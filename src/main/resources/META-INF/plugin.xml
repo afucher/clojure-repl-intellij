@@ -1,0 +1,30 @@
+<idea-plugin require-restart="true">
+    <id>com.github.clojure-repl</id>
+    <name>Clojure REPL</name>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <!--
+    <extensions defaultExtensionNs="com.intellij">
+        <configurationType
+                implementation="com.github.clojure_repl.intellij.configuration.DemoRunConfigurationType"/>
+    </extensions>
+    -->
+
+    <actions>
+        <group id="ClojureREPLGroup">
+            <action id="com.github.clojure_repl.intellij.action.FooAction" class="com.github.clojure_repl.intellij.action.FooAction" text="minha-acao"
+                    description="descricao-da-minha-acao">
+                <add-to-group group-id="ToolsMenu" anchor="first"/>
+                <keyboard-shortcut keymap="$default" first-keystroke="shift meta 1"/>
+            </action>
+
+        </group>
+    </actions>
+
+    <applicationListeners>
+        <listener topic="com.intellij.ide.AppLifecycleListener"
+                  class="com.github.clojure_repl.intellij.listener.AppLifecycleListener"/>
+    </applicationListeners>
+
+</idea-plugin>
