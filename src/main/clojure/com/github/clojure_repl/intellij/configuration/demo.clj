@@ -1,31 +1,37 @@
 (ns com.github.clojure-repl.intellij.configuration.demo
   (:gen-class
-    :post-init post-init
-    :init init
-    :name com.github.clojure_repl.intellij.configuration.DemoRunConfigurationType
-    :constructors {[] [String String String com.intellij.openapi.util.NotNullLazyValue]}
-    :extends com.intellij.execution.configurations.ConfigurationTypeBase)
-  (:import (com.intellij.execution.configurations ConfigurationFactory)
-           (com.intellij.icons AllIcons$Nodes)
-           (com.intellij.openapi.util NotNullLazyValue))
-  (:require [com.rpl.proxy-plus :refer [proxy+]]))
+   :init init
+   :constructors {[] [String String String com.intellij.openapi.util.NotNullLazyValue]}
+   :name com.github.clojure_repl.intellij.configuration.DemoRunConfigurationType
+   :extends com.intellij.execution.configurations.SimpleConfigurationType)
+  (:require
+   [com.rpl.proxy-plus :refer [proxy+]])
+  (:import
+   [com.intellij.execution.configurations RunConfigurationBase]
+   [com.intellij.icons AllIcons$Nodes]
+   [com.intellij.openapi.project Project]
+   [com.intellij.openapi.util NotNullFactory NotNullLazyValue]))
 
-(set! *warn-on-reflection* false)
+(set! *warn-on-reflection* true)
 
-(def ID "DemoRunConfiguration")
+(def ID "Clojure REPL")
 
 (defn -init []
-  [[ID "Demo" "Demo run  configuration type" (NotNullLazyValue/createValue (fn [] AllIcons$Nodes/Console ))] nil])
-
-(defn -post-init [this _]
-  (.addFactory this (proxy+
-                      [this]
-                      ConfigurationFactory
-                      (getId [] ID))))
-
-
-
+  [[ID "Clojure REPL" "Clojure REPL" (NotNullLazyValue/createValue
+                                      (reify NotNullFactory
+                                        (create [_]
+                                          AllIcons$Nodes/Console)))] nil])
 
 (defn -getId [_]
   ID)
 
+(defn -createTemplateConfiguration
+  ([this ^Project project _]
+   (-createTemplateConfiguration this project))
+  ([this ^Project project]
+   (proxy+ [project this "Demo"] RunConfigurationBase
+           ;; TODO
+           #_(getConfigurationEditor []))))
+
+(defn -getHelpTopic [_]
+  "Clojure REPL")
