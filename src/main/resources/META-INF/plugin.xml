@@ -4,12 +4,10 @@
 
     <depends>com.intellij.modules.platform</depends>
 
-    <!--
+
     <extensions defaultExtensionNs="com.intellij">
-        <configurationType
-                implementation="com.github.clojure_repl.intellij.configuration.DemoRunConfigurationType"/>
+        <configurationType implementation="com.github.clojure_repl.intellij.configuration.DemoRunConfigurationType"/>
     </extensions>
-    -->
 
     <actions>
         <group id="ClojureREPLGroup">
