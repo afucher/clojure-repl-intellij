@@ -24,7 +24,7 @@ repositories {
 
 dependencies {
     implementation ("org.clojure:clojure:1.11.1")
-    implementation ("com.github.ericdallo:clj4intellij:0.3.0")
+    implementation ("com.github.ericdallo:clj4intellij:0.3.1")
     implementation ("com.rpl:proxy-plus:0.0.9")
 }
 
