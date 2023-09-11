@@ -4,9 +4,9 @@
 
     <depends>com.intellij.modules.platform</depends>
 
-
     <extensions defaultExtensionNs="com.intellij">
         <configurationType implementation="com.github.clojure_repl.intellij.configuration.DemoRunConfigurationType"/>
+        <postStartupActivity implementation="com.github.ericdallo.clj4intellij.extension.NREPLStartup"/>
     </extensions>
 
     <actions>
@@ -22,7 +22,7 @@
 
     <applicationListeners>
         <listener topic="com.intellij.ide.AppLifecycleListener"
-                  class="com.github.clojure_repl.intellij.listener.AppLifecycleListener"/>
+                  class="com.github.ericdallo.clj4intellij.listener.ClojureClassLoaderListener"/>
     </applicationListeners>
 
 </idea-plugin>
