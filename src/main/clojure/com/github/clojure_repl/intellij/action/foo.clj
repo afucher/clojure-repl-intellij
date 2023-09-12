@@ -5,23 +5,10 @@
   (:require
    [nrepl.core :as nrepl])
   (:import
-    [com.intellij.codeInsight.hint HintManager]
-    [com.intellij.find.findUsages FindUsagesOptions]
-    [com.intellij.openapi.actionSystem CommonDataKeys]
-    [com.intellij.openapi.actionSystem AnActionEvent]
-    [com.intellij.openapi.editor Document Editor]
-    [com.intellij.openapi.project Project]
-    [com.intellij.openapi.util TextRange]
-    [com.intellij.openapi.vfs VirtualFile]
-    [com.intellij.openapi.ui Messages]
-    [com.intellij.psi PsiElement]
-    [com.intellij.usages
-     Usage
-     UsageInfo2UsageAdapter
-     UsageTarget
-     UsageViewManager
-     UsageViewPresentation]
-    [com.intellij.usageView UsageInfo]))
+   [com.intellij.openapi.actionSystem CommonDataKeys]
+   [com.intellij.openapi.actionSystem AnActionEvent]
+   [com.intellij.openapi.ui Messages]
+   [com.intellij.openapi.vfs VirtualFile]))
 
 
 (set! *warn-on-reflection* true)
