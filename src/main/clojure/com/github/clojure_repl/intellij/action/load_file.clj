@@ -1,6 +1,6 @@
-(ns com.github.clojure-repl.intellij.action.foo
+(ns com.github.clojure-repl.intellij.action.load-file
   (:gen-class
-   :name com.github.clojure_repl.intellij.action.FooAction
+   :name com.github.clojure_repl.intellij.action.LoadFile
    :extends com.intellij.openapi.actionSystem.AnAction)
   (:require
    [nrepl.core :as nrepl])
@@ -9,7 +9,6 @@
    [com.intellij.openapi.actionSystem AnActionEvent]
    [com.intellij.openapi.ui Messages]
    [com.intellij.openapi.vfs VirtualFile]))
-
 
 (set! *warn-on-reflection* true)
 
