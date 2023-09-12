@@ -11,8 +11,9 @@
 
     <actions>
         <group id="ClojureREPLGroup">
-            <action id="com.github.clojure_repl.intellij.action.FooAction" class="com.github.clojure_repl.intellij.action.FooAction" text="minha-acao"
-                    description="descricao-da-minha-acao">
+            <action class="com.github.clojure_repl.intellij.action.LoadFile"
+                    text="Load file to REPL"
+                    description="Load file to REPL">
                 <add-to-group group-id="ToolsMenu" anchor="first"/>
                 <keyboard-shortcut keymap="$default" first-keystroke="shift meta 1"/>
             </action>
