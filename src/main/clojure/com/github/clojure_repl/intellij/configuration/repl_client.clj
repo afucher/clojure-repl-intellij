@@ -5,9 +5,9 @@
    :name com.github.clojure_repl.intellij.configuration.ReplClientRunConfigurationType
    :extends com.intellij.execution.configurations.SimpleConfigurationType)
   (:require
+   [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.rpl.proxy-plus :refer [proxy+]]
    [nrepl.core :as nrepl]
-   [seesaw.color :as color]
    [seesaw.core :as seesaw]
    [seesaw.mig :as mig])
   (:import
@@ -19,8 +19,6 @@
    [com.intellij.openapi.actionSystem AnAction]
    [com.intellij.openapi.project Project]
    [com.intellij.openapi.util NotNullFactory NotNullLazyValue]
-   [java.awt.event KeyEvent]
-   [javax.swing JComponent JTextArea]
    [nrepl.transport FnTransport]))
 
 (set! *warn-on-reflection* true)
@@ -51,52 +49,14 @@
 (defn ^:private build-editor-view []
   (mig/mig-panel :items [[(seesaw/label "Nrepl port") ""]]))
 
-(defn with-background [^JComponent component color]
-  (doto component
-    (.setBackground (color/color color))))
-
-(def ^:private repl-output-background "#1d252c")
-(def ^:private repl-input-background "#666")
-
-(defn ^:private build-console-view [{:keys [on-eval]}]
-  (with-background
-    (mig/mig-panel :items [[(with-background
-                              (mig/mig-panel :id :repl-output-layout
-                                             :items [[(with-background
-                                                        (seesaw/text :id :repl-output-content
-                                                                     :multi-line? true
-                                                                     :editable? false
-                                                                     :text "Clojure REPL")
-                                                        repl-output-background) ""]])
-                              repl-output-background)
-                            "span, grow"]
-                           [(seesaw/separator) "growx, gaptop 5, span"]
-                           [(with-background
-                              (mig/mig-panel :id :repl-input-layout
-                                             :items [[(with-background
-                                                        (seesaw/text :id :repl-input-content
-                                                                     :multi-line? true
-                                                                     :editable? true
-                                                                     :listen [:key-pressed (fn [^KeyEvent key-event]
-                                                                                             (when (= KeyEvent/VK_ENTER (.getKeyCode key-event))
-                                                                                               (let [component (.getComponent key-event)
-                                                                                                     current-code (seesaw/text component)]
-                                                                                                 (seesaw/text! component "")
-                                                                                                 (.consume key-event)
-                                                                                                 (on-eval current-code))))]
-                                                                     :text "")
-                                                        repl-input-background) ""]])
-                              repl-output-background)
-                            "grow"]])
-    repl-output-background))
-
 (defn ^:private build-console []
-  (let [console-view (build-console-view
-                      {:on-eval (fn [code]
-                                  (let [return (:value (first (send-repl-message {:op "eval" :code code :session (:session-id @state*)})))
-                                        repl-output-content ^JTextArea (seesaw/select (:console @state*) [:#repl-output-content])]
-                                    (.append repl-output-content
-                                             (str "\n=> " return ""))))})]
+  (let [console-view (ui.repl/build-console-view
+                       ;; TODO set current nrepl host, port, clojure and java versions.
+                      {:initial-text (str ";; Connected to nREPL server - nrepl://host:port\n"
+                                          ";; Clojure x.xx.x, Java y.y.y")
+                       :initial-ns "user"
+                       :on-eval (fn [code]
+                                  (first (send-repl-message {:op "eval" :code code :session (:session-id @state*)})))})]
     (swap! state* assoc :console console-view)
     (proxy+ [] ConsoleView
       (getComponent [_] console-view)
@@ -137,7 +97,6 @@
            (:handler @state*)))))))
 
 (comment
-
   (def session-id (:new-session (first (send-repl-message {:op "clone"}))))
   (send-repl-message {:op "ls-sessions"})
   (send-repl-message {:op "load-file" :file (slurp "/home/greg/dev/nu/atlas-core/src/atlas_core/db/datomic/config.clj")})
