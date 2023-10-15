@@ -11,6 +11,7 @@
    [seesaw.core :as seesaw]
    [seesaw.mig :as mig])
   (:import
+   [com.github.clojure_repl.intellij.configuration ReplClientRunOptions]
    [com.intellij.execution.configurations CommandLineState RunConfigurationBase]
    [com.intellij.execution.process NopProcessHandler]
    [com.intellij.execution.runners ExecutionEnvironment]
@@ -21,12 +22,14 @@
    [com.intellij.openapi.util NotNullFactory NotNullLazyValue]
    [nrepl.transport FnTransport]))
 
-(set! *warn-on-reflection* true)
+(set! *warn-on-reflection* false)
 
 (def ID "Clojure REPL")
 
 (defonce state* (atom {:handler (NopProcessHandler.)
-                       :console nil}))
+                       :console nil
+                       :editor nil
+                       :settings {:nrepl-port nil}}))
 
 (defn -init []
   [[ID
@@ -39,15 +42,18 @@
 
 (defn -getId [_] ID)
 (defn -getHelpTopic [_] "Clojure REPL")
+(defn -getOptionsClass [_] ReplClientRunOptions)
 
 (defn ^:private send-repl-message [message]
-  (with-open [conn ^FnTransport (nrepl/connect :port 8880)]
+  (with-open [conn ^FnTransport (nrepl/connect :port (-> @state* :settings :nrepl-port))]
     (-> (nrepl/client conn 1000)
         (nrepl/message message)
         doall)))
 
 (defn ^:private build-editor-view []
-  (mig/mig-panel :items [[(seesaw/label "Nrepl port") ""]]))
+  (mig/mig-panel :items [[(seesaw/label "Nrepl port") ""]
+                         [(seesaw/text :id :nrepl-port
+                                       :columns 8) "wrap"]]))
 
 (defn ^:private build-console []
   (let [console-view (ui.repl/build-console-view
@@ -78,21 +84,37 @@
       (createConsoleActions [_] (into-array AnAction []))
       (allowHeavyFilters [_]))))
 
-(defn -createTemplateConfiguration
-  ([this ^Project project _]
-   (-createTemplateConfiguration this project))
-  ([this ^Project project]
-   (proxy+ [project this "Connect to existing REPL"] RunConfigurationBase
-     (getConfigurationEditor [_]
-       (proxy+ [] com.intellij.openapi.options.SettingsEditor
-         (resetEditorFrom [_ _])
-         (applyEditorTo [_ _])
-         (createEditor [_] (build-editor-view))))
+(defn ^:private apply-editor-to [^RunConfigurationBase configuration-base]
+  (when-let [nrepl-port (parse-long (seesaw/text (seesaw/select (:editor @state*) [:#nrepl-port])))]
+    (swap! state* assoc-in [:settings :nrepl-port] nrepl-port)
+    (.setNreplPort (.getOptions configuration-base) (str nrepl-port))))
 
-     (getState [_ executor ^ExecutionEnvironment env]
-       (proxy+ [env] CommandLineState
-         (createConsole [_ _] (build-console))
-         (startProcess [_]
+(defn ^:private reset-editor-from [^RunConfigurationBase configuration-base]
+  (when-let [nrepl-port (parse-long (.getNreplPort (.getOptions configuration-base)))]
+    (swap! state* assoc-in [:settings :nrepl-port] nrepl-port)
+    (seesaw/text! (seesaw/select (:editor @state*) [:#nrepl-port]) nrepl-port)))
+
+(defn -createTemplateConfiguration
+  ([this project _]
+   (-createTemplateConfiguration this project))
+  ([factory-this ^Project project]
+   (proxy [RunConfigurationBase] [project factory-this "Connect to existing REPL"]
+     (getConfigurationEditor []
+       (proxy+ [] com.intellij.openapi.options.SettingsEditor
+         (createEditor [_]
+           (let [editor-view (build-editor-view)]
+             (swap! state* assoc :editor editor-view)
+             editor-view))
+         (applyEditorTo [_ configuration-base]
+           (apply-editor-to configuration-base))
+
+         (resetEditorFrom [_ configuraiton-base]
+           (reset-editor-from configuraiton-base))))
+
+     (getState [executor ^ExecutionEnvironment env]
+       (proxy [CommandLineState] [env]
+         (createConsole [_] (build-console))
+         (startProcess []
            (swap! state* assoc :session-id (:new-session (first (send-repl-message {:op "clone"}))))
            (:handler @state*)))))))
 
