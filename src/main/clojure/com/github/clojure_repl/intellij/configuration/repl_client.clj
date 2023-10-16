@@ -20,6 +20,7 @@
    [com.intellij.openapi.actionSystem AnAction]
    [com.intellij.openapi.project Project]
    [com.intellij.openapi.util NotNullFactory NotNullLazyValue]
+   [com.intellij.ui IdeBorderFactory]
    [nrepl.transport FnTransport]))
 
 (set! *warn-on-reflection* false)
@@ -29,7 +30,8 @@
 (defonce state* (atom {:handler (NopProcessHandler.)
                        :console nil
                        :editor nil
-                       :settings {:nrepl-port nil}}))
+                       :settings {:nrepl-port nil
+                                  :nrepl-host "localhost"}}))
 
 (defn -init []
   [[ID
@@ -45,20 +47,29 @@
 (defn -getOptionsClass [_] ReplClientRunOptions)
 
 (defn ^:private send-repl-message [message]
-  (with-open [conn ^FnTransport (nrepl/connect :port (-> @state* :settings :nrepl-port))]
+  (with-open [conn ^FnTransport (nrepl/connect
+                                 :host (-> @state* :settings :nrepl-host)
+                                 :port (-> @state* :settings :nrepl-port))]
     (-> (nrepl/client conn 1000)
         (nrepl/message message)
         doall)))
 
 (defn ^:private build-editor-view []
-  (mig/mig-panel :items [[(seesaw/label "Nrepl port") ""]
-                         [(seesaw/text :id :nrepl-port
-                                       :columns 8) "wrap"]]))
+  (mig/mig-panel
+   :border (IdeBorderFactory/createTitledBorder "NREPL connection")
+   :items [[(seesaw/label "Host") ""]
+           [(seesaw/text :id :nrepl-host
+                         :columns 20) "wrap"]
+           [(seesaw/label "Port") ""]
+           [(seesaw/text :id :nrepl-port
+                         :columns 8) "wrap"]]))
 
 (defn ^:private build-console []
   (let [console-view (ui.repl/build-console-view
-                       ;; TODO set current nrepl host, port, clojure and java versions.
-                      {:initial-text (str ";; Connected to nREPL server - nrepl://host:port\n"
+                       ;; TODO set clojure and java versions.
+                      {:initial-text (str (format ";; Connected to nREPL server - nrepl://%s:%s\n"
+                                                  (-> @state* :settings :nrepl-host)
+                                                  (-> @state* :settings :nrepl-port))
                                           ";; Clojure x.xx.x, Java y.y.y")
                        :initial-ns "user"
                        :on-eval (fn [code]
@@ -85,11 +96,18 @@
       (allowHeavyFilters [_]))))
 
 (defn ^:private apply-editor-to [^RunConfigurationBase configuration-base]
+  (let [host (seesaw/text (seesaw/select (:editor @state*) [:#nrepl-host]))]
+    (swap! state* assoc-in [:settings :nrepl-host] host)
+    (.setNreplHost (.getOptions configuration-base) host))
   (when-let [nrepl-port (parse-long (seesaw/text (seesaw/select (:editor @state*) [:#nrepl-port])))]
     (swap! state* assoc-in [:settings :nrepl-port] nrepl-port)
     (.setNreplPort (.getOptions configuration-base) (str nrepl-port))))
 
 (defn ^:private reset-editor-from [^RunConfigurationBase configuration-base]
+  (let [host (or (not-empty (.getNreplHost (.getOptions configuration-base)))
+                 (-> @state* :settings :nrepl-host))]
+    (swap! state* assoc-in [:settings :nrepl-host] host)
+    (seesaw/text! (seesaw/select (:editor @state*) [:#nrepl-host]) host))
   (when-let [nrepl-port (parse-long (.getNreplPort (.getOptions configuration-base)))]
     (swap! state* assoc-in [:settings :nrepl-port] nrepl-port)
     (seesaw/text! (seesaw/select (:editor @state*) [:#nrepl-port]) nrepl-port)))
