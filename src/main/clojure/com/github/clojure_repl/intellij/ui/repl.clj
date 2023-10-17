@@ -71,9 +71,6 @@
                                           (and shift? enter?)
                                           (on-repl-new-line event)
 
-                                          (and shift? enter?)
-                                          (on-repl-new-line event)
-
                                           (and enter? (not shift?))
                                           (on-repl-input event on-eval)
 
