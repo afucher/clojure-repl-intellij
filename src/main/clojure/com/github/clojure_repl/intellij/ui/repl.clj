@@ -1,6 +1,7 @@
 (ns com.github.clojure-repl.intellij.ui.repl
   (:require
    [clojure.string :as string]
+   [com.github.clojure-repl.intellij.db :as db]
    [seesaw.core :as seesaw]
    [seesaw.mig :as mig])
   (:import
@@ -12,7 +13,7 @@
 (def ^:private code-to-eval-regexp #".*>\s+([^>]+)$")
 (def ^:private color-repl-primary "#1d252c")
 
-(defonce ^:private console-state* (atom {:ns nil :last-output nil}))
+(defonce ^:private console-state* (atom {:last-output nil}))
 
 (defn ^:private extract-code-to-eval [repl-content-text]
   (or (some-> (re-find code-to-eval-regexp repl-content-text)
@@ -31,7 +32,7 @@
                        (when err (str "\n" err))
                        (when out (str "\n" out))
                        (when value (str "\n;; => " value)))
-          ns-text (str "\n" (:ns @console-state*) "> ")]
+          ns-text (str "\n" (-> @db/db* :current-nrepl :ns) "> ")]
       (.append repl-content (str result-text ns-text)))
     (let [new-text (seesaw/text repl-content)]
       (.setCaretPosition repl-content (count new-text))
@@ -41,16 +42,19 @@
   (.consume key-event)
   (.append ^JTextArea (.getComponent key-event) "\n"))
 
+(defn ^:private initial-text+ns [initial-text]
+  (str initial-text "\n\n" (-> @db/db* :current-nrepl :ns) "> "))
+
 (defn ^:private on-repl-clear [^KeyEvent key-event]
   (.consume key-event)
-  (let [initial-text (:initial-text @console-state*)]
-    (seesaw/text! (.getComponent key-event) initial-text)
-    (swap! console-state* assoc :last-output initial-text)))
+  (let [text (initial-text+ns (:initial-text @console-state*))]
+    (seesaw/text! (.getComponent key-event) text)
+    (swap! console-state* assoc :last-output text)))
 
-(defn build-console-view [{:keys [initial-ns initial-text on-eval]}]
-  (reset! console-state* {:ns initial-ns
-                          :initial-text (str initial-text "\n\n" initial-ns "> ")
-                          :last-output (str initial-text "\n\n" initial-ns "> ")})
+(defn build-console [{:keys [initial-text on-eval]}]
+  (reset! console-state* {:status :running
+                          :initial-text initial-text
+                          :last-output (initial-text+ns initial-text)})
   (seesaw/scrollable
    (mig/mig-panel
     :id :repl-input-layout
@@ -63,16 +67,23 @@
               :background color-repl-primary
               :text (:last-output @console-state*)
               :listen [:key-pressed (fn [^KeyEvent event]
-                                      (let [ctrl? (not= 0 (bit-and (.getModifiers event) InputEvent/CTRL_MASK))
-                                            shift? (not= 0 (bit-and (.getModifiers event) InputEvent/SHIFT_MASK))
-                                            enter? (= KeyEvent/VK_ENTER (.getKeyCode event))
-                                            l? (= KeyEvent/VK_L (.getKeyCode event))]
-                                        (cond
-                                          (and shift? enter?)
-                                          (on-repl-new-line event)
+                                      (when (= :running (:status @console-state*))
+                                        (let [ctrl? (not= 0 (bit-and (.getModifiers event) InputEvent/CTRL_MASK))
+                                              shift? (not= 0 (bit-and (.getModifiers event) InputEvent/SHIFT_MASK))
+                                              enter? (= KeyEvent/VK_ENTER (.getKeyCode event))
+                                              l? (= KeyEvent/VK_L (.getKeyCode event))]
+                                          (cond
+                                            (and shift? enter?)
+                                            (on-repl-new-line event)
 
-                                          (and enter? (not shift?))
-                                          (on-repl-input event on-eval)
+                                            (and enter? (not shift?))
+                                            (on-repl-input event on-eval)
 
-                                          (and ctrl? l?)
-                                          (on-repl-clear event))))]) "grow"]])))
+                                            (and ctrl? l?)
+                                            (on-repl-clear event)))))]) "grow"]])))
+
+(defn close-console [console]
+  (let [repl-content (seesaw/select console [:#repl-content])]
+    (swap! console-state* assoc :status :closed)
+    (seesaw/config! repl-content :editable? false)
+    (.append ^JTextArea repl-content "\nClosed!")))
