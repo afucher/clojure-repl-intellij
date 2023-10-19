@@ -5,33 +5,34 @@
    :name com.github.clojure_repl.intellij.configuration.ReplClientRunConfigurationType
    :extends com.intellij.execution.configurations.SimpleConfigurationType)
   (:require
+   [com.github.clojure-repl.intellij.db :as db]
+   [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.rpl.proxy-plus :refer [proxy+]]
-   [nrepl.core :as nrepl]
    [seesaw.core :as seesaw]
    [seesaw.mig :as mig])
   (:import
    [com.github.clojure_repl.intellij.configuration ReplClientRunOptions]
    [com.intellij.execution.configurations CommandLineState RunConfigurationBase]
-   [com.intellij.execution.process NopProcessHandler]
+   [com.intellij.execution.process NopProcessHandler ProcessListener]
    [com.intellij.execution.runners ExecutionEnvironment]
    [com.intellij.execution.ui ConsoleView]
    [com.intellij.icons AllIcons$Nodes]
+   [com.intellij.ide.plugins PluginManagerCore]
    [com.intellij.openapi.actionSystem AnAction]
+   [com.intellij.openapi.extensions PluginId]
    [com.intellij.openapi.project Project]
    [com.intellij.openapi.util NotNullFactory NotNullLazyValue]
-   [com.intellij.ui IdeBorderFactory]
-   [nrepl.transport FnTransport]))
+   [com.intellij.ui IdeBorderFactory]))
 
 (set! *warn-on-reflection* false)
 
 (def ID "Clojure REPL")
 
-(defonce state* (atom {:handler (NopProcessHandler.)
-                       :console nil
-                       :editor nil
-                       :settings {:nrepl-port nil
-                                  :nrepl-host "localhost"}}))
+(def initial-current-repl {:handler nil
+                           :console nil})
+(defonce current-repl* (atom initial-current-repl))
+(defonce editor* (atom nil))
 
 (defn -init []
   [[ID
@@ -46,14 +47,6 @@
 (defn -getHelpTopic [_] "Clojure REPL")
 (defn -getOptionsClass [_] ReplClientRunOptions)
 
-(defn ^:private send-repl-message [message]
-  (with-open [conn ^FnTransport (nrepl/connect
-                                 :host (-> @state* :settings :nrepl-host)
-                                 :port (-> @state* :settings :nrepl-port))]
-    (-> (nrepl/client conn 1000)
-        (nrepl/message message)
-        doall)))
-
 (defn ^:private build-editor-view []
   (mig/mig-panel
    :border (IdeBorderFactory/createTitledBorder "NREPL connection")
@@ -64,53 +57,74 @@
            [(seesaw/text :id :nrepl-port
                          :columns 8) "wrap"]]))
 
-(defn ^:private build-console []
-  (let [console-view (ui.repl/build-console-view
-                       ;; TODO set clojure and java versions.
-                      {:initial-text (str (format ";; Connected to nREPL server - nrepl://%s:%s\n"
-                                                  (-> @state* :settings :nrepl-host)
-                                                  (-> @state* :settings :nrepl-port))
-                                          ";; Clojure x.xx.x, Java y.y.y")
-                       :initial-ns "user"
-                       :on-eval (fn [code]
-                                  (first (send-repl-message {:op "eval" :code code :session (:session-id @state*)})))})]
-    (swap! state* assoc :console console-view)
-    (proxy+ [] ConsoleView
-      (getComponent [_] console-view)
-      (getPreferredFocusableComponent [_] console-view)
-      (dispose [_])
-      (print [_ _ _])
-      (clear [_])
-      (scrollTo [_ _])
-      (attachToProcess [_ _])
-      (setOutputPaused [_ _])
-      (isOutputPaused [_] false)
-      (hasDeferredOutput [_] false)
-      (performWhenNoDeferredOutput [_ _])
-      (setHelpId [_ _])
-      (addMessageFilter [_ _])
-      (printHyperlink [_ _ _])
-      (getContentSize [_] 0)
-      (canPause [_] false)
-      (createConsoleActions [_] (into-array AnAction []))
-      (allowHeavyFilters [_]))))
+(defn ^:private initial-repl-text []
+  (let [{:keys [clojure java nrepl]} (:versions (nrepl/describe))]
+    (str (format ";; Connected to nREPL server - nrepl://%s:%s\n"
+                 (-> @db/db* :settings :nrepl-host)
+                 (-> @db/db* :settings :nrepl-port))
+         (format ";; Clojure REPL Intellij %s\n"
+                 (.getVersion
+                  (PluginManagerCore/getPlugin (PluginId/getId "com.github.clojure-repl"))))
+         (format ";; Clojure %s, Java %s, nREPL %s"
+                 (:version-string clojure)
+                 (:version-string java)
+                 (:version-string nrepl)))))
+
+(defn ^:private build-console-view []
+  (reset! current-repl* initial-current-repl)
+  (swap! current-repl* assoc :console (ui.repl/build-console
+                                       {:initial-text (initial-repl-text)
+                                        :on-eval (fn [code]
+                                                   (nrepl/eval :code code))}))
+  (proxy+ [] ConsoleView
+    (getComponent [_] (:console @current-repl*))
+    (getPreferredFocusableComponent [_] (:console @current-repl*))
+    (dispose [_])
+    (print [_ _ _])
+    (clear [_])
+    (scrollTo [_ _])
+    (attachToProcess [_ _])
+    (setOutputPaused [_ _])
+    (isOutputPaused [_] false)
+    (hasDeferredOutput [_] false)
+    (performWhenNoDeferredOutput [_ _])
+    (setHelpId [_ _])
+    (addMessageFilter [_ _])
+    (printHyperlink [_ _ _])
+    (getContentSize [_] 0)
+    (canPause [_] false)
+    (createConsoleActions [_] (into-array AnAction []))
+    (allowHeavyFilters [_])))
+
+(defn ^:private start-process []
+  (nrepl/clone-session)
+  (nrepl/eval "*ns*")
+  (let [handler (NopProcessHandler.)]
+    (swap! current-repl* assoc :handler handler)
+    (.addProcessListener handler
+                         (proxy+ [] ProcessListener
+                           (processWillTerminate [_ _ _]
+                             (ui.repl/close-console (:console @current-repl*)))))
+    handler))
 
 (defn ^:private apply-editor-to [^RunConfigurationBase configuration-base]
-  (let [host (seesaw/text (seesaw/select (:editor @state*) [:#nrepl-host]))]
-    (swap! state* assoc-in [:settings :nrepl-host] host)
-    (.setNreplHost (.getOptions configuration-base) host))
-  (when-let [nrepl-port (parse-long (seesaw/text (seesaw/select (:editor @state*) [:#nrepl-port])))]
-    (swap! state* assoc-in [:settings :nrepl-port] nrepl-port)
-    (.setNreplPort (.getOptions configuration-base) (str nrepl-port))))
+  (let [editor @editor*
+        host (seesaw/text (seesaw/select editor [:#nrepl-host]))]
+    (swap! db/db* assoc-in [:settings :nrepl-host] host)
+    (.setNreplHost (.getOptions configuration-base) host)
+    (when-let [nrepl-port (parse-long (seesaw/text (seesaw/select editor [:#nrepl-port])))]
+      (swap! db/db* assoc-in [:settings :nrepl-port] nrepl-port)
+      (.setNreplPort (.getOptions configuration-base) (str nrepl-port)))))
 
 (defn ^:private reset-editor-from [^RunConfigurationBase configuration-base]
-  (let [host (or (not-empty (.getNreplHost (.getOptions configuration-base)))
-                 (-> @state* :settings :nrepl-host))]
-    (swap! state* assoc-in [:settings :nrepl-host] host)
-    (seesaw/text! (seesaw/select (:editor @state*) [:#nrepl-host]) host))
-  (when-let [nrepl-port (parse-long (.getNreplPort (.getOptions configuration-base)))]
-    (swap! state* assoc-in [:settings :nrepl-port] nrepl-port)
-    (seesaw/text! (seesaw/select (:editor @state*) [:#nrepl-port]) nrepl-port)))
+  (let [editor @editor*
+        host (or (not-empty (.getNreplHost (.getOptions configuration-base)))
+                 (-> @db/db* :settings :nrepl-host))]
+    (swap! db/db* assoc-in [:settings :nrepl-host] host)
+    (seesaw/text! (seesaw/select editor [:#nrepl-host]) host)
+    (when-let [nrepl-port (parse-long (.getNreplPort (.getOptions configuration-base)))]
+      (swap! db/db* assoc-in [:settings :nrepl-port] nrepl-port)
+      (seesaw/text! (seesaw/select editor [:#nrepl-port]) nrepl-port))))
 
 (defn -createTemplateConfiguration
   ([this project _]
@@ -121,7 +135,7 @@
        (proxy+ [] com.intellij.openapi.options.SettingsEditor
          (createEditor [_]
            (let [editor-view (build-editor-view)]
-             (swap! state* assoc :editor editor-view)
+             (reset! editor* editor-view)
              editor-view))
          (applyEditorTo [_ configuration-base]
            (apply-editor-to configuration-base))
@@ -131,21 +145,5 @@
 
      (getState [executor ^ExecutionEnvironment env]
        (proxy [CommandLineState] [env]
-         (createConsole [_] (build-console))
-         (startProcess []
-           (swap! state* assoc :session-id (:new-session (first (send-repl-message {:op "clone"}))))
-           (:handler @state*)))))))
-
-(comment
-  (def session-id (:new-session (first (send-repl-message {:op "clone"}))))
-  (send-repl-message {:op "ls-sessions"})
-  (send-repl-message {:op "load-file" :file (slurp "/home/greg/dev/nu/atlas-core/src/atlas_core/db/datomic/config.clj")})
-  (send-repl-message {:op "decribe"})
-
-  (let [return (:value (first (send-repl-message {:op "eval" :code "(+ 1 2)" :session session-id})))
-        repl-output-content (seesaw/select (:console @state*) [:#repl-output-content])]
-    (.append repl-output-content
-             (str "\n=> " return ""))
-    #_(.notifyTextAvailable (:handler @state*)
-                            (str "=> " return "\n")
-                            (Key. "output"))))
+         (createConsole [_] (build-console-view))
+         (startProcess [] (start-process)))))))
