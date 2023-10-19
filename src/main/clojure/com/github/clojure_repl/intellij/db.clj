@@ -3,4 +3,5 @@
 (defonce db* (atom {:current-nrepl {:session-id nil
                                     :ns "user"}
                     :settings {:nrepl-port nil
-                               :nrepl-host "localhost"}}))
+                               :nrepl-host "localhost"}
+                   :ops {}}))

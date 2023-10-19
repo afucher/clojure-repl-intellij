@@ -58,7 +58,7 @@
                          :columns 8) "wrap"]]))
 
 (defn ^:private initial-repl-text []
-  (let [{:keys [clojure java nrepl]} (:versions (nrepl/describe))]
+  (let [{:keys [clojure java nrepl]} (-> @db/db* :versions )]
     (str (format ";; Connected to nREPL server - nrepl://%s:%s\n"
                  (-> @db/db* :settings :nrepl-host)
                  (-> @db/db* :settings :nrepl-port))
@@ -99,6 +99,9 @@
 (defn ^:private start-process []
   (nrepl/clone-session)
   (nrepl/eval "*ns*")
+  (let [description (nrepl/describe)]
+    (swap! db/db* assoc :ops (:ops description))
+    (swap! db/db* assoc :versions (:versions description)))
   (let [handler (NopProcessHandler.)]
     (swap! current-repl* assoc :handler handler)
     (.addProcessListener handler
