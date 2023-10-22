@@ -6,6 +6,7 @@
    [seesaw.mig :as mig])
   (:import
    [java.awt.event InputEvent KeyEvent]
+   [java.time.format DateTimeFormatter]
    [javax.swing JTextArea]))
 
 (set! *warn-on-reflection* true)
@@ -82,8 +83,10 @@
                                             (and ctrl? l?)
                                             (on-repl-clear event)))))]) "grow"]])))
 
+(def ^:private ^DateTimeFormatter time-formatter (DateTimeFormatter/ofPattern "dd/MM/yyyy HH:mm:ss"))
+
 (defn close-console [console]
   (let [repl-content (seesaw/select console [:#repl-content])]
     (swap! console-state* assoc :status :closed)
     (seesaw/config! repl-content :editable? false)
-    (.append ^JTextArea repl-content "\nClosed!")))
+    (.append ^JTextArea repl-content (format "\n*** Closed on %s ***" (.format time-formatter (java.time.LocalDateTime/now))))))

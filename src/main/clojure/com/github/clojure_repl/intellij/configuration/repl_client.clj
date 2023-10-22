@@ -8,6 +8,7 @@
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
+   [com.github.ericdallo.clj4intellij.logger :as logger]
    [com.rpl.proxy-plus :refer [proxy+]]
    [seesaw.core :as seesaw]
    [seesaw.mig :as mig])
@@ -58,7 +59,7 @@
                          :columns 8) "wrap"]]))
 
 (defn ^:private initial-repl-text []
-  (let [{:keys [clojure java nrepl]} (-> @db/db* :versions )]
+  (let [{:keys [clojure java nrepl]} (-> @db/db* :versions)]
     (str (format ";; Connected to nREPL server - nrepl://%s:%s\n"
                  (-> @db/db* :settings :nrepl-host)
                  (-> @db/db* :settings :nrepl-port))
@@ -97,6 +98,7 @@
     (allowHeavyFilters [_])))
 
 (defn ^:private start-process []
+  (logger/info "Starting NREPL process...")
   (nrepl/clone-session)
   (nrepl/eval "*ns*")
   (let [description (nrepl/describe)]
@@ -119,15 +121,17 @@
       (swap! db/db* assoc-in [:settings :nrepl-port] nrepl-port)
       (.setNreplPort (.getOptions configuration-base) (str nrepl-port)))))
 
-(defn ^:private reset-editor-from [^RunConfigurationBase configuration-base]
+(defn ^:private setup-settings [^RunConfigurationBase configuration-base]
+  (when-let [host (not-empty (.getNreplHost (.getOptions configuration-base)))]
+    (swap! db/db* assoc-in [:settings :nrepl-host] host))
+  (when-let [nrepl-port (parse-long (.getNreplPort (.getOptions configuration-base)))]
+    (swap! db/db* assoc-in [:settings :nrepl-port] nrepl-port)))
+
+(defn ^:private reset-editor-from-settings []
   (let [editor @editor*
-        host (or (not-empty (.getNreplHost (.getOptions configuration-base)))
-                 (-> @db/db* :settings :nrepl-host))]
-    (swap! db/db* assoc-in [:settings :nrepl-host] host)
-    (seesaw/text! (seesaw/select editor [:#nrepl-host]) host)
-    (when-let [nrepl-port (parse-long (.getNreplPort (.getOptions configuration-base)))]
-      (swap! db/db* assoc-in [:settings :nrepl-port] nrepl-port)
-      (seesaw/text! (seesaw/select editor [:#nrepl-port]) nrepl-port))))
+        settings (:settings @db/db*)]
+    (seesaw/text! (seesaw/select editor [:#nrepl-host]) (:nrepl-host settings))
+    (seesaw/text! (seesaw/select editor [:#nrepl-port]) (:nrepl-port settings))))
 
 (defn -createTemplateConfiguration
   ([this project _]
@@ -143,10 +147,14 @@
          (applyEditorTo [_ configuration-base]
            (apply-editor-to configuration-base))
 
-         (resetEditorFrom [_ configuraiton-base]
-           (reset-editor-from configuraiton-base))))
+         (resetEditorFrom [_ configuration-base]
+           (setup-settings configuration-base)
+           (reset-editor-from-settings configuration-base))))
 
      (getState [executor ^ExecutionEnvironment env]
+       (setup-settings this)
        (proxy [CommandLineState] [env]
-         (createConsole [_] (build-console-view))
-         (startProcess [] (start-process)))))))
+         (createConsole [_]
+           (build-console-view))
+         (startProcess []
+           (start-process)))))))
