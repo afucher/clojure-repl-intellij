@@ -149,7 +149,7 @@
 
          (resetEditorFrom [_ configuration-base]
            (setup-settings configuration-base)
-           (reset-editor-from-settings configuration-base))))
+           (reset-editor-from-settings))))
 
      (getState [executor ^ExecutionEnvironment env]
        (setup-settings this)
@@ -158,3 +158,8 @@
            (build-console-view))
          (startProcess []
            (start-process)))))))
+
+(defn load-file [file]
+  (let [console (:console @current-repl*)]
+    (ui.repl/append-text console (str "\nLoading file " file "...\n"))
+    (nrepl/load-file file)))
