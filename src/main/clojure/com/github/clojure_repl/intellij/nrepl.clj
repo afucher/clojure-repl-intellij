@@ -16,9 +16,12 @@
         first)))
 
 (defn eval [& {:keys [code]}]
-  (let [{:keys [ns] :as response} (send-message {:op "eval" :code code :session (-> @db/db* :current-nrepl :session-id)})]
+  (let [{:keys [ns out] :as response} (send-message {:op "eval" :code code :session (-> @db/db* :current-nrepl :session-id)})]
     (when ns
       (swap! db/db* assoc-in [:current-nrepl :ns] ns))
+    (when out
+      ;; TODO print `out` to current console. Depends on listeners for that.
+      out)
     response))
 
 (defn clone-session []
