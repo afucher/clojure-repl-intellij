@@ -58,6 +58,12 @@
            [(seesaw/text :id :nrepl-port
                          :columns 8) "wrap"]]))
 
+(defn ^:private file-loaded [file]
+  (ui.repl/append-text (:console @current-repl*) (str "\nLoaded file " file "\n")))
+
+(defn ^:private register-listeners []
+  (swap! db/db* update :on-repl-file-loaded-fns conj #'file-loaded))
+
 (defn ^:private initial-repl-text []
   (let [{:keys [clojure java nrepl]} (-> @db/db* :versions)]
     (str (format ";; Connected to nREPL server - nrepl://%s:%s\n"
@@ -106,6 +112,7 @@
     (swap! db/db* assoc :versions (:versions description)))
   (let [handler (NopProcessHandler.)]
     (swap! current-repl* assoc :handler handler)
+    (register-listeners)
     (.addProcessListener handler
                          (proxy+ [] ProcessListener
                            (processWillTerminate [_ _ _]
@@ -158,8 +165,3 @@
            (build-console-view))
          (startProcess []
            (start-process)))))))
-
-(defn load-file [file]
-  (let [console (:console @current-repl*)]
-    (ui.repl/append-text console (str "\nLoading file " file "...\n"))
-    (nrepl/load-file file)))

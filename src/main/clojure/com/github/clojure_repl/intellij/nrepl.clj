@@ -28,7 +28,9 @@
   (send-message {:op "ls-sessions"}))
 
 (defn load-file [file]
-  (send-message {:op "load-file" :file (slurp file)}))
+  (send-message {:op "load-file" :file (slurp file)})
+  (doseq [callback (:on-repl-file-loaded-fns @db/db*)]
+    (callback file)))
 
 (defn describe []
   (send-message {:op "describe"}))

@@ -3,7 +3,7 @@
    :name com.github.clojure_repl.intellij.action.LoadFile
    :extends com.intellij.openapi.actionSystem.AnAction)
   (:require
-   [com.github.clojure-repl.intellij.configuration.repl-client :as repl-client])
+   [com.github.clojure-repl.intellij.nrepl :as nrepl])
   (:import
    [com.intellij.openapi.actionSystem CommonDataKeys]
    [com.intellij.openapi.actionSystem AnActionEvent]
@@ -14,4 +14,4 @@
 (defn -actionPerformed [_ ^AnActionEvent event]
   (when-let [vf ^VirtualFile (.getData event CommonDataKeys/VIRTUAL_FILE)]
     (let [path (.getCanonicalPath vf)]
-      (repl-client/load-file path))))
+      (nrepl/load-file path))))
