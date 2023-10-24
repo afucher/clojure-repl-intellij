@@ -17,6 +17,7 @@
 (set! *warn-on-reflection* true)
 
 (defn -actionPerformed [_ ^AnActionEvent event]
+  ;; TODO change for listeners here or a better way to know which repl is related to current opened file
   (if (-> @db/db* :current-nrepl :session-id)
     (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
           [row col] (editor/editor->cursor-position editor)
