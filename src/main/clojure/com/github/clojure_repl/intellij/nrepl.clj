@@ -27,8 +27,11 @@
 (defn list-sessions []
   (send-message {:op "ls-sessions"}))
 
-(defn load-file [file]
-  (send-message {:op "load-file" :file (slurp file)}))
+(defn load-file [project file]
+  (send-message {:op "load-file" :file (slurp file)})
+  (doseq [fns (:on-repl-file-loaded-fns @db/db*)]
+    (when (= (:project fns) project)
+      ((:fn fns) file))))
 
 (defn describe []
   (send-message {:op "describe"}))

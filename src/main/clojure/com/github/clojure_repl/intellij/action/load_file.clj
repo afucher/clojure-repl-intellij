@@ -14,4 +14,4 @@
 (defn -actionPerformed [_ ^AnActionEvent event]
   (when-let [vf ^VirtualFile (.getData event CommonDataKeys/VIRTUAL_FILE)]
     (let [path (.getCanonicalPath vf)]
-      (nrepl/load-file path))))
+      (nrepl/load-file (-> event .getProject .getName) path))))
