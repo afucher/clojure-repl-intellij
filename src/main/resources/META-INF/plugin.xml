@@ -15,9 +15,14 @@
                     text="Load file to REPL"
                     description="Load file to REPL">
                 <add-to-group group-id="ToolsMenu" anchor="first"/>
-                <keyboard-shortcut keymap="$default" first-keystroke="shift meta 1"/>
+                <keyboard-shortcut keymap="$default" first-keystroke="shift alt l"/>
             </action>
-
+            <action class="com.github.clojure_repl.intellij.action.EvalLastSexp"
+                    text="Eval last sexp"
+                    description="Eval the expression preceding cursor">
+                <add-to-group group-id="ToolsMenu" anchor="first"/>
+                <keyboard-shortcut keymap="$default" first-keystroke="shift alt E"/>
+            </action>
         </group>
     </actions>
 
