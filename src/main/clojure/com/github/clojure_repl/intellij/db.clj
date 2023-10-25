@@ -4,5 +4,5 @@
                                     :ns "user"}
                     :settings {:nrepl-port nil
                                :nrepl-host "localhost"}
-                    :on-repl-file-loaded-fns []}
-                   :ops {}))
+                    :on-repl-file-loaded-fns []
+                    :ops {}}))
