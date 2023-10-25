@@ -13,18 +13,19 @@
    [seesaw.core :as seesaw]
    [seesaw.mig :as mig])
   (:import
-   [com.github.clojure_repl.intellij.configuration ReplClientRunOptions]
-   [com.intellij.execution.configurations CommandLineState RunConfigurationBase]
-   [com.intellij.execution.process NopProcessHandler ProcessListener]
-   [com.intellij.execution.runners ExecutionEnvironment]
-   [com.intellij.execution.ui ConsoleView]
-   [com.intellij.icons AllIcons$Nodes]
-   [com.intellij.ide.plugins PluginManagerCore]
-   [com.intellij.openapi.actionSystem AnAction]
-   [com.intellij.openapi.extensions PluginId]
-   [com.intellij.openapi.project Project]
-   [com.intellij.openapi.util NotNullFactory NotNullLazyValue]
-   [com.intellij.ui IdeBorderFactory]))
+    [com.github.clojure_repl.intellij.configuration ReplClientRunOptions]
+    [com.intellij.execution.configurations CommandLineState RunConfigurationBase]
+    [com.intellij.execution.process NopProcessHandler ProcessListener]
+    [com.intellij.execution.runners ExecutionEnvironment]
+    [com.intellij.execution.ui ConsoleView]
+    [com.intellij.icons AllIcons$Nodes]
+    [com.intellij.ide.plugins PluginManagerCore]
+    [com.intellij.openapi.actionSystem AnAction]
+    [com.intellij.openapi.extensions PluginId]
+    [com.intellij.openapi.project Project ProjectManager]
+    [com.intellij.openapi.util NotNullFactory NotNullLazyValue]
+    [com.intellij.ui IdeBorderFactory]
+    (javax.swing JComboBox)))
 
 (set! *warn-on-reflection* false)
 
@@ -48,21 +49,35 @@
 (defn -getHelpTopic [_] "Clojure REPL")
 (defn -getOptionsClass [_] ReplClientRunOptions)
 
+(defn custom-renderer [^Project item]
+  (seesaw.core/text (.getName item)))
+
 (defn ^:private build-editor-view []
   (mig/mig-panel
-   :border (IdeBorderFactory/createTitledBorder "NREPL connection")
-   :items [[(seesaw/label "Host") ""]
-           [(seesaw/text :id :nrepl-host
-                         :columns 20) "wrap"]
-           [(seesaw/label "Port") ""]
-           [(seesaw/text :id :nrepl-port
-                         :columns 8) "wrap"]]))
+    :border (IdeBorderFactory/createTitledBorder "NREPL connection")
+    :items [[(seesaw/label "Host") ""]
+            [(seesaw/text :id :nrepl-host
+                          :columns 20) "wrap"]
+            [(seesaw/label "Port") ""]
+            [(seesaw/text :id :nrepl-port
+                          :columns 8) "wrap"]
+            [(seesaw/label "Project") ""]
+            [(seesaw/combobox :id    :project
+                              :model (->> (ProjectManager/getInstance)
+                                         .getOpenProjects
+                                         (map #(.getName %)))) "wrap"]]))
 
 (defn ^:private file-loaded [file]
   (ui.repl/append-text (:console @current-repl*) (str "\nLoaded file " file "\n")))
 
 (defn ^:private register-listeners []
-  (swap! db/db* update :on-repl-file-loaded-fns conj #'file-loaded))
+  (swap! db/db* update :on-repl-file-loaded-fns conj {:project (-> @db/db* :settings :project) :fn #'file-loaded}))
+
+(defn ^:private unregister-listeners []
+  (let [fns (:on-repl-file-loaded-fns @db/db*)
+        project (-> @db/db* :settings :project)]
+    (swap! db/db* assoc :on-repl-file-loaded-fns
+           (remove #(= (:project %) project) fns))))
 
 (defn ^:private initial-repl-text []
   (let [{:keys [clojure java nrepl]} (-> @db/db* :versions)]
@@ -116,29 +131,36 @@
     (.addProcessListener handler
                          (proxy+ [] ProcessListener
                            (processWillTerminate [_ _ _]
+                             (unregister-listeners)
                              (ui.repl/close-console (:console @current-repl*)))))
     handler))
 
 (defn ^:private apply-editor-to [^RunConfigurationBase configuration-base]
   (let [editor @editor*
-        host (seesaw/text (seesaw/select editor [:#nrepl-host]))]
+        host (seesaw/text (seesaw/select editor [:#nrepl-host]))
+        project (seesaw/text (seesaw/select editor [:#project]))]
     (swap! db/db* assoc-in [:settings :nrepl-host] host)
     (.setNreplHost (.getOptions configuration-base) host)
     (when-let [nrepl-port (parse-long (seesaw/text (seesaw/select editor [:#nrepl-port])))]
       (swap! db/db* assoc-in [:settings :nrepl-port] nrepl-port)
-      (.setNreplPort (.getOptions configuration-base) (str nrepl-port)))))
+      (.setNreplPort (.getOptions configuration-base) (str nrepl-port))
+     (swap! db/db* assoc-in [:settings :project] host)
+     (.setProject (.getOptions configuration-base) project))))
 
 (defn ^:private setup-settings [^RunConfigurationBase configuration-base]
   (when-let [host (not-empty (.getNreplHost (.getOptions configuration-base)))]
     (swap! db/db* assoc-in [:settings :nrepl-host] host))
   (when-let [nrepl-port (parse-long (.getNreplPort (.getOptions configuration-base)))]
-    (swap! db/db* assoc-in [:settings :nrepl-port] nrepl-port)))
+    (swap! db/db* assoc-in [:settings :nrepl-port] nrepl-port))
+  (when-let [project (not-empty (.getProject (.getOptions configuration-base)))]
+      (swap! db/db* assoc-in [:settings :project] project)))
 
 (defn ^:private reset-editor-from-settings []
   (let [editor @editor*
         settings (:settings @db/db*)]
     (seesaw/text! (seesaw/select editor [:#nrepl-host]) (:nrepl-host settings))
-    (seesaw/text! (seesaw/select editor [:#nrepl-port]) (:nrepl-port settings))))
+    (seesaw/text! (seesaw/select editor [:#nrepl-port]) (:nrepl-port settings))
+    (seesaw/text! (seesaw/select editor [:#project]) (:project settings))))
 
 (defn -createTemplateConfiguration
   ([this project _]
