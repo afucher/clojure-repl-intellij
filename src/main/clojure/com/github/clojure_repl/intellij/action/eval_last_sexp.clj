@@ -23,7 +23,7 @@
           [row col] (editor/editor->cursor-position editor)
           text (.getText (.getDocument editor))
           root-zloc (z/of-string text)
-          zloc (parser/find-at-pos root-zloc row col)
+          zloc (parser/find-at-pos root-zloc (inc row) col)
           code (z/string zloc)
           {:keys [value err]} (nrepl/eval {:code code})]
       (if err
