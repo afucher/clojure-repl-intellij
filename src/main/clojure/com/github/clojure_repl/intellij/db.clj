@@ -5,4 +5,5 @@
                     :settings {:nrepl-port nil
                                :nrepl-host "localhost"}
                     :on-repl-file-loaded-fns []
+                    :on-repl-evaluated-fns []
                     :ops {}}))

@@ -19,11 +19,12 @@
   ;; TODO change for listeners here or a better way to know which repl is related to current opened file
   (if (-> @db/db* :current-nrepl :session-id)
     (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
+          project (.getData event CommonDataKeys/PROJECT)
           text (.getText (.getDocument editor))
           root-zloc (z/of-string text)
           zloc (parser/find-namespace root-zloc)
           namespace (z/string zloc)
-          {:keys [value err]} (nrepl/eval {:code (format "(in-ns '%s)" namespace)})]
+          {:keys [value err]} (nrepl/eval {:project project :code (format "(in-ns '%s)" namespace)})]
       (if err
         (.showErrorHint (HintManager/getInstance) editor (str "=> " err) (HintManager/RIGHT))
         (.showInformationHint (HintManager/getInstance) editor (str "=> " (or value "nil")) (HintManager/RIGHT))))

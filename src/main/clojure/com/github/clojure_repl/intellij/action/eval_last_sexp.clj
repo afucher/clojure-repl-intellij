@@ -20,12 +20,13 @@
   ;; TODO change for listeners here or a better way to know which repl is related to current opened file
   (if (-> @db/db* :current-nrepl :session-id)
     (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
+          project (.getData event CommonDataKeys/PROJECT)
           [row col] (editor/editor->cursor-position editor)
           text (.getText (.getDocument editor))
           root-zloc (z/of-string text)
           zloc (parser/find-at-pos root-zloc (inc row) col)
           code (z/string zloc)
-          {:keys [value err]} (nrepl/eval {:code code})]
+          {:keys [value err]} (nrepl/eval {:project project :code code})]
       (if err
         (.showErrorHint (HintManager/getInstance) editor (str "=> " err) (HintManager/RIGHT))
         (.showInformationHint (HintManager/getInstance) editor (str "=> " (or value "nil")) (HintManager/RIGHT))))
