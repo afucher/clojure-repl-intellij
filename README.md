@@ -8,6 +8,8 @@ Free OpenSource Intellij plugin for Clojure REPL development.
 
 <!-- Plugin description end -->
 
+![Clojure LSP Intellij](images/demo.png)
+
 ---
 
 ## Features
