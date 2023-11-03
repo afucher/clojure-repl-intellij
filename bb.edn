@@ -1,2 +1,4 @@
 {:paths ["src/scripts"]
- :tasks {tag scripts/tag}}
+ :tasks {tag scripts/tag
+         build-plugin scripts/build-plugin
+         publish-plugin scripts/publish-plugin}}
