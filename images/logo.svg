@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="16"
+   height="16"
+   viewBox="0 0 210 210"
+   version="1.1"
+   id="svg476"
+   sodipodi:docname="pluginIcon.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview478"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.59990854"
+     inkscape:cx="375.05717"
+     inkscape:cy="260.8731"
+     inkscape:window-width="950"
+     inkscape:window-height="1032"
+     inkscape:window-x="962"
+     inkscape:window-y="40"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs473" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:174.238px;font-family:'UKIJ Esliye Chiwer';-inkscape-font-specification:'UKIJ Esliye Chiwer, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#93da52;fill-opacity:1;stroke-width:0.326696"
+       x="8.8474617"
+       y="128.25958"
+       id="text534"
+       transform="scale(0.82971088,1.2052391)"><tspan
+         sodipodi:role="line"
+         id="tspan532"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:174.238px;font-family:'Quicksand Medium';-inkscape-font-specification:'Quicksand Medium, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#93da52;fill-opacity:1;stroke-width:0.326696"
+         x="8.8474617"
+         y="128.25958">&gt;</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:174.238px;font-family:'Noto Sans Ol Chiki';-inkscape-font-specification:'Noto Sans Ol Chiki, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#91b6fb;fill-opacity:1;stroke-width:0.326696"
+       x="117.08384"
+       y="100.7653"
+       id="text588"
+       transform="scale(0.82971088,1.2052391)"><tspan
+         sodipodi:role="line"
+         id="tspan586"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:174.238px;font-family:'Quicksand Medium';-inkscape-font-specification:'Quicksand Medium, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#91b6fb;fill-opacity:1;stroke-width:0.326696"
+         x="117.08384"
+         y="100.7653">_</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:174.238px;font-family:'Quicksand Medium';-inkscape-font-specification:'Quicksand Medium, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#91b6fb;fill-opacity:1;stroke-width:0.326696"
+       x="57.618275"
+       y="-95.656128"
+       id="text2395"
+       transform="scale(0.82971087,1.2052391)"><tspan
+         sodipodi:role="line"
+         id="tspan2393"
+         style="stroke-width:0.326696"
+         x="57.618275"
+         y="-95.656128"></tspan></text>
+  </g>
+</svg>

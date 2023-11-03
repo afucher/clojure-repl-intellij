@@ -37,5 +37,9 @@
   (shell "./gradlew buildPlugin"))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
+(defn run-ide []
+  (shell "./gradlew runIde"))
+
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn publish-plugin []
   (shell "./gradlew publishPlugin"))
