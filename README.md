@@ -35,4 +35,7 @@ or
 
 `bb build-plugin` to build the plugin, then install it from disk in Intellij, the zip should be on `./build/distributions/*.zip`.
 
+## Release
 
+1. `bb tag x.y.z` to tag and push the new tag
+2. `bb publish-plugin` to publish to Jetbrains Marketplace (requires JETBRAINS_TOKEN on env).
