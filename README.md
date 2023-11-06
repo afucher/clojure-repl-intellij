@@ -4,7 +4,7 @@
 
 <!-- Plugin description -->
 
-Free OpenSource Intellij plugin for Clojure REPL development.
+Free OpenSource IntelliJ plugin for Clojure REPL development.
 
 <!-- Plugin description end -->
 
@@ -20,7 +20,7 @@ Free OpenSource Intellij plugin for Clojure REPL development.
 
 ### Soon
 
-- Start a nREPL server from Intellij
+- Start a nREPL server from IntelliJ
 
 ## Contributing
 
@@ -29,11 +29,11 @@ Contributions are very welcome, check the [issues page](https://github.com/afuch
 
 ## Developing
 
-`bb run-ide` to spawn a new Intellij session with the plugin.
+`bb run-ide` to spawn a new IntelliJ session with the plugin.
 
 or
 
-`bb build-plugin` to build the plugin, then install it from disk in Intellij, the zip should be on `./build/distributions/*.zip`.
+`bb build-plugin` to build the plugin, then install it from disk in IntelliJ, the zip should be on `./build/distributions/*.zip`.
 
 ## Release
 
