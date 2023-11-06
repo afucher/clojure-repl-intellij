@@ -1,10 +1,9 @@
-(ns com.github.clojure-repl.intellij.action.eval-last-sexp
+(ns com.github.clojure-repl.intellij.action.switch-ns
   (:gen-class
-   :name com.github.clojure_repl.intellij.action.EvalLastSexp
+   :name com.github.clojure_repl.intellij.action.SwitchNs
    :extends com.intellij.openapi.actionSystem.AnAction)
   (:require
    [com.github.clojure-repl.intellij.db :as db]
-   [com.github.clojure-repl.intellij.editor :as editor]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.parser :as parser]
    [rewrite-clj.zip :as z])
@@ -21,12 +20,11 @@
   (if (-> @db/db* :current-nrepl :session-id)
     (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
           project (.getData event CommonDataKeys/PROJECT)
-          [row col] (editor/editor->cursor-position editor)
           text (.getText (.getDocument editor))
           root-zloc (z/of-string text)
-          zloc (parser/find-at-pos root-zloc (inc row) col)
-          code (z/string zloc)
-          {:keys [value err]} (nrepl/eval {:project project :code code})]
+          zloc (parser/find-namespace root-zloc)
+          namespace (z/string zloc)
+          {:keys [value err]} (nrepl/eval {:project project :code (format "(in-ns '%s)" namespace)})]
       (if err
         (.showErrorHint (HintManager/getInstance) editor (str "=> " err) (HintManager/RIGHT))
         (.showInformationHint (HintManager/getInstance) editor (str "=> " (or value "nil")) (HintManager/RIGHT))))

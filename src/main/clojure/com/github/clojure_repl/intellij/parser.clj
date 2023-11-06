@@ -53,3 +53,16 @@
   [zloc row col]
   (let [exact-position {:row row, :col col, :end-row row, :end-col col}]
     (find-by-heritability zloc #(zloc-in-range? % exact-position))))
+
+(defn ^:private root? [loc]
+  (identical? :forms (z/tag loc)))
+
+(defn to-root
+  "Returns the loc of the root `:forms` node."
+  [loc]
+  (z/find loc z/up root?))
+
+(defn find-namespace [zloc]
+  (-> (to-root zloc)
+      (z/find-value z/next 'ns)
+      z/next))

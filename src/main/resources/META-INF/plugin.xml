@@ -23,8 +23,15 @@
                     icon="com.github.clojure_repl.intellij.Icons.CLOJURE_REPL"
                     description="Eval the expression preceding cursor">
                 <add-to-group group-id="ToolsMenu" anchor="first"/>
-                <keyboard-shortcut keymap="$default" first-keystroke="shift alt E"/>
+                <keyboard-shortcut keymap="$default" first-keystroke="shift alt e"/>
             </action>
+            <action class="com.github.clojure_repl.intellij.action.SwitchNs"
+                    text="Switch REPL namespace"
+                    description="Switch REPL namespace to current opened file namespace">
+                <add-to-group group-id="ToolsMenu" anchor="first"/>
+                <keyboard-shortcut keymap="$default" first-keystroke="shift alt n"/>
+            </action>
+
         </group>
     </actions>
 
