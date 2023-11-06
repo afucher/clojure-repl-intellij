@@ -27,7 +27,7 @@
                     text="Switch REPL namespace"
                     description="Switch REPL namespace to current opened file namespace">
                 <add-to-group group-id="ToolsMenu" anchor="first"/>
-                <keyboard-shortcut keymap="$default" first-keystroke="shift alt s"/>
+                <keyboard-shortcut keymap="$default" first-keystroke="shift alt n"/>
             </action>
 
         </group>
