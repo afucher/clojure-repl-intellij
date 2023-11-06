@@ -57,12 +57,6 @@ changelog {
     groups.set(emptyList())
 }
 
-tasks.register("classpath") {
-    val classpath = project.configurations.getByName("runtimeClasspath").files
-    val clojureClasspath = clojure.builds.named("main").get().sourceRoots.files
-    println(clojureClasspath.plus(classpath).joinToString(":"))
-}
-
 java {
     targetCompatibility = JavaVersion.VERSION_11
     sourceCompatibility = JavaVersion.VERSION_11
@@ -138,20 +132,6 @@ tasks {
     buildSearchableOptions {
         enabled = false
     }
-
-/*    generateParser {
-        source.set("src/main/gramar/clojure.bnf")
-        targetRoot.set("src/gen")
-        pathToParser.set("com/github/clojure_repl/intellij/language/parser/ClojureParser.java")
-        pathToPsiRoot.set("com/github/clojure_repl/intellij/language/psi")
-        purgeOldFiles.set(true)
-    }
-
-    generateLexer {
-        source.set("src/main/gramar/_ClojureLexer.flex")
-        targetDir.set("src/gen/com/github/clojure_repl/intellij/language/parser")
-        targetClass.set("_ClojureLexer")
-    }*/
 }
 
 grammarKit {
