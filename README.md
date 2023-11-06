@@ -15,8 +15,9 @@ Free OpenSource IntelliJ plugin for Clojure REPL development.
 ## Features
 
 - Connect to an existing nREPL process
-- Load file to REPL
-- Eval code at point
+- Load file to REPL (`alt + shift + l` / `opt + shift + l`)
+- Eval code at point (`alt + shift + e` / `opt + shift + e`)
+- Switch to file namespace (`alt + shift + n` / `opt + shift + n`)
 
 ### Soon
 
