@@ -1,6 +1,7 @@
 <idea-plugin require-restart="true">
     <id>com.github.clojure-repl</id>
     <name>Clojure REPL</name>
+    <vendor url="https://github.com/afucher/clojure-repl-intellij">Arthur Fücher</vendor>
 
     <depends>com.intellij.modules.platform</depends>
 
