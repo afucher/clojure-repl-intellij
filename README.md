@@ -4,7 +4,9 @@
 
 <!-- Plugin description -->
 
-Free OpenSource IntelliJ plugin for Clojure REPL development.
+Free OpenSource IntelliJ plugin for Clojure REPL development. 
+
+Checkout all available [features](https://github.com/afucher/clojure-repl-intellij#features)
 
 <!-- Plugin description end -->
 
