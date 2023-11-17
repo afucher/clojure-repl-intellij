@@ -24,7 +24,8 @@
    [com.intellij.openapi.extensions PluginId]
    [com.intellij.openapi.project Project ProjectManager]
    [com.intellij.openapi.util NotNullFactory NotNullLazyValue]
-   [com.intellij.ui IdeBorderFactory]))
+   [com.intellij.ui IdeBorderFactory]
+   [javax.swing JTextField]))
 
 (set! *warn-on-reflection* false)
 
@@ -51,20 +52,42 @@
 (defn custom-renderer [^Project item]
   (seesaw.core/text (.getName item)))
 
+(defn mode-id-key [repl-mode]
+  (->> (seesaw/selection repl-mode)
+       (seesaw/id-of)))
+
 (defn ^:private build-editor-view []
-  (mig/mig-panel
-   :border (IdeBorderFactory/createTitledBorder "NREPL connection")
-   :items [[(seesaw/label "Host") ""]
-           [(seesaw/text :id :nrepl-host
-                         :columns 20) "wrap"]
-           [(seesaw/label "Port") ""]
-           [(seesaw/text :id :nrepl-port
-                         :columns 8) "wrap"]
-           [(seesaw/label "Project") ""]
-           [(seesaw/combobox :id    :project
-                             :model (->> (ProjectManager/getInstance)
-                                         .getOpenProjects
-                                         (map #(.getName %)))) "wrap"]]))
+  (let [repl-mode-group (seesaw/button-group)
+        panel (mig/mig-panel
+                :border (IdeBorderFactory/createTitledBorder "NREPL connection")
+                :items [[(seesaw/radio :text "Manual"
+                                       :id :manual
+                                       :group repl-mode-group
+                                       :mnemonic \M
+                                       :selected? true) "wrap"]
+                        [(seesaw/label "Host") ""]
+                        [(seesaw/text :id :nrepl-host
+                                      :columns 20) "wrap"]
+                        [(seesaw/label "Port") ""]
+                        [(seesaw/text :id :nrepl-port
+                                      :columns 8) "wrap"]
+                        [(seesaw/radio :text "Read from repl file"
+                                       :id :repl-file
+                                       :group repl-mode-group
+                                       :mnemonic \R) "wrap"]
+                        [(seesaw/label "Project") ""]
+                        [(seesaw/combobox :id :project
+                                          :model (->> (ProjectManager/getInstance)
+                                                      .getOpenProjects
+                                                      (map #(.getName %)))) "wrap"]])]
+    (seesaw/listen repl-mode-group :action
+                   (fn [e]
+                     (let [mode-key (mode-id-key repl-mode-group)
+                           manual? (= mode-key :manual)]
+                       (.setEnabled ^JTextField (seesaw/select panel [:#nrepl-host]) manual?)
+                       (.setEnabled ^JTextField (seesaw/select panel [:#nrepl-port]) manual?))))
+
+    panel))
 
 (defn ^:private echo-file-loaded [file]
   (ui.repl/append-text (:console @current-repl*) (str "\nLoaded file " file "\n")))
