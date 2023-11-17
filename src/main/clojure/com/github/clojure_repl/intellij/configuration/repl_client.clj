@@ -25,7 +25,7 @@
    [com.intellij.openapi.project Project ProjectManager]
    [com.intellij.openapi.util NotNullFactory NotNullLazyValue]
    [com.intellij.ui IdeBorderFactory]
-   [javax.swing JTextField]))
+   [javax.swing JRadioButton JTextField]))
 
 (set! *warn-on-reflection* false)
 
@@ -51,6 +51,9 @@
 
 (defn custom-renderer [^Project item]
   (seesaw.core/text (.getName item)))
+
+(defn is-manual? [editor]
+  (.isSelected ^JRadioButton (seesaw/select editor [:#manual])))
 
 (defn mode-id-key [repl-mode]
   (->> (seesaw/selection repl-mode)
@@ -146,8 +149,24 @@
     (createConsoleActions [_] (into-array AnAction []))
     (allowHeavyFilters [_])))
 
+(defn ^:private should-read-port-file? []
+  (= (-> @db/db* :settings :mode) "repl-file"))
+
 (defn ^:private start-process [project]
   (logger/info "Starting NREPL process...")
+  (logger/info (str "project: " project))
+  (logger/info (str "read port from file? : " (should-read-port-file?)))
+  ;TODO: handle when file does not exist
+  (when (should-read-port-file?)
+      (if-let [project (->> (ProjectManager/getInstance)
+                            .getOpenProjects
+                            (filter #(= (.getName %) (.getName project)))
+                            first)]
+        (let [base-path (.getBasePath ^Project project)
+              repl-file (str base-path "/.nrepl-port")
+              port (slurp repl-file)]
+          (swap! db/db* assoc-in [:settings :nrepl-port] (parse-long port)))))
+
   (nrepl/clone-session)
   (nrepl/eval {:project project :code "*ns*"})
   (let [description (nrepl/describe)]
@@ -166,9 +185,12 @@
 (defn ^:private apply-editor-to [^RunConfigurationBase configuration-base]
   (let [editor @editor*
         host (seesaw/text (seesaw/select editor [:#nrepl-host]))
-        project (seesaw/text (seesaw/select editor [:#project]))]
+        project (seesaw/text (seesaw/select editor [:#project]))
+        mode (if (is-manual? editor) "manual" "repl-file")]
     (swap! db/db* assoc-in [:settings :nrepl-host] host)
     (.setNreplHost (.getOptions configuration-base) host)
+    (swap! db/db* assoc-in [:settings :mode] mode)
+    (.setMode (.getOptions configuration-base) mode)
     (when-let [nrepl-port (parse-long (seesaw/text (seesaw/select editor [:#nrepl-port])))]
       (swap! db/db* assoc-in [:settings :nrepl-port] nrepl-port)
       (.setNreplPort (.getOptions configuration-base) (str nrepl-port))
@@ -181,7 +203,9 @@
   (when-let [nrepl-port (parse-long (.getNreplPort (.getOptions configuration-base)))]
     (swap! db/db* assoc-in [:settings :nrepl-port] nrepl-port))
   (when-let [project (not-empty (.getProject (.getOptions configuration-base)))]
-    (swap! db/db* assoc-in [:settings :project] project)))
+    (swap! db/db* assoc-in [:settings :project] project))
+  (when-let [mode (not-empty (.getMode (.getOptions configuration-base)))]
+    (swap! db/db* assoc-in [:settings :mode] mode)))
 
 (defn ^:private reset-editor-from-settings []
   (let [editor @editor*
