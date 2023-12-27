@@ -33,7 +33,7 @@
 (def initial-current-repl {:handler nil
                            :console nil})
 (defonce current-repl* (atom initial-current-repl))
-(defonce editor* (atom nil))
+(defonce editor-view* (atom nil))
 
 (defn -init []
   [[ID
@@ -47,9 +47,6 @@
 (defn -getId [_] ID)
 (defn -getHelpTopic [_] "Clojure REPL")
 (defn -getOptionsClass [_] ReplClientRunOptions)
-
-(defn custom-renderer [^Project item]
-  (seesaw.core/text (.getName item)))
 
 (defn ^:private build-editor-view []
   (mig/mig-panel
@@ -65,24 +62,6 @@
                              :model (->> (ProjectManager/getInstance)
                                          .getOpenProjects
                                          (map #(.getName %)))) "wrap"]]))
-
-(defn ^:private echo-file-loaded [file]
-  (ui.repl/append-text (:console @current-repl*) (str "\nLoaded file " file "\n")))
-
-(defn ^:private echo-evaluated [{:keys [value]}]
-  (ui.repl/append-text (:console @current-repl*) (str "\n" value "\n")))
-
-(defn ^:private register-listeners []
-  (swap! db/db* update :on-repl-file-loaded-fns conj {:project (-> @db/db* :settings :project) :fn #'echo-file-loaded})
-  (swap! db/db* update :on-repl-evaluated-fns conj {:project (-> @db/db* :settings :project) :fn #'echo-evaluated}))
-
-(defn ^:private unregister-listeners []
-  (let [db @db/db*
-        project (-> db :settings :project)]
-    (swap! db/db* assoc :on-repl-file-loaded-fns
-           (remove #(= (:project %) project) (:on-repl-file-loaded-fns db)))
-    (swap! db/db* assoc :on-repl-evaluated-fns
-           (remove #(= (:project %) project) (:on-repl-evaluated-fns db)))))
 
 (defn ^:private initial-repl-text []
   (let [{:keys [clojure java nrepl]} (-> @db/db* :versions)]
@@ -132,16 +111,14 @@
     (swap! db/db* assoc :versions (:versions description)))
   (let [handler (NopProcessHandler.)]
     (swap! current-repl* assoc :handler handler)
-    (register-listeners)
     (.addProcessListener handler
                          (proxy+ [] ProcessListener
                            (processWillTerminate [_ _ _]
-                             (unregister-listeners)
                              (ui.repl/close-console (:console @current-repl*)))))
     handler))
 
 (defn ^:private apply-editor-to [^RunConfigurationBase configuration-base]
-  (let [editor @editor*
+  (let [editor @editor-view*
         host (seesaw/text (seesaw/select editor [:#nrepl-host]))
         project (seesaw/text (seesaw/select editor [:#project]))]
     (swap! db/db* assoc-in [:settings :nrepl-host] host)
@@ -161,7 +138,7 @@
     (swap! db/db* assoc-in [:settings :project] project)))
 
 (defn ^:private reset-editor-from-settings []
-  (let [editor @editor*
+  (let [editor @editor-view*
         settings (:settings @db/db*)]
     (seesaw/text! (seesaw/select editor [:#nrepl-host]) (:nrepl-host settings))
     (seesaw/text! (seesaw/select editor [:#nrepl-port]) (:nrepl-port settings))
@@ -176,7 +153,7 @@
        (proxy+ [] com.intellij.openapi.options.SettingsEditor
          (createEditor [_]
            (let [editor-view (build-editor-view)]
-             (reset! editor* editor-view)
+             (reset! editor-view* editor-view)
              editor-view))
          (applyEditorTo [_ configuration-base]
            (apply-editor-to configuration-base))

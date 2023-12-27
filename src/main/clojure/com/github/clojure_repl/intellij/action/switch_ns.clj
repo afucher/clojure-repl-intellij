@@ -6,6 +6,7 @@
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.parser :as parser]
+   [com.github.clojure-repl.intellij.ui.repl-hint :as ui.repl-hint]
    [rewrite-clj.zip :as z])
   (:import
    [com.intellij.codeInsight.hint HintManager]
@@ -26,6 +27,6 @@
           namespace (z/string zloc)
           {:keys [value err]} (nrepl/eval {:project project :code (format "(in-ns '%s)" namespace)})]
       (if err
-        (.showErrorHint (HintManager/getInstance) editor (str "=> " err) (HintManager/RIGHT))
-        (.showInformationHint (HintManager/getInstance) editor (str "=> " (or value "nil")) (HintManager/RIGHT))))
+        (ui.repl-hint/show-error err editor)
+        (ui.repl-hint/show-info value editor)))
     (.showErrorHint (HintManager/getInstance) (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE) "No REPL connected" (HintManager/RIGHT))))
