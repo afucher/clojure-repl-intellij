@@ -48,6 +48,11 @@
 (defn -getHelpTopic [_] "Clojure REPL")
 (defn -getOptionsClass [_] ReplClientRunOptions)
 
+(defn ^:private close-repl []
+  (ui.repl/close-console (:console @current-repl*))
+  (reset! current-repl* initial-current-repl)
+  (swap! db/db* assoc :current-nrepl nil))
+
 (defn ^:private build-editor-view []
   (mig/mig-panel
    :border (IdeBorderFactory/createTitledBorder "NREPL connection")
@@ -113,8 +118,7 @@
     (swap! current-repl* assoc :handler handler)
     (.addProcessListener handler
                          (proxy+ [] ProcessListener
-                           (processWillTerminate [_ _ _]
-                             (ui.repl/close-console (:console @current-repl*)))))
+                           (processWillTerminate [_ _ _] (close-repl))))
     handler))
 
 (defn ^:private apply-editor-to [^RunConfigurationBase configuration-base]
