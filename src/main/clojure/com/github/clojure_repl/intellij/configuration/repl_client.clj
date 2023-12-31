@@ -166,10 +166,12 @@
            (setup-settings configuration-base)
            (reset-editor-from-settings))))
 
-     (getState [executor ^ExecutionEnvironment env]
-       (setup-settings this)
-       (proxy [CommandLineState] [env]
-         (createConsole [_]
-           (build-console-view project))
-         (startProcess []
-           (start-process project)))))))
+     (getState
+       ([])
+       ([executor ^ExecutionEnvironment env]
+        (setup-settings this)
+        (proxy [CommandLineState] [env]
+          (createConsole [_]
+            (build-console-view project))
+          (startProcess []
+            (start-process project))))))))
