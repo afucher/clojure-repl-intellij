@@ -1,9 +1,9 @@
-(ns com.github.clojure-repl.intellij.configuration.repl-client
+(ns com.github.clojure-repl.intellij.configuration.repl
   (:gen-class
    :init init
    :constructors {[] [String String String com.intellij.openapi.util.NotNullLazyValue]}
-   :name com.github.clojure_repl.intellij.configuration.ReplClientRunConfigurationType
-   :extends com.intellij.execution.configurations.SimpleConfigurationType)
+   :name com.github.clojure_repl.intellij.configuration.ReplRunConfigurationType
+   :extends com.intellij.execution.configurations.ConfigurationTypeBase)
   (:require
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
@@ -13,8 +13,12 @@
    [seesaw.core :as seesaw]
    [seesaw.mig :as mig])
   (:import
-   [com.github.clojure_repl.intellij.configuration ReplClientRunOptions]
-   [com.intellij.execution.configurations CommandLineState RunConfigurationBase]
+   [com.github.clojure_repl.intellij.configuration ReplRemoteRunOptions]
+   [com.intellij.execution.configurations
+    CommandLineState
+    ConfigurationFactory
+    ConfigurationType
+    RunConfigurationBase]
    [com.intellij.execution.process NopProcessHandler ProcessListener]
    [com.intellij.execution.runners ExecutionEnvironment]
    [com.intellij.execution.ui ConsoleView]
@@ -28,25 +32,10 @@
 
 (set! *warn-on-reflection* false)
 
-(def ID "Clojure REPL")
-
 (def initial-current-repl {:handler nil
                            :console nil})
 (defonce current-repl* (atom initial-current-repl))
 (defonce editor-view* (atom nil))
-
-(defn -init []
-  [[ID
-    "Clojure REPL"
-    "Connect to existing REPL"
-    (NotNullLazyValue/createValue
-     (reify NotNullFactory
-       (create [_]
-         AllIcons$Nodes/Console)))] nil])
-
-(defn -getId [_] ID)
-(defn -getHelpTopic [_] "Clojure REPL")
-(defn -getOptionsClass [_] ReplClientRunOptions)
 
 (defn ^:private close-repl []
   (ui.repl/close-console (:console @current-repl*))
@@ -66,7 +55,7 @@
            [(seesaw/combobox :id    :project
                              :model (->> (ProjectManager/getInstance)
                                          .getOpenProjects
-                                         (map #(.getName %)))) "wrap"]]))
+                                         (map #(.getName ^Project %)))) "wrap"]]))
 
 (defn ^:private initial-repl-text []
   (let [{:keys [clojure java nrepl]} (-> @db/db* :versions)]
@@ -148,30 +137,50 @@
     (seesaw/text! (seesaw/select editor [:#nrepl-port]) (:nrepl-port settings))
     (seesaw/text! (seesaw/select editor [:#project]) (:project settings))))
 
-(defn -createTemplateConfiguration
-  ([this project _]
-   (-createTemplateConfiguration this project))
-  ([factory-this ^Project project]
-   (proxy [RunConfigurationBase] [project factory-this "Connect to existing REPL"]
-     (getConfigurationEditor []
-       (proxy+ [] com.intellij.openapi.options.SettingsEditor
-         (createEditor [_]
-           (let [editor-view (build-editor-view)]
-             (reset! editor-view* editor-view)
-             editor-view))
-         (applyEditorTo [_ configuration-base]
-           (apply-editor-to configuration-base))
+(def options-class ReplRemoteRunOptions)
 
-         (resetEditorFrom [_ configuration-base]
-           (setup-settings configuration-base)
-           (reset-editor-from-settings))))
+#_{:clj-kondo/ignore [:unused-binding]}
+(defn ^:private remote-repl-configuration-type ^ConfigurationFactory [^ConfigurationType type]
+  (proxy [ConfigurationFactory] [type]
+    (getId [] "clojure-repl-remote")
+    (getName [] "Remote")
+    (createTemplateConfiguration
+      ([project _]
+       (.createTemplateConfiguration this project))
+      ([^Project project]
+       (proxy [RunConfigurationBase] [project this "Connect to an existing REPL"]
+         (getConfigurationEditor []
+           (proxy+ [] com.intellij.openapi.options.SettingsEditor
+             (createEditor [_]
+               (let [editor-view (build-editor-view)]
+                 (reset! editor-view* editor-view)
+                 editor-view))
+             (applyEditorTo [_ configuration-base]
+               (apply-editor-to configuration-base))
 
-     (getState
-       ([])
-       ([executor ^ExecutionEnvironment env]
-        (setup-settings this)
-        (proxy [CommandLineState] [env]
-          (createConsole [_]
-            (build-console-view project))
-          (startProcess []
-            (start-process project))))))))
+             (resetEditorFrom [_ configuration-base]
+               (setup-settings configuration-base)
+               (reset-editor-from-settings))))
+
+         (getState
+           ([])
+           ([executor ^ExecutionEnvironment env]
+            (setup-settings this)
+            (proxy [CommandLineState] [env]
+              (createConsole [_]
+                (build-console-view project))
+              (startProcess []
+                (start-process project))))))))
+    (getOptionsClass [] options-class)))
+
+(defn -init []
+  [["clojure-repl"
+    "Clojure REPL"
+    "Connect to a local or remote REPL"
+    (NotNullLazyValue/createValue
+     (reify NotNullFactory
+       (create [_]
+         AllIcons$Nodes/Console)))] nil])
+
+(defn -getConfigurationFactories [this]
+  (into-array ConfigurationFactory [(remote-repl-configuration-type this)]))

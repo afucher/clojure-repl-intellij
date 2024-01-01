@@ -2,7 +2,7 @@ package com.github.clojure_repl.intellij.configuration
 
 import com.intellij.execution.configurations.RunConfigurationOptions
 
-class ReplClientRunOptions : RunConfigurationOptions() {
+class ReplRemoteRunOptions : RunConfigurationOptions() {
 
     private var nreplHostOption = string("").provideDelegate(this, "nreplHost")
     private var nreplPortOption = string("").provideDelegate(this, "nreplPort")
