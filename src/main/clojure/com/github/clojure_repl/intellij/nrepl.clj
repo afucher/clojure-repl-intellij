@@ -33,9 +33,6 @@
 (defn clone-session []
   (swap! db/db* assoc-in [:current-nrepl :session-id] (:new-session (send-message {:op "clone"}))))
 
-(defn list-sessions []
-  (send-message {:op "ls-sessions"}))
-
 (defn load-file [project file]
   (send-message {:op "load-file" :file (slurp file)})
   (doseq [fns (:on-repl-file-loaded-fns @db/db*)]
