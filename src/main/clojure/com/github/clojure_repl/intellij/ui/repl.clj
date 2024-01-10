@@ -90,3 +90,8 @@
     (swap! console-state* assoc :status :closed)
     (seesaw/config! repl-content :editable? false)
     (.append ^JTextArea repl-content (format "\n*** Closed on %s ***" (.format time-formatter (java.time.LocalDateTime/now))))))
+
+(defn append-text [console text]
+  (let [repl-content (seesaw/select console [:#repl-content])
+        ns-text (str (-> @db/db* :current-nrepl :ns) "> ")]
+    (.append ^JTextArea repl-content (str "\n" text ns-text))))
