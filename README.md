@@ -28,6 +28,7 @@ Checkout all available [features](https://github.com/afucher/clojure-repl-intell
 
 - Start a nREPL server from IntelliJ
 - Customize REPL UI
+- Run test support
 
 ## Contributing
 
