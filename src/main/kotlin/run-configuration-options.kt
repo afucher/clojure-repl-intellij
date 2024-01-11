@@ -20,3 +20,13 @@ class ReplRemoteRunOptions : RunConfigurationOptions() {
         get() = projectOption.getValue(this) ?: ""
         set(value) = projectOption.setValue(this, value)
 }
+
+class ReplLocalRunOptions : RunConfigurationOptions() {
+
+    private var projectOption = string("").provideDelegate(this, "project")
+
+    var project: String
+        get() = projectOption.getValue(this) ?: ""
+        set(value) = projectOption.setValue(this, value)
+
+}

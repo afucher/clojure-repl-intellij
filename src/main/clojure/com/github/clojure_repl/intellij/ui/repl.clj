@@ -53,9 +53,9 @@
     (swap! console-state* assoc :last-output text)))
 
 (defn build-console [{:keys [initial-text on-eval]}]
-  (reset! console-state* {:status :running
+  (reset! console-state* {:status :disabled
                           :initial-text initial-text
-                          :last-output (initial-text+ns initial-text)})
+                          :last-output ""})
   (seesaw/scrollable
    (mig/mig-panel
     :id :repl-input-layout
@@ -68,7 +68,7 @@
               :background color-repl-primary
               :text (:last-output @console-state*)
               :listen [:key-pressed (fn [^KeyEvent event]
-                                      (when (= :running (:status @console-state*))
+                                      (if (identical? :enabled (:status @console-state*))
                                         (let [ctrl? (not= 0 (bit-and (.getModifiers event) InputEvent/CTRL_MASK))
                                               shift? (not= 0 (bit-and (.getModifiers event) InputEvent/SHIFT_MASK))
                                               enter? (= KeyEvent/VK_ENTER (.getKeyCode event))
@@ -81,12 +81,30 @@
                                             (on-repl-input event on-eval)
 
                                             (and ctrl? l?)
-                                            (on-repl-clear event)))))]) "grow"]])))
+                                            (on-repl-clear event)))
+                                        (.consume event)))]) "grow"]])))
+
+(defn set-initial-text [console text]
+  (swap! console-state* assoc
+         :status :enabled
+         :initial-text text
+         :last-output (initial-text+ns text))
+  (let [repl-content (seesaw/select console [:#repl-content])
+        ns-text (str "\n\n" (-> @db/db* :current-nrepl :ns) "> ")]
+    (.setText ^JTextArea repl-content "")
+    (.append ^JTextArea repl-content (str text ns-text))))
 
 (def ^:private ^DateTimeFormatter time-formatter (DateTimeFormatter/ofPattern "dd/MM/yyyy HH:mm:ss"))
 
 (defn close-console [console]
   (let [repl-content (seesaw/select console [:#repl-content])]
-    (swap! console-state* assoc :status :closed)
+    (swap! console-state* assoc :status :disabled)
     (seesaw/config! repl-content :editable? false)
     (.append ^JTextArea repl-content (format "\n*** Closed on %s ***" (.format time-formatter (java.time.LocalDateTime/now))))))
+
+(defn append-text [console text]
+  (let [repl-content (seesaw/select console [:#repl-content])]
+    (.append ^JTextArea repl-content text)))
+
+(defn append-result-text [console text]
+  (append-text console (str "\n" text (-> @db/db* :current-nrepl :ns) "> ")))
