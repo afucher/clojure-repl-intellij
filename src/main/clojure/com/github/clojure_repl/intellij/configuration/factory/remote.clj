@@ -22,15 +22,13 @@
 
 (def ^:private options-class ReplRemoteRunOptions)
 
-(def ^:private repl-started-initial-text config.factory.base/initial-repl-text)
-
 (defn ^:private setup-process [project]
   (logger/info "Connecting to nREPL process...")
   (let [handler (NopProcessHandler.)]
     (swap! config.factory.base/current-repl* assoc :handler handler)
     (.addProcessListener handler
                          (proxy+ [] ProcessListener
-                           (startNotified [_ _] (config.factory.base/repl-started project (repl-started-initial-text)))
+                           (startNotified [_ _] (config.factory.base/repl-started project ""))
                            (processWillTerminate [_ _ _] (config.factory.base/repl-disconnected))))
     handler))
 

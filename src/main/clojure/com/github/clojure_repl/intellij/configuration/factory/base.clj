@@ -16,7 +16,7 @@
                               :console nil}))
 (defonce editor-view* (atom nil))
 
-(defn initial-repl-text []
+(defn ^:private initial-repl-text []
   (let [{:keys [clojure java nrepl]} (-> @db/db* :current-nrepl :versions)]
     (str (format ";; Connected to nREPL server - nrepl://%s:%s\n"
                  (-> @db/db* :settings :nrepl-host)
@@ -62,10 +62,10 @@
                          :console nil})
   (swap! db/db* assoc :current-nrepl nil))
 
-(defn repl-started [project initial-text]
+(defn repl-started [project extra-initial-text]
   (nrepl/clone-session)
   (nrepl/eval {:project project :code "*ns*"})
   (let [description (nrepl/describe)]
     (swap! db/db* assoc-in [:current-nrepl :ops] (:ops description))
     (swap! db/db* assoc-in [:current-nrepl :versions] (:versions description))
-    (ui.repl/set-initial-text (:console @current-repl*) initial-text)))
+    (ui.repl/set-initial-text (:console @current-repl*) (str (initial-repl-text) extra-initial-text))))

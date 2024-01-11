@@ -4,6 +4,7 @@
    [clojure.string :as string]
    [com.github.clojure-repl.intellij.configuration.factory.base :as config.factory.base]
    [com.github.clojure-repl.intellij.db :as db]
+   [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.logger :as logger]
    [com.rpl.proxy-plus :refer [proxy+]]
    [seesaw.core :as seesaw]
@@ -26,8 +27,7 @@
 (def ^:private options-class ReplLocalRunOptions)
 
 (defn ^:private repl-started-initial-text [command]
-  (str (config.factory.base/initial-repl-text) "\n"
-       ";; Startup: " command))
+  (str "\n;; Startup: " command))
 
 (defn ^:private process-output->nrepl-uri [text]
   (or (when-let [[_ port] (re-find #"nREPL server started on port (\d+)" text)]
@@ -59,7 +59,7 @@
 
 (def ^:private project-type->parameters
   {:lein "repl :headless :host localhost"
-   :clojure ""
+   :clojure "-Sdeps {:deps{nrepl/nrepl{:mvn/version\"1.1.0\"}}} -M -m nrepl.cmdline"
    :babashka "nrepl-server localhost:0"
    :shadow-cljs "server"
    :boot "repl -s -b localhost wait"
@@ -74,19 +74,20 @@
     ;; and dependencies injection, check how cider does for more details
     (format "%s %s" command parameters)))
 
-(defn ^:private setup-process [project]
-  (let [command (project->repl-start-command project)
-        command-line (GeneralCommandLine. ^java.util.List (string/split command #" "))
+(defn ^:private setup-process [project command]
+  (let [command-line (GeneralCommandLine. ^java.util.List (string/split command #" "))
         handler (.createColoredProcessHandler (ProcessHandlerFactory/getInstance)
                                               command-line)]
     (swap! config.factory.base/current-repl* assoc :handler handler)
     (.addProcessListener handler
                          (proxy+ [] ProcessListener
                            (onTextAvailable [_ ^ProcessEvent event _key]
-                             (when-let [[host port] (process-output->nrepl-uri (.getText event))]
-                               (swap! db/db* assoc-in [:settings :nrepl-host] host)
-                               (swap! db/db* assoc-in [:settings :nrepl-port] port)
-                               (config.factory.base/repl-started project (repl-started-initial-text command))))
+                             (if-let [[host port] (process-output->nrepl-uri (.getText event))]
+                               (do
+                                 (swap! db/db* assoc-in [:settings :nrepl-host] host)
+                                 (swap! db/db* assoc-in [:settings :nrepl-port] port)
+                                 (config.factory.base/repl-started project (repl-started-initial-text command)))
+                               (ui.repl/append-text (:console @config.factory.base/current-repl*) (.getText event))))
                            (processWillTerminate [_ _ _] (config.factory.base/repl-disconnected))))
     (logger/info "Starting nREPL process:" command)
     handler))
@@ -142,9 +143,10 @@
          (getState
            ([])
            ([executor ^ExecutionEnvironment env]
-            (setup-settings this)
-            (proxy [CommandLineState] [env]
-              (createConsole [_]
-                (config.factory.base/build-console-view project "Starting nREPL server via: "))
-              (startProcess []
-                (setup-process project))))))))))
+            (let [command (project->repl-start-command project)]
+              (setup-settings this)
+              (proxy [CommandLineState] [env]
+                (createConsole [_]
+                  (config.factory.base/build-console-view project "Starting nREPL server via: "))
+                (startProcess []
+                  (setup-process project command)))))))))))
