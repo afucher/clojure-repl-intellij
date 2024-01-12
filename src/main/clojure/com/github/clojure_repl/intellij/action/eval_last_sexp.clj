@@ -3,10 +3,12 @@
    :name com.github.clojure_repl.intellij.action.EvalLastSexp
    :extends com.intellij.openapi.actionSystem.AnAction)
   (:require
+   [com.github.clojure-repl.intellij.configuration.factory.base :as config.factory.base]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.editor :as editor]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.parser :as parser]
+   [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.clojure-repl.intellij.ui.repl-hint :as ui.repl-hint]
    [rewrite-clj.zip :as z])
   (:import
@@ -27,7 +29,11 @@
           root-zloc (z/of-string text)
           zloc (parser/find-at-pos root-zloc (inc row) col)
           code (z/string zloc)
-          {:keys [value err]} (nrepl/eval {:project project :code code})]
+          {:keys [value out err]} (nrepl/eval {:project project :code code})]
+      ;; TODO how we can avoid coupling config.repl ns with this?
+      ;; maybe have a listener only for stdout?
+      (when out
+        (ui.repl/append-result-text (:console @config.factory.base/current-repl*) out))
       (if err
         (ui.repl-hint/show-error err editor)
         (ui.repl-hint/show-info value editor)))
