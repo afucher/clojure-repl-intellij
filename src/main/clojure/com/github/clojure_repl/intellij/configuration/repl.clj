@@ -127,8 +127,6 @@
 
 (defn ^:private start-process [project]
   (logger/info "Starting NREPL process...")
-  (logger/info (str "project: " project))
-  (logger/info (str "read port from file? : " (should-read-port-file?)))
   ;TODO: handle when file does not exist
   (when (should-read-port-file?)
       (if-let [project (->> (ProjectManager/getInstance)
