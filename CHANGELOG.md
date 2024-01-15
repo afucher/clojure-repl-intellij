@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add support to read .nrepl-port file to connect to a running nREPL process.
+
 ## 0.1.3
 
 - Fix repl output duplicated.
