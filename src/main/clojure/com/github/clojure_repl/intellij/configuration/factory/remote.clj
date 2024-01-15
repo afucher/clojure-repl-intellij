@@ -32,7 +32,7 @@
   (when (should-read-port-file?)
     (if-let [project (->> (ProjectManager/getInstance)
                           .getOpenProjects
-                          (filter #(= (.getName %) (.getName project)))
+                          (filter #(= (.getName ^Project %) (.getName ^Project project)))
                           first)]
       (let [base-path (.getBasePath ^Project project)
             repl-file (str base-path "/.nrepl-port")
