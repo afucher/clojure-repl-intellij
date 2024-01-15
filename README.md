@@ -1,3 +1,6 @@
+[![JetBrains Plugin Version](https://img.shields.io/jetbrains/plugin/v/com.github.clojure-repl?style=flat-square&labelColor=91B6FB&color=93DA52&link=https%3A%2F%2Fplugins.jetbrains.com%2Fplugin%2F23073-clojure-repl)](https://plugins.jetbrains.com/plugin/23073-clojure-repl)
+[![Slack community](https://img.shields.io/badge/Slack-chat-blue?style=flat-square&labelColor=91B6FB&color=93DA52)](https://clojurians.slack.com/archives/C06DZSPDCPJ)
+
 <img src="images/logo.svg" width="180" align="right">
 
 # clojure-repl-intellij
@@ -24,6 +27,8 @@ Checkout all available [features](https://github.com/afucher/clojure-repl-intell
 ### Soon
 
 - Start a nREPL server from IntelliJ
+- Customize REPL UI
+- Run test support
 
 ## Contributing
 

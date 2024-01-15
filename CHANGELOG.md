@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 0.1.3
+
+- Fix repl output duplicated.
+- Clear repl state on repl disconnection.
+
 ## 0.1.2
 
 ## 0.1.1

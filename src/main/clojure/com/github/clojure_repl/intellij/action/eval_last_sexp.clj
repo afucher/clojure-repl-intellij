@@ -3,10 +3,13 @@
    :name com.github.clojure_repl.intellij.action.EvalLastSexp
    :extends com.intellij.openapi.actionSystem.AnAction)
   (:require
+   [com.github.clojure-repl.intellij.configuration.repl :as config.repl]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.editor :as editor]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.parser :as parser]
+   [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
+   [com.github.clojure-repl.intellij.ui.repl-hint :as ui.repl-hint]
    [rewrite-clj.zip :as z])
   (:import
    [com.intellij.codeInsight.hint HintManager]
@@ -26,8 +29,12 @@
           root-zloc (z/of-string text)
           zloc (parser/find-at-pos root-zloc (inc row) col)
           code (z/string zloc)
-          {:keys [value err]} (nrepl/eval {:project project :code code})]
+          {:keys [value out err]} (nrepl/eval {:project project :code code})]
+      ;; TODO how we can avoid coupling config.repl ns with this?
+      ;; maybe have a listener only for stdout?
+      (when out
+        (ui.repl/append-text (:console @config.repl/current-repl*) out))
       (if err
-        (.showErrorHint (HintManager/getInstance) editor (str "=> " err) (HintManager/RIGHT))
-        (.showInformationHint (HintManager/getInstance) editor (str "=> " (or value "nil")) (HintManager/RIGHT))))
+        (ui.repl-hint/show-error err editor)
+        (ui.repl-hint/show-info value editor)))
     (.showErrorHint (HintManager/getInstance) (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE) "No REPL connected" (HintManager/RIGHT))))

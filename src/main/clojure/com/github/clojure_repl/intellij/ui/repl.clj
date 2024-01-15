@@ -16,12 +16,6 @@
 
 (defonce ^:private console-state* (atom {:last-output nil}))
 
-(defn append-text [console text]
-  (let [repl-content (seesaw/select console [:#repl-content])
-        ns-text (str "\n" (-> @db/db* :current-nrepl :ns) "> ")]
-    (.append ^JTextArea repl-content (str text ns-text))))
-
-
 (defn ^:private extract-code-to-eval [repl-content-text]
   (or (some-> (re-find code-to-eval-regexp repl-content-text)
               last
@@ -96,3 +90,8 @@
     (swap! console-state* assoc :status :closed)
     (seesaw/config! repl-content :editable? false)
     (.append ^JTextArea repl-content (format "\n*** Closed on %s ***" (.format time-formatter (java.time.LocalDateTime/now))))))
+
+(defn append-text [console text]
+  (let [repl-content (seesaw/select console [:#repl-content])
+        ns-text (str (-> @db/db* :current-nrepl :ns) "> ")]
+    (.append ^JTextArea repl-content (str "\n" text ns-text))))
