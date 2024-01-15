@@ -1,13 +1,7 @@
-(ns com.github.clojure-repl.intellij.configuration.repl
-  (:gen-class
-   :init init
-   :constructors {[] [String String String com.intellij.openapi.util.NotNullLazyValue]}
-   :name com.github.clojure_repl.intellij.configuration.ReplRunConfigurationType
-   :extends com.intellij.execution.configurations.ConfigurationTypeBase)
+(ns com.github.clojure-repl.intellij.configuration.factory.remote
   (:require
+   [com.github.clojure-repl.intellij.configuration.factory.base :as config.factory.base]
    [com.github.clojure-repl.intellij.db :as db]
-   [com.github.clojure-repl.intellij.nrepl :as nrepl]
-   [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.logger :as logger]
    [com.rpl.proxy-plus :refer [proxy+]]
    [seesaw.core :as seesaw]
@@ -21,27 +15,37 @@
     RunConfigurationBase]
    [com.intellij.execution.process NopProcessHandler ProcessListener]
    [com.intellij.execution.runners ExecutionEnvironment]
-   [com.intellij.execution.ui ConsoleView]
-   [com.intellij.icons AllIcons$Nodes]
-   [com.intellij.ide.plugins PluginManagerCore]
-   [com.intellij.openapi.actionSystem AnAction]
-   [com.intellij.openapi.extensions PluginId]
    [com.intellij.openapi.project Project ProjectManager]
-   [com.intellij.openapi.util NotNullFactory NotNullLazyValue]
    [com.intellij.ui IdeBorderFactory]
    [javax.swing JRadioButton JTextField]))
 
-(set! *warn-on-reflection* false)
+(set! *warn-on-reflection* true)
 
-(def initial-current-repl {:handler nil
-                           :console nil})
-(defonce current-repl* (atom initial-current-repl))
-(defonce editor-view* (atom nil))
+(def ^:private options-class ReplRemoteRunOptions)
 
-(defn ^:private close-repl []
-  (ui.repl/close-console (:console @current-repl*))
-  (reset! current-repl* initial-current-repl)
-  (swap! db/db* assoc :current-nrepl nil))
+(defn ^:private should-read-port-file? []
+  (= (-> @db/db* :settings :mode) "repl-file"))
+
+(defn ^:private setup-process [project]
+  (logger/info "Connecting to nREPL process...")
+  ;TODO: handle when file does not exist
+  (when (should-read-port-file?)
+    (if-let [project (->> (ProjectManager/getInstance)
+                          .getOpenProjects
+                          (filter #(= (.getName %) (.getName project)))
+                          first)]
+      (let [base-path (.getBasePath ^Project project)
+            repl-file (str base-path "/.nrepl-port")
+            port (slurp repl-file)]
+        (swap! db/db* assoc-in [:settings :nrepl-port] (parse-long port)))))
+
+  (let [handler (NopProcessHandler.)]
+    (swap! config.factory.base/current-repl* assoc :handler handler)
+    (.addProcessListener handler
+                         (proxy+ [] ProcessListener
+                           (startNotified [_ _] (config.factory.base/repl-started project ""))
+                           (processWillTerminate [_ _ _] (config.factory.base/repl-disconnected))))
+    handler))
 
 (defn is-manual? [editor]
   (.isSelected ^JRadioButton (seesaw/select editor [:#manual])))
@@ -83,75 +87,9 @@
 
     panel))
 
-(defn ^:private initial-repl-text []
-  (let [{:keys [clojure java nrepl]} (-> @db/db* :versions)]
-    (str (format ";; Connected to nREPL server - nrepl://%s:%s\n"
-                 (-> @db/db* :settings :nrepl-host)
-                 (-> @db/db* :settings :nrepl-port))
-         (format ";; Clojure REPL Intellij %s\n"
-                 (.getVersion
-                  (PluginManagerCore/getPlugin (PluginId/getId "com.github.clojure-repl"))))
-         (format ";; Clojure %s, Java %s, nREPL %s"
-                 (:version-string clojure)
-                 (:version-string java)
-                 (:version-string nrepl)))))
-
-(defn ^:private build-console-view [project]
-  (reset! current-repl* initial-current-repl)
-  (swap! current-repl* assoc :console (ui.repl/build-console
-                                       {:initial-text (initial-repl-text)
-                                        :on-eval (fn [code]
-                                                   (nrepl/eval {:project project :code code}))}))
-  (proxy+ [] ConsoleView
-    (getComponent [_] (:console @current-repl*))
-    (getPreferredFocusableComponent [_] (:console @current-repl*))
-    (dispose [_])
-    (print [_ _ _])
-    (clear [_])
-    (scrollTo [_ _])
-    (attachToProcess [_ _])
-    (setOutputPaused [_ _])
-    (isOutputPaused [_] false)
-    (hasDeferredOutput [_] false)
-    (performWhenNoDeferredOutput [_ _])
-    (setHelpId [_ _])
-    (addMessageFilter [_ _])
-    (printHyperlink [_ _ _])
-    (getContentSize [_] 0)
-    (canPause [_] false)
-    (createConsoleActions [_] (into-array AnAction []))
-    (allowHeavyFilters [_])))
-
-(defn ^:private should-read-port-file? []
-  (= (-> @db/db* :settings :mode) "repl-file"))
-
-(defn ^:private start-process [project]
-  (logger/info "Starting NREPL process...")
-  ;TODO: handle when file does not exist
-  (when (should-read-port-file?)
-      (if-let [project (->> (ProjectManager/getInstance)
-                            .getOpenProjects
-                            (filter #(= (.getName %) (.getName project)))
-                            first)]
-        (let [base-path (.getBasePath ^Project project)
-              repl-file (str base-path "/.nrepl-port")
-              port (slurp repl-file)]
-          (swap! db/db* assoc-in [:settings :nrepl-port] (parse-long port)))))
-
-  (nrepl/clone-session)
-  (nrepl/eval {:project project :code "*ns*"})
-  (let [description (nrepl/describe)]
-    (swap! db/db* assoc :ops (:ops description))
-    (swap! db/db* assoc :versions (:versions description)))
-  (let [handler (NopProcessHandler.)]
-    (swap! current-repl* assoc :handler handler)
-    (.addProcessListener handler
-                         (proxy+ [] ProcessListener
-                           (processWillTerminate [_ _ _] (close-repl))))
-    handler))
-
+(set! *warn-on-reflection* false)
 (defn ^:private apply-editor-to [^RunConfigurationBase configuration-base]
-  (let [editor @editor-view*
+  (let [editor @config.factory.base/editor-view*
         host (seesaw/text (seesaw/select editor [:#nrepl-host]))
         project (seesaw/text (seesaw/select editor [:#project]))
         mode (if (is-manual? editor) "manual" "repl-file")]
@@ -176,29 +114,27 @@
     (swap! db/db* assoc-in [:settings :mode] mode)))
 
 (defn ^:private reset-editor-from-settings []
-  (let [editor @editor-view*
+  (let [editor @config.factory.base/editor-view*
         settings (:settings @db/db*)]
     (seesaw/text! (seesaw/select editor [:#nrepl-host]) (:nrepl-host settings))
     (seesaw/text! (seesaw/select editor [:#nrepl-port]) (:nrepl-port settings))
     (seesaw/text! (seesaw/select editor [:#project]) (:project settings))))
 
-(def options-class ReplRemoteRunOptions)
-
-#_{:clj-kondo/ignore [:unused-binding]}
-(defn ^:private remote-repl-configuration-type ^ConfigurationFactory [^ConfigurationType type]
+(defn configuration-factory ^ConfigurationFactory [^ConfigurationType type]
   (proxy [ConfigurationFactory] [type]
     (getId [] "clojure-repl-remote")
     (getName [] "Remote")
+    (getOptionsClass [] options-class)
     (createTemplateConfiguration
       ([project _]
-       (.createTemplateConfiguration this project))
+       (.createTemplateConfiguration ^ConfigurationFactory this project))
       ([^Project project]
-       (proxy [RunConfigurationBase] [project this "Connect to an existing REPL"]
+       (proxy [RunConfigurationBase] [project this "Connect to an existing nREPL process"]
          (getConfigurationEditor []
            (proxy+ [] com.intellij.openapi.options.SettingsEditor
              (createEditor [_]
                (let [editor-view (build-editor-view)]
-                 (reset! editor-view* editor-view)
+                 (reset! config.factory.base/editor-view* editor-view)
                  editor-view))
              (applyEditorTo [_ configuration-base]
                (apply-editor-to configuration-base))
@@ -213,19 +149,6 @@
             (setup-settings this)
             (proxy [CommandLineState] [env]
               (createConsole [_]
-                (build-console-view project))
+                (config.factory.base/build-console-view project "Connecting to nREPL server..."))
               (startProcess []
-                (start-process project))))))))
-    (getOptionsClass [] options-class)))
-
-(defn -init []
-  [["clojure-repl"
-    "Clojure REPL"
-    "Connect to a local or remote REPL"
-    (NotNullLazyValue/createValue
-     (reify NotNullFactory
-       (create [_]
-         AllIcons$Nodes/Console)))] nil])
-
-(defn -getConfigurationFactories [this]
-  (into-array ConfigurationFactory [(remote-repl-configuration-type this)]))
+                (setup-process project))))))))))
