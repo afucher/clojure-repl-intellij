@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add support for starting REPL from inside IntelliJ. #40
+
 ## 0.1.3
 
 - Fix repl output duplicated.
