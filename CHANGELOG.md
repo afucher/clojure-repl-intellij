@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Add support to read .nrepl-port file to connect to a running nREPL process.
+- Add support to read .nrepl-port file to connect to a running nREPL process. #5
 
 ## 0.1.3
 
