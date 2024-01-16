@@ -1,5 +1,6 @@
 (ns com.github.clojure-repl.intellij.configuration.factory.remote
   (:require
+   [clojure.java.io :as io]
    [com.github.clojure-repl.intellij.configuration.factory.base :as config.factory.base]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.ericdallo.clj4intellij.logger :as logger]
@@ -23,19 +24,19 @@
 
 (def ^:private options-class ReplRemoteRunOptions)
 
-(defn ^:private should-read-port-file? []
-  (= (-> @db/db* :settings :mode) "repl-file"))
+(defn ^:private read-port-file? []
+  (= (-> @db/db* :settings :mode) :file-config))
 
 (defn ^:private setup-process [project]
   (logger/info "Connecting to nREPL process...")
   ;TODO: handle when file does not exist
-  (when (should-read-port-file?)
+  (when (read-port-file?)
     (if-let [project (->> (ProjectManager/getInstance)
                           .getOpenProjects
                           (filter #(= (.getName ^Project %) (.getName ^Project project)))
                           first)]
       (let [base-path (.getBasePath ^Project project)
-            repl-file (str base-path "/.nrepl-port")
+            repl-file (io/file base-path ".nrepl-port")
             port (slurp repl-file)]
         (swap! db/db* assoc-in [:settings :nrepl-port] (parse-long port)))))
 
@@ -47,7 +48,7 @@
                            (processWillTerminate [_ _ _] (config.factory.base/repl-disconnected))))
     handler))
 
-(defn is-manual? [editor]
+(defn manual? [editor]
   (.isSelected ^JRadioButton (seesaw/select editor [:#manual])))
 
 (defn mode-id-key [repl-mode]
@@ -92,11 +93,11 @@
   (let [editor @config.factory.base/editor-view*
         host (seesaw/text (seesaw/select editor [:#nrepl-host]))
         project (seesaw/text (seesaw/select editor [:#project]))
-        mode (if (is-manual? editor) "manual" "repl-file")]
+        mode (if (manual? editor) :manual-config :file-config)]
     (swap! db/db* assoc-in [:settings :nrepl-host] host)
     (.setNreplHost (.getOptions configuration-base) host)
     (swap! db/db* assoc-in [:settings :mode] mode)
-    (.setMode (.getOptions configuration-base) mode)
+    (.setMode (.getOptions configuration-base) (name mode))
     (when-let [nrepl-port (parse-long (seesaw/text (seesaw/select editor [:#nrepl-port])))]
       (swap! db/db* assoc-in [:settings :nrepl-port] nrepl-port)
       (.setNreplPort (.getOptions configuration-base) (str nrepl-port))
@@ -111,7 +112,7 @@
   (when-let [project (not-empty (.getProject (.getOptions configuration-base)))]
     (swap! db/db* assoc-in [:settings :project] project))
   (when-let [mode (not-empty (.getMode (.getOptions configuration-base)))]
-    (swap! db/db* assoc-in [:settings :mode] mode)))
+    (swap! db/db* assoc-in [:settings :mode] (keyword mode))))
 
 (defn ^:private reset-editor-from-settings []
   (let [editor @config.factory.base/editor-view*
