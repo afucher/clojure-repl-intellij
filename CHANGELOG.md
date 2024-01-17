@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 0.1.4
+
 - Add support for starting REPL from inside IntelliJ. #40
 - Add support to read .nrepl-port file to connect to a running nREPL process. #5
 
