@@ -31,14 +31,10 @@
   (logger/info "Connecting to nREPL process...")
   ;TODO: handle when file does not exist
   (when (read-port-file?)
-    (if-let [project (->> (ProjectManager/getInstance)
-                          .getOpenProjects
-                          (filter #(= (.getName ^Project %) (.getName ^Project project)))
-                          first)]
-      (let [base-path (.getBasePath ^Project project)
-            repl-file (io/file base-path ".nrepl-port")
-            port (slurp repl-file)]
-        (swap! db/db* assoc-in [:settings :nrepl-port] (parse-long port)))))
+    (let [base-path (.getBasePath ^Project project)
+          repl-file (io/file base-path ".nrepl-port")
+          port (slurp repl-file)]
+      (swap! db/db* assoc-in [:settings :nrepl-port] (parse-long port))))
 
   (let [handler (NopProcessHandler.)]
     (swap! config.factory.base/current-repl* assoc :handler handler)
@@ -80,7 +76,7 @@
                                                       .getOpenProjects
                                                       (map #(.getName ^Project %)))) "wrap"]])]
     (seesaw/listen repl-mode-group :action
-                   (fn [e]
+                   (fn [_e]
                      (let [mode-key (mode-id-key repl-mode-group)
                            manual? (= mode-key :manual)]
                        (.setEnabled ^JTextField (seesaw/select panel [:#nrepl-host]) manual?)
