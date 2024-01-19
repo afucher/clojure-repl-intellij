@@ -8,9 +8,9 @@
    [com.github.clojure-repl.intellij.configuration.factory.local :as config.factory.local]
    [com.github.clojure-repl.intellij.configuration.factory.remote :as config.factory.remote])
   (:import
+   [com.github.clojure_repl.intellij Icons]
    [com.intellij.execution.configurations
     ConfigurationFactory]
-   [com.intellij.icons AllIcons$Nodes]
    [com.intellij.openapi.util NotNullFactory NotNullLazyValue]))
 
 (set! *warn-on-reflection* true)
@@ -20,9 +20,7 @@
     "Clojure REPL"
     "Connect to a local or remote REPL"
     (NotNullLazyValue/createValue
-     (reify NotNullFactory
-       (create [_]
-         AllIcons$Nodes/Console)))] nil])
+     (reify NotNullFactory (create [_] Icons/CLOJURE)))] nil])
 
 (defn -getConfigurationFactories [this]
   (into-array ConfigurationFactory [(config.factory.local/configuration-factory this)
