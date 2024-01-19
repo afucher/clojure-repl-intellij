@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix cwd of the spawned repl process to be the project dir.
+
 ## 0.1.4
 
 - Add support for starting REPL from inside IntelliJ. #40

@@ -20,7 +20,8 @@
    [com.intellij.execution.process ProcessEvent ProcessHandlerFactory ProcessListener]
    [com.intellij.execution.runners ExecutionEnvironment]
    [com.intellij.openapi.project Project ProjectManager]
-   [com.intellij.ui IdeBorderFactory]))
+   [com.intellij.ui IdeBorderFactory]
+   [java.nio.charset Charset]))
 
 (set! *warn-on-reflection* true)
 
@@ -74,8 +75,10 @@
     ;; and dependencies injection, check how cider does for more details
     (format "%s %s" command parameters)))
 
-(defn ^:private setup-process [project command]
-  (let [command-line (GeneralCommandLine. ^java.util.List (string/split command #" "))
+(defn ^:private setup-process [^Project project command]
+  (let [command-line (doto (GeneralCommandLine. ^java.util.List (string/split command #" "))
+                       (.setCharset (Charset/forName "UTF-8"))
+                       (.setWorkDirectory (.getBasePath project)))
         handler (.createColoredProcessHandler (ProcessHandlerFactory/getInstance)
                                               command-line)]
     (swap! config.factory.base/current-repl* assoc :handler handler)
