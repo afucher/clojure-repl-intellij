@@ -16,6 +16,12 @@ Checkout all available [features](https://github.com/afucher/clojure-repl-intell
 ![Clojure LSP Intellij](images/demo.png)
 
 ---
+## Getting Started
+After installing the plugin in IntelliJ, you can add a REPL to your Run
+configurations.
+1. Go to `Run` > `Edit Configurations`
+2. Click `Add new` > `Clojure REPL` > `Remote`
+3. Copy the values of host and port from an existing nREPL process
 
 ## Features
 
