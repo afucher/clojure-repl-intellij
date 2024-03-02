@@ -19,12 +19,27 @@ Checkout all available [features](https://github.com/afucher/clojure-repl-intell
 ## Getting Started
 After installing the plugin in IntelliJ, you can add a REPL to your Run
 configurations.
+
+### Local: Start a nREPL server from IntelliJ
 1. Go to `Run` > `Edit Configurations`
-2. Click `Add new` > `Clojure REPL` > `Remote`
-3. Copy the values of host and port from an existing nREPL process
+2. If you don't have any existing configurations, click `Add new...` or `Add new run configuration`. Otherwise, click the `+` ("Add New Configuration").
+3. Select `Clojure REPL` > `Local`
+4. Optional: Name your Configuration (e.g. "Local REPL")
+5. Click `OK`
+
+
+### Remote: Connecting to an existing nREPL process
+1. Ensure you have an existing nREPL process running outside IntelliJ
+2. Within Intellij, go to `Run` > `Edit Configurations`
+3. If you don't have any existing configurations, click `Add new...` or `Add new run configuration`. Otherwise, click the `+` ("Add New Configuration").
+4. Select `Clojure REPL` > `Remote`
+5. In the boxes for `Host` and `Port` copy and paste the values from your existing nREPL process
+6. Optional: Name your Configuration (e.g. "Remote REPL")
+7. Click `OK`
 
 ## Features
 
+- Start a nREPL server from IntelliJ
 - Connect to an existing nREPL process
 - Load file to REPL (`alt + shift + l` / `opt + shift + l`)
 - Eval code at point (`alt + shift + e` / `opt + shift + e`)
@@ -32,7 +47,6 @@ configurations.
 
 ### Soon
 
-- Start a nREPL server from IntelliJ
 - Customize REPL UI
 - Run test support
 
