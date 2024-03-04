@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 0.1.6
+
 ## 0.1.5
 
 - Fix cwd of the spawned repl process to be the project dir.
