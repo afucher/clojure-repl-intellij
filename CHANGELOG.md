@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Use cider-nrepl middleware to support more features.
+
 ## 0.1.6
 
 ## 0.1.5
