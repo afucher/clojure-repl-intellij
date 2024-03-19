@@ -1,9 +1,9 @@
 (ns com.github.clojure-repl.intellij.configuration.factory.local
   (:require
-   [clojure.java.io :as io]
    [clojure.string :as string]
    [com.github.clojure-repl.intellij.configuration.factory.base :as config.factory.base]
    [com.github.clojure-repl.intellij.db :as db]
+   [com.github.clojure-repl.intellij.repl-command :as repl-command]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.logger :as logger]
    [com.rpl.proxy-plus :refer [proxy+]]
@@ -36,49 +36,11 @@
       (when-let [[_ host port] (re-find #"Started nREPL server at (\w+):(\d+)" text)]
         [host (parse-long port)])))
 
-(defn ^:private project->project-type [^Project project]
-  (let [project-path (.getBasePath project)]
-    (some #(case %
-             "project.clj" :lein
-             "deps.edn" :clojure
-             "bb.edn" :babashka
-             "shadow-cljs.edn" :shadow-cljs
-             "build.boot" :boot
-             "nbb.edn" :nbb
-             ("build.gradle" "build.gradle.kts") :gradle
-             nil)
-          (.list (io/file project-path)))))
-
-(def ^:private project-type->command
-  {:lein "lein"
-   :clojure "clojure"
-   :babashka "bb"
-   :shadow-cljs "npx shadow-cljs"
-   :boot "boot"
-   :nbb "nbb"
-   :gradle "./gradlew"})
-
-(def ^:private project-type->parameters
-  {:lein "repl :headless :host localhost"
-   :clojure "-Sdeps {:deps{nrepl/nrepl{:mvn/version\"1.1.0\"}}} -M -m nrepl.cmdline"
-   :babashka "nrepl-server localhost:0"
-   :shadow-cljs "server"
-   :boot "repl -s -b localhost wait"
-   :nbb "nrepl-server"
-   :gradle "clojureRepl"})
-
-(defn ^:private project->repl-start-command [^Project project]
-  (let [project-type (project->project-type project)
-        command (project-type->command project-type)
-        parameters (project-type->parameters project-type)]
-    ;; TODO Add support for global options along with parameters like aliases
-    ;; and dependencies injection, check how cider does for more details
-    (format "%s %s" command parameters)))
-
 (defn ^:private setup-process [^Project project command]
-  (let [command-line (doto (GeneralCommandLine. ^java.util.List (string/split command #" "))
-                       (.setCharset (Charset/forName "UTF-8"))
-                       (.setWorkDirectory (.getBasePath project)))
+  (let [command-str (string/join command " ")
+        command-line  (doto (GeneralCommandLine. ^java.util.List command)
+                        (.setCharset (Charset/forName "UTF-8"))
+                        (.setWorkDirectory (.getBasePath project)))
         handler (.createColoredProcessHandler (ProcessHandlerFactory/getInstance)
                                               command-line)]
     (swap! config.factory.base/current-repl* assoc :handler handler)
@@ -89,10 +51,10 @@
                                (do
                                  (swap! db/db* assoc-in [:settings :nrepl-host] host)
                                  (swap! db/db* assoc-in [:settings :nrepl-port] port)
-                                 (config.factory.base/repl-started project (repl-started-initial-text command)))
+                                 (config.factory.base/repl-started project (repl-started-initial-text command-str)))
                                (ui.repl/append-text (:console @config.factory.base/current-repl*) (.getText event))))
                            (processWillTerminate [_ _ _] (config.factory.base/repl-disconnected))))
-    (logger/info "Starting nREPL process:" command)
+    (logger/info "Starting nREPL process:" command-str)
     handler))
 
 (defn ^:private build-editor-view []
@@ -146,7 +108,7 @@
          (getState
            ([])
            ([executor ^ExecutionEnvironment env]
-            (let [command (project->repl-start-command project)]
+            (let [command (repl-command/project->repl-start-command (.getBasePath project))]
               (setup-settings this)
               (proxy [CommandLineState] [env]
                 (createConsole [_]

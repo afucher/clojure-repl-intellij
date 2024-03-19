@@ -17,4 +17,5 @@
                                                                                com.jetbrains.intellij.platform/external-system-impl
                                                                                com.jetbrains.intellij.platform/service-container
                                                                                com.jetbrains.intellij.platform/statistics-devkit
-                                                                               com.jetbrains.infra/download-pgp-verifier]}}}}}
+                                                                               com.jetbrains.infra/download-pgp-verifier]}}}
+           :test {:extra-paths ["src/test/clojure"]}}}
