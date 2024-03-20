@@ -30,7 +30,7 @@
    :gradle "./gradlew"})
 
 (def ^:private middleware-versions
-  {"nrepl/nrepl" "1.1.0"
+  {"nrepl/nrepl" "1.0.0"
    "cider/cider-nrepl" "0.45.0"})
 
 (def ^:private project-type->parameters
