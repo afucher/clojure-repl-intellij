@@ -27,16 +27,18 @@
 (defn ^:private read-port-file? []
   (= (-> @db/db* :settings :mode) :file-config))
 
-(defn ^:private setup-process [project]
+(defn ^:private setup-process [^ReplRemoteRunOptions options]
   (logger/info "Connecting to nREPL process...")
+  (logger/info (str "[setup-process] Host: " (.getNreplHost options)))
   ;TODO: handle when file does not exist
   (when (read-port-file?)
-    (let [base-path (.getBasePath ^Project project)
+    (let [base-path (.getBasePath ^Project (.getProject ^ReplRemoteRunOptions options))
           repl-file (io/file base-path ".nrepl-port")
           port (slurp repl-file)]
       (swap! db/db* assoc-in [:settings :nrepl-port] (parse-long port))))
 
-  (let [handler (NopProcessHandler.)]
+  (let [handler (NopProcessHandler.)
+        project (.getProject ^ReplRemoteRunOptions options)]
     (swap! config.factory.base/current-repl* assoc :handler handler)
     (.addProcessListener handler
                          (proxy+ [] ProcessListener
@@ -44,63 +46,11 @@
                            (processWillTerminate [_ _ _] (config.factory.base/repl-disconnected))))
     handler))
 
-(defn manual? [editor]
-  (.isSelected ^JRadioButton (seesaw/select editor [:#manual])))
-
-(defn mode-id-key [repl-mode]
-  (->> (seesaw/selection repl-mode)
-       (seesaw/id-of)))
-
-(defn ^:private build-editor-view []
-  (let [repl-mode-group (seesaw/button-group)
-        panel (mig/mig-panel
-                :border (IdeBorderFactory/createTitledBorder "NREPL connection")
-                :items [[(seesaw/radio :text "Manual"
-                                       :id :manual
-                                       :group repl-mode-group
-                                       :mnemonic \M
-                                       :selected? true) "wrap"]
-                        [(seesaw/label "Host") ""]
-                        [(seesaw/text :id :nrepl-host
-                                      :columns 20) "wrap"]
-                        [(seesaw/label "Port") ""]
-                        [(seesaw/text :id :nrepl-port
-                                      :columns 8) "wrap"]
-                        [(seesaw/radio :text "Read from repl file"
-                                       :id :repl-file
-                                       :group repl-mode-group
-                                       :mnemonic \R) "wrap"]
-                        [(seesaw/label "Project") ""]
-                        [(seesaw/combobox :id :project
-                                          :model (->> (ProjectManager/getInstance)
-                                                      .getOpenProjects
-                                                      (map #(.getName ^Project %)))) "wrap"]])]
-    (seesaw/listen repl-mode-group :action
-                   (fn [_e]
-                     (let [mode-key (mode-id-key repl-mode-group)
-                           manual? (= mode-key :manual)]
-                       (.setEnabled ^JTextField (seesaw/select panel [:#nrepl-host]) manual?)
-                       (.setEnabled ^JTextField (seesaw/select panel [:#nrepl-port]) manual?))))
-
-    panel))
 
 (set! *warn-on-reflection* false)
-(defn ^:private apply-editor-to [^RunConfigurationBase configuration-base]
-  (let [editor @config.factory.base/editor-view*
-        host (seesaw/text (seesaw/select editor [:#nrepl-host]))
-        project (seesaw/text (seesaw/select editor [:#project]))
-        mode (if (manual? editor) :manual-config :file-config)]
-    (swap! db/db* assoc-in [:settings :nrepl-host] host)
-    (.setNreplHost (.getOptions configuration-base) host)
-    (swap! db/db* assoc-in [:settings :mode] mode)
-    (.setMode (.getOptions configuration-base) (name mode))
-    (when-let [nrepl-port (parse-long (seesaw/text (seesaw/select editor [:#nrepl-port])))]
-      (swap! db/db* assoc-in [:settings :nrepl-port] nrepl-port)
-      (.setNreplPort (.getOptions configuration-base) (str nrepl-port))
-      (swap! db/db* assoc-in [:settings :project] host)
-      (.setProject (.getOptions configuration-base) project))))
 
 (defn ^:private setup-settings [^RunConfigurationBase configuration-base]
+  (logger/info "setup-settings")
   (when-let [host (not-empty (.getNreplHost (.getOptions configuration-base)))]
     (swap! db/db* assoc-in [:settings :nrepl-host] host))
   (when-let [nrepl-port (parse-long (.getNreplPort (.getOptions configuration-base)))]
@@ -110,12 +60,7 @@
   (when-let [mode (not-empty (.getMode (.getOptions configuration-base)))]
     (swap! db/db* assoc-in [:settings :mode] (keyword mode))))
 
-(defn ^:private reset-editor-from-settings []
-  (let [editor @config.factory.base/editor-view*
-        settings (:settings @db/db*)]
-    (seesaw/text! (seesaw/select editor [:#nrepl-host]) (:nrepl-host settings))
-    (seesaw/text! (seesaw/select editor [:#nrepl-port]) (:nrepl-port settings))
-    (seesaw/text! (seesaw/select editor [:#project]) (:project settings))))
+
 
 (defn configuration-factory ^ConfigurationFactory [^ConfigurationType type]
   (proxy [ConfigurationFactory] [type]
@@ -124,22 +69,13 @@
     (getOptionsClass [] options-class)
     (createTemplateConfiguration
       ([project _]
+       (logger/info "Creating template configuration")
        (.createTemplateConfiguration ^ConfigurationFactory this project))
       ([^Project project]
+       (logger/info "Creating template configuration 2")
        (proxy [RunConfigurationBase] [project this "Connect to an existing nREPL process"]
          (getConfigurationEditor []
-           (proxy+ [] com.intellij.openapi.options.SettingsEditor
-             (createEditor [_]
-               (let [editor-view (build-editor-view)]
-                 (reset! config.factory.base/editor-view* editor-view)
-                 editor-view))
-             (applyEditorTo [_ configuration-base]
-               (apply-editor-to configuration-base))
-
-             (resetEditorFrom [_ configuration-base]
-               (setup-settings configuration-base)
-               (reset-editor-from-settings))))
-
+           (new com.github.clojure_repl.intellij.configuration.editor/SettingsEditor))
          (getState
            ([])
            ([executor ^ExecutionEnvironment env]
@@ -148,4 +84,4 @@
               (createConsole [_]
                 (config.factory.base/build-console-view project "Connecting to nREPL server..."))
               (startProcess []
-                (setup-process project))))))))))
+                (setup-process (.getOptions this)))))))))))
