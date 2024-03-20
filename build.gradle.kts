@@ -36,7 +36,7 @@ sourceSets {
         resources.srcDirs("resources")
     }
     test {
-        java.srcDirs("tests")
+        java.srcDirs("src/test")
     }
 }
 
