@@ -44,7 +44,7 @@
   [loc pos]
   (some-> loc z/node meta (in-range? pos)))
 
-(defn find-at-pos
+(defn find-form-at-pos
   "Find the deepest zloc whose node is at the given `row` and `col`, seeking
   from initial zipper location `zloc`.
 
@@ -54,8 +54,40 @@
   (let [exact-position {:row row, :col col, :end-row row, :end-col col}]
     (find-by-heritability zloc #(zloc-in-range? % exact-position))))
 
-(defn ^:private root? [loc]
+(defn root? [loc]
   (identical? :forms (z/tag loc)))
+
+(defn top? [loc]
+  (root? (z/up loc)))
+
+(defn to-top
+  "Returns the loc for the top-level form above the loc, or the loc itself if it
+  is top-level, or nil if the loc is at the `:forms` node."
+  [loc]
+  (z/find loc z/up top?))
+
+(defn var-name-loc-from-op [loc]
+  (cond
+    (not loc)
+    nil
+
+    (= :map (-> loc z/next z/tag))
+    (-> loc z/next z/right)
+
+    (and (= :meta (-> loc z/next z/tag))
+         (= :map (-> loc z/next z/next z/tag)))
+    (-> loc z/next z/down z/rightmost)
+
+    (= :meta (-> loc z/next z/tag))
+    (-> loc z/next z/next z/next)
+
+    :else
+    (z/next loc)))
+
+(defn find-var-at-pos
+  [root-zloc row col]
+  (let [loc (find-form-at-pos root-zloc row col)]
+    (some-> loc to-top z/next var-name-loc-from-op)))
 
 (defn to-root
   "Returns the loc of the root `:forms` node."

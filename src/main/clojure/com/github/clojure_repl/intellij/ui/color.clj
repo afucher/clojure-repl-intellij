@@ -6,6 +6,4 @@
 (def fail-foreground JBColor/RED)
 (def error-foreground JBColor/RED)
 
-(def info-foreground JBColor/BLUE)
-
 (def low-light-foreground JBColor/GRAY)

@@ -26,7 +26,7 @@
             [row col] (editor/editor->cursor-position editor)
             text (.getText (.getDocument editor))
             root-zloc (z/of-string text)
-            zloc (parser/find-at-pos root-zloc (inc row) col)
+            zloc (parser/find-form-at-pos root-zloc (inc row) col)
             code (z/string zloc)
             {:keys [value out err]} (nrepl/eval {:project project :code code})]
         ;; TODO how we can avoid coupling config.repl ns with this?

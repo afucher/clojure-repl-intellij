@@ -48,15 +48,17 @@
 (defn describe []
   (send-message {:op "describe"}))
 
-(defn run-tests [ns {:keys [on-ns-not-found on-out on-err on-succeeded on-failed]}]
-  (let [{:keys [summary results status out err] :as response} (send-message {:op "test" :ns ns})]
+(defn sym-info [ns sym]
+  (send-message {:op "info" :ns ns :sym sym}))
+
+(defn run-tests [{:keys [ns tests on-ns-not-found on-out on-err on-succeeded on-failed]}]
+  (let [{:keys [summary results status out err] :as response}
+        (send-message {:op "test" :ns ns :tests (when (seq tests) tests)})]
     (when (some #(= % "namespace-not-found") status)
       (on-ns-not-found ns))
     (when out (on-out out))
     (when err (on-err err))
     (when results
-      ;; TODO save last result and summary
-      ;; TODO highlight errors on editor
       (if (zero? (+ (:error summary) (:fail summary)))
         (on-succeeded response)
         (on-failed response)))))
