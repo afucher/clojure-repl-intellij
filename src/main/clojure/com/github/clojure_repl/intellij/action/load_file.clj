@@ -25,7 +25,7 @@
       (if (-> @db/db* :current-nrepl :session-id)
         (tasks/run-background-task!
          (.getProject editor)
-         "Clojure REPL load file"
+         "REPL: Loading file"
          (fn [_indicator]
            (let [path (.getCanonicalPath vf)
                  file (io/file path)

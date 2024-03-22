@@ -16,7 +16,7 @@
   ;; TODO save last result and summary
   (tasks/run-background-task!
    (.getProject editor)
-   "Clojure tests"
+   "REPL: Running test"
    (fn [_indicator]
      (nrepl/run-tests
       {:ns ns

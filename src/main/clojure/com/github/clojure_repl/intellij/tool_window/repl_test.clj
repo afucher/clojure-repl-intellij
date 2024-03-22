@@ -26,7 +26,6 @@
    [com.intellij.ui EditorTextField]
    [com.intellij.ui.components ActionLink]
    [com.intellij.ui.content ContentFactory$SERVICE]
-   [com.intellij.util.ui JBFont]
    [java.io File]
    [javax.swing JComponent JScrollPane]))
 
@@ -53,8 +52,8 @@
         document (.createDocument (EditorFactory/getInstance) code)
         clojure-file-type (.getStdFileType (FileTypeManager/getInstance) "clojure")
         any-project (first (.getOpenProjects (ProjectManager/getInstance)))]
-    [[(seesaw/label :text key :foreground ui.color/low-light-foreground) "alignx right"]
-     [(let [field (EditorTextField. document any-project clojure-file-type true true)]
+    [[(seesaw/label :text key :foreground ui.color/low-light-foreground) "alignx right, aligny top"]
+     [(let [field (EditorTextField. document any-project clojure-file-type true false)]
         ;; We remove the border after the editor is built
         (app-manager/invoke-later! {:invoke-fn
                                     (fn []
@@ -80,14 +79,9 @@
     (for [[_var tests] vars]
       (let [non-passing (remove #(= "pass" (:type %)) tests)]
         (when (seq non-passing)
-          [(mig/mig-panel
-            :items
-            (concat
-             [[(seesaw/flow-panel
-                :hgap 0
-                :vgap 0
-                :items [(seesaw/label :text (count non-passing) :font (.deriveFont (JBFont/label) java.awt.Font/BOLD))
-                        (seesaw/label :text " non-passing tests:")]) "span"]]
+          [(seesaw/scrollable
+            (mig/mig-panel
+             :items
              (for [{:keys [var context type message expected actual diffs error gen-input] :as test} non-passing]
                [(mig/mig-panel
                  :items
@@ -114,7 +108,7 @@
                            (label "actual: " actual)))
                        (when (seq error)
                          [(label "error: " error)
-                                     ;; TODO implement support to check stacktrace error
+                           ;; TODO implement support to check stacktrace error
                           #_[(seesaw/button :text "View stacktrace"
                                             :mnemonic "S"
                                             :listen [:action (fn [_]
@@ -127,7 +121,8 @@
                       flatten
                       (remove nil?)
                       (partition 2)
-                      vec)) "span"]))) "span"]))))))
+                      vec)) "span"]))
+            :border nil) "span"]))))))
 
 (defn ^:private test-report-title-summary [summary elapsed-time]
   (let [failed (when (> (:fail summary) 0) (:fail summary))

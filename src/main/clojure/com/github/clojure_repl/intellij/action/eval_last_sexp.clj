@@ -29,7 +29,7 @@
             text (.getText (.getDocument editor))]
         (tasks/run-background-task!
          (.getProject editor)
-         "Clojure REPL load file"
+         "REPL: Evaluating"
          (fn [_indicator]
            (let [root-zloc (z/of-string text)
                  zloc (parser/find-form-at-pos root-zloc (inc row) col)
