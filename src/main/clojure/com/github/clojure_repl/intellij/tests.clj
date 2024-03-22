@@ -17,8 +17,7 @@
   (tasks/run-background-task!
    (.getProject editor)
    "Clojure tests"
-   (fn [indicator]
-     (tasks/set-progress indicator "Running tests")
+   (fn [_indicator]
      (nrepl/run-tests
       {:ns ns
        :tests vars
