@@ -4,9 +4,11 @@
    :extends com.intellij.openapi.actionSystem.AnAction)
   (:require
    [clojure.java.io :as io]
+   [com.github.clojure-repl.intellij.configuration.factory.base :as config.factory.base]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.ui.hint :as ui.hint]
+   [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
    [com.github.ericdallo.clj4intellij.tasks :as tasks])
   (:import
@@ -30,7 +32,7 @@
                  {:keys [err]} (nrepl/load-file (-> event .getProject .getName) file)]
              (app-manager/invoke-later!
               {:invoke-fn (fn []
-                            (if err
-                              (ui.hint/show-repl-error :message err :editor editor)
-                              (ui.hint/show-repl-info :message (str "Loaded file " path) :editor editor)))}))))
+                            (when err
+                              (ui.repl/append-result-text (:console @config.factory.base/current-repl*) err))
+                            (ui.hint/show-repl-info :message (str "Loaded file " path) :editor editor))}))))
         (ui.hint/show-error :message "No REPL connected" :editor editor)))))
