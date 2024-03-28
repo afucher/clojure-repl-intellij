@@ -44,11 +44,12 @@ configurations.
 - Load file to REPL (`alt + shift + l` / `opt + shift + l`)
 - Eval code at point (`alt + shift + e` / `opt + shift + e`)
 - Switch to file namespace (`alt + shift + n` / `opt + shift + n`)
+- Run ns tests  (`alt + shift + t` `alt + shift + n` / `opt + shift + t` `opt + shift + n`)
+- Run test at cursor (`alt + shift + t` `alt + shift + t` / `opt + shift + t` `opt + shift + t`)
 
 ### Soon
 
 - Customize REPL UI
-- Run test support
 
 ## Contributing
 

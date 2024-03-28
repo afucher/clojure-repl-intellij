@@ -7,4 +7,6 @@
                                :remote-repl-mode :manual-config}
                     :on-repl-file-loaded-fns []
                     :on-repl-evaluated-fns []
+                    :on-test-failed-fns []
+                    :on-test-succeeded-fns []
                     :ops {}}))

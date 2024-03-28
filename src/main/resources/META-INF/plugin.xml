@@ -8,31 +8,58 @@
     <extensions defaultExtensionNs="com.intellij">
         <configurationType implementation="com.github.clojure_repl.intellij.configuration.ReplRunConfigurationType"/>
         <postStartupActivity implementation="com.github.ericdallo.clj4intellij.extension.NREPLStartup"/>
+        <toolWindow id="Clojure test summary" secondary="true" icon="com.github.clojure_repl.intellij.Icons.CLOJURE_REPL" anchor="right"
+                    factoryClass="com.github.clojure_repl.intellij.tool_window.ReplTestToolWindow"/>
+        <codeInsight.lineMarkerProvider language="clojure" implementationClass="com.github.clojure_repl.intellij.extension.RunTestLineMarkerProvider"/>
     </extensions>
 
     <actions>
-        <group id="ClojureREPLGroup">
-            <action class="com.github.clojure_repl.intellij.action.LoadFile"
-                    text="Load file to REPL"
-                    icon="com.github.clojure_repl.intellij.Icons.CLOJURE_REPL"
-                    description="Load file to REPL">
-                <add-to-group group-id="ToolsMenu" anchor="first"/>
-                <keyboard-shortcut keymap="$default" first-keystroke="shift alt l"/>
-            </action>
-            <action class="com.github.clojure_repl.intellij.action.EvalLastSexp"
-                    text="Eval last sexp"
-                    icon="com.github.clojure_repl.intellij.Icons.CLOJURE_REPL"
-                    description="Eval the expression preceding cursor">
-                <add-to-group group-id="ToolsMenu" anchor="first"/>
-                <keyboard-shortcut keymap="$default" first-keystroke="shift alt e"/>
-            </action>
-            <action class="com.github.clojure_repl.intellij.action.SwitchNs"
-                    text="Switch REPL namespace"
-                    description="Switch REPL namespace to current opened file namespace">
-                <add-to-group group-id="ToolsMenu" anchor="first"/>
-                <keyboard-shortcut keymap="$default" first-keystroke="shift alt n"/>
-            </action>
+        <action id="ClojureREPL.RunNsTests"
+                class="com.github.clojure_repl.intellij.action.RunNsTests"
+                text="Run namespace tests"
+                icon="com.github.clojure_repl.intellij.Icons.CLOJURE_REPL"
+                description="Run all namespaces tests">
+            <keyboard-shortcut keymap="$default" first-keystroke="shift alt t" second-keystroke="shift alt n"/>
+        </action>
+        <action id="ClojureREPL.RunCursorTest"
+                class="com.github.clojure_repl.intellij.action.RunCursorTest"
+                text="Run test at cursor"
+                icon="com.github.clojure_repl.intellij.Icons.CLOJURE_REPL"
+                description="Run test at cursor">
+            <keyboard-shortcut keymap="$default" first-keystroke="shift alt t" second-keystroke="shift alt t"/>
+        </action>
+        <action id="ClojureREPL.LoadFile"
+                class="com.github.clojure_repl.intellij.action.LoadFile"
+                text="Load file to REPL"
+                icon="com.github.clojure_repl.intellij.Icons.CLOJURE_REPL"
+                description="Load file to REPL">
+            <keyboard-shortcut keymap="$default" first-keystroke="shift alt l"/>
+        </action>
+        <action id="ClojureREPL.EvalLastSexp"
+                class="com.github.clojure_repl.intellij.action.EvalLastSexp"
+                text="Eval last sexp"
+                icon="com.github.clojure_repl.intellij.Icons.CLOJURE_REPL"
+                description="Eval the expression preceding cursor">
+            <keyboard-shortcut keymap="$default" first-keystroke="shift alt e"/>
+        </action>
+        <action id="ClojureREPL.SwitchNs"
+                class="com.github.clojure_repl.intellij.action.SwitchNs"
+                text="Switch REPL namespace"
+                icon="com.github.clojure_repl.intellij.Icons.CLOJURE_REPL"
+                description="Switch REPL namespace to current opened file namespace">
+            <keyboard-shortcut keymap="$default" first-keystroke="shift alt n"/>
+        </action>
 
+        <!-- groups -->
+        <group id="ClojureREPL.ReplActions" popup="true" text="Clojure REPL" icon="com.github.clojure_repl.intellij.Icons.CLOJURE_REPL">
+            <add-to-group group-id="ToolsMenu" anchor="first"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="RefactoringMenu"/>
+            <reference ref="ClojureREPL.RunNsTests"/>
+            <reference ref="ClojureREPL.RunCursorTest"/>
+            <reference ref="ClojureREPL.LoadFile"/>
+            <reference ref="ClojureREPL.EvalLastSexp"/>
+            <reference ref="ClojureREPL.SwitchNs"/>
+            <separator/>
         </group>
     </actions>
 

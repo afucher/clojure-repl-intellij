@@ -4,11 +4,14 @@
    :extends com.intellij.openapi.actionSystem.AnAction)
   (:require
    [clojure.java.io :as io]
+   [com.github.clojure-repl.intellij.configuration.factory.base :as config.factory.base]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
-   [com.github.clojure-repl.intellij.ui.repl-hint :as ui.repl-hint])
+   [com.github.clojure-repl.intellij.ui.hint :as ui.hint]
+   [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
+   [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
+   [com.github.ericdallo.clj4intellij.tasks :as tasks])
   (:import
-   [com.intellij.codeInsight.hint HintManager]
    [com.intellij.openapi.actionSystem CommonDataKeys]
    [com.intellij.openapi.actionSystem AnActionEvent]
    [com.intellij.openapi.editor Editor]
@@ -18,12 +21,18 @@
 
 (defn -actionPerformed [_ ^AnActionEvent event]
   (when-let [vf ^VirtualFile (.getData event CommonDataKeys/VIRTUAL_FILE)]
-    (if (-> @db/db* :current-nrepl :session-id)
-      (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
-            path (.getCanonicalPath vf)
-            file (io/file path)
-            {:keys [err]} (nrepl/load-file (-> event .getProject .getName) file)]
-        (if err
-          (ui.repl-hint/show-error err editor)
-          (ui.repl-hint/show-info (str "Loaded file " path) editor)))
-      (.showErrorHint (HintManager/getInstance) (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE) "No REPL connected" (HintManager/RIGHT)))))
+    (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
+      (if (-> @db/db* :current-nrepl :session-id)
+        (tasks/run-background-task!
+         (.getProject editor)
+         "REPL: Loading file"
+         (fn [_indicator]
+           (let [path (.getCanonicalPath vf)
+                 file (io/file path)
+                 {:keys [err]} (nrepl/load-file (-> event .getProject .getName) file)]
+             (app-manager/invoke-later!
+              {:invoke-fn (fn []
+                            (when err
+                              (ui.repl/append-result-text (:console @config.factory.base/current-repl*) err))
+                            (ui.hint/show-repl-info :message (str "Loaded file " path) :editor editor))}))))
+        (ui.hint/show-error :message "No REPL connected" :editor editor)))))

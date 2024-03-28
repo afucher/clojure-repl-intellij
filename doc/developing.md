@@ -12,4 +12,4 @@ Unless you need to edit some generated extension file or kotlin file, mostly clo
 
 NREPL is included in the plugin during development, so you can jack in and edit most of the plugin behavior while running it.
 
-It runs on port 7770.
+It runs on port `7770`.
