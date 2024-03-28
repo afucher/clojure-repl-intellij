@@ -37,7 +37,7 @@
         [host (parse-long port)])))
 
 (defn ^:private setup-process [^Project project command]
-  (let [command-str (string/join command " ")
+  (let [command-str (string/join " " command)
         command-line  (doto (GeneralCommandLine. ^java.util.List command)
                         (.setCharset (Charset/forName "UTF-8"))
                         (.setWorkDirectory (.getBasePath project)))

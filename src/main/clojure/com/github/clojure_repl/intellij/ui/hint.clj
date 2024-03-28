@@ -15,12 +15,10 @@
       :or {prefix ""}}]
   (.showErrorHint (HintManager/getInstance) ^Editor editor (str prefix message) HintManager/RIGHT))
 
-(set! *warn-on-reflection* false)
 (defn show-success
   [& {:keys [message editor prefix]
       :or {prefix ""}}]
-  (.showSuccessHint (HintManager/getInstance) ^Editor editor (str prefix message) HintManager/RIGHT))
-(set! *warn-on-reflection* true)
+  (.showInformationHint (HintManager/getInstance) ^Editor editor (str prefix message) HintManager/RIGHT))
 
 (defn show-repl-info [& {:as args}]
   (show-info (assoc args :prefix "=> " :message (or (:message args) "nil"))))
