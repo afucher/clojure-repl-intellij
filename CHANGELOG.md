@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 0.1.7
+
 - Use cider-nrepl middleware to support more features.
 - Add test support. #46
 - Fix freeze on evaluation. #48
