@@ -9,10 +9,10 @@
 
 (set! *warn-on-reflection* true)
 
-(defn ^:private send-message [message]
+(defn ^:private send-message [project message]
   (with-open [conn ^FnTransport (nrepl.core/connect
-                                 :host (-> @db/db* :settings :nrepl-host)
-                                 :port (-> @db/db* :settings :nrepl-port))]
+                                 :host (db/get-in project [:settings :nrepl-host])
+                                 :port (db/get-in project [:settings :nrepl-port]))]
     ;; TODO Improve this timeout, what will happen for tests/evals
     ;; taking more than this timeout? should we really fail?
     (-> (nrepl.core/client conn 60000)
@@ -20,40 +20,40 @@
         doall
         first)))
 
-(defn eval [& {:keys [^Project project code]}]
-  (let [{:keys [ns out] :as response} (send-message {:op "eval" :code code :session (-> @db/db* :current-nrepl :session-id)})]
+(defn eval [& {:keys [^Project project ns code]
+               :or {ns (or (db/get-in project [:current-nrepl :ns]) "user")}}]
+  (let [{:keys [ns out] :as response} (send-message project {:op "eval" :code code :ns ns :session (db/get-in project [:current-nrepl :session-id])})]
     (when ns
-      (swap! db/db* assoc-in [:current-nrepl :ns] ns))
+      (db/assoc-in project [:current-nrepl :ns] ns))
     (when out
       ;; TODO print `out` to current console. Depends on listeners for that.
       out)
-    (doseq [fn (:on-repl-evaluated-fns @db/db*)]
-      (when (= (:project fn) (.getName project))
-        ((:fn fn) response)))
+    (doseq [fn (db/get-in project [:on-repl-evaluated-fns])]
+      (fn response))
     response))
 
-(defn clone-session []
-  (swap! db/db* assoc-in [:current-nrepl :session-id] (:new-session (send-message {:op "clone"}))))
+(defn clone-session [^Project project]
+  (db/assoc-in project [:current-nrepl :session-id] (:new-session (send-message project {:op "clone"}))))
 
 (defn load-file [project ^java.io.File file]
-  (let [result (send-message {:op "load-file"
-                              :file (slurp file)
-                              :file-path (.getCanonicalPath file)
-                              :file-name (.getName file)})]
-    (doseq [fns (:on-repl-file-loaded-fns @db/db*)]
-      (when (= (:project fns) project)
-        ((:fn fns) file)))
+  (let [result (send-message project {:op "load-file"
+                                      :session (db/get-in project [:current-nrepl :session-id])
+                                      :file (slurp file)
+                                      :file-path (.getCanonicalPath file)
+                                      :file-name (.getName file)})]
+    (doseq [fn (db/get-in project [:on-repl-file-loaded-fns])]
+      (fn file))
     result))
 
-(defn describe []
-  (send-message {:op "describe"}))
+(defn describe [^Project project]
+  (send-message project {:op "describe"}))
 
-(defn sym-info [ns sym]
-  (send-message {:op "info" :ns ns :sym sym}))
+(defn sym-info [^Project project ns sym]
+  (send-message project {:op "info" :ns ns :sym sym}))
 
-(defn run-tests [{:keys [ns tests on-ns-not-found on-out on-err on-succeeded on-failed]}]
+(defn run-tests [^Project project {:keys [ns tests on-ns-not-found on-out on-err on-succeeded on-failed]}]
   (let [{:keys [summary results status out err] :as response}
-        (send-message {:op "test" :ns ns :tests (when (seq tests) tests)})]
+        (send-message project {:op "test" :ns ns :tests (when (seq tests) tests)})]
     (when (some #(= % "namespace-not-found") status)
       (on-ns-not-found ns))
     (when out (on-out out))

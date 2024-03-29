@@ -60,8 +60,8 @@
                                       (.setBorder ^JScrollPane (.getScrollPane ^EditorImpl (.getEditor field)) nil))})
         field) "span"]]))
 
-(defn ^:private navigate-to-test [{:keys [ns var]}]
-  (let [{:keys [file line column]} (nrepl/sym-info ns var)
+(defn ^:private navigate-to-test [project {:keys [ns var]}]
+  (let [{:keys [file line column]} (nrepl/sym-info project ns var)
         project (first (.getOpenProjects (ProjectManager/getInstance)))
         editor ^Editor (util/uri->editor file project true)
         offset (StringUtil/lineColToOffset (.getText (.getDocument editor)) (dec line) (dec column))
@@ -71,7 +71,7 @@
     (.openFile file-editor-manager v-file true)
     (.moveToOffset (.getCaretModel editor) offset)))
 
-(defn ^:private test-report-content ^JComponent [vars]
+(defn ^:private test-report-content ^JComponent [^Project project vars]
   (seesaw/scrollable
    (mig/mig-panel
     :items
@@ -93,7 +93,7 @@
                                         :foreground (test-result-type->color (keyword type)))
                           (seesaw/label :text " in ")
                           (ActionLink. ^String var (proxy+ [] java.awt.event.ActionListener
-                                                     (actionPerformed [_ _] (navigate-to-test test))))]) "span"]
+                                                     (actionPerformed [_ _] (navigate-to-test project test))))]) "span"]
                        (when (seq context) [(seesaw/label :text (str context)) "span"])
                        (when (seq message) [(seesaw/label :text (str message)) "span"])
                        (when (seq expected)
@@ -141,29 +141,31 @@
       ms
       (str " in " ms "ms"))))
 
-(defn ^:private on-test-failed [^ToolWindow tool-window {:keys [results summary elapsed-time]}]
-  (let [content-factory (ContentFactory$SERVICE/getInstance)
-        content-manager (.getContentManager tool-window)]
-    (app-manager/invoke-later!
-     {:invoke-fn (fn []
-                   (.removeAllContents content-manager false)
-                   (doseq [[_ vars] results]
-                     (.addContent content-manager
-                                  (.createContent content-factory
-                                                  (test-report-content vars)
-                                                  (test-report-title-summary summary elapsed-time)
-                                                  false)))
-                   (.setAvailable tool-window true)
-                   (.show tool-window))})))
+(defn ^:private on-test-failed [^Project project ^ToolWindow tool-window {:keys [results summary elapsed-time]}]
+  (when-not (.isDisposed tool-window)
+    (let [content-factory (ContentFactory$SERVICE/getInstance)
+          content-manager (.getContentManager tool-window)]
+      (app-manager/invoke-later!
+       {:invoke-fn (fn []
+                     (.removeAllContents content-manager false)
+                     (doseq [[_ vars] results]
+                       (.addContent content-manager
+                                    (.createContent content-factory
+                                                    (test-report-content project vars)
+                                                    (test-report-title-summary summary elapsed-time)
+                                                    false)))
+                     (.setAvailable tool-window true)
+                     (.show tool-window))}))))
 
-(defn ^:private on-test-succeeded [^ToolWindow tool-window _]
-  (.removeAllContents (.getContentManager tool-window) false)
-  (.setAvailable tool-window false)
-  (.hide tool-window))
+(defn ^:private on-test-succeeded [^Project _project ^ToolWindow tool-window _]
+  (when-not (.isDisposed tool-window)
+    (.removeAllContents (.getContentManager tool-window) false)
+    (.setAvailable tool-window false)
+    (.hide tool-window)))
 
 (defn -init [_ ^ToolWindow tool-window]
-  (swap! db/db* update :on-test-failed-fns #(conj % (partial #'on-test-failed tool-window)))
-  (swap! db/db* update :on-test-succeeded-fns #(conj % (partial #'on-test-succeeded tool-window))))
+  (db/global-update-in [:on-test-failed-fns-by-key tool-window] #(conj % #'on-test-failed))
+  (db/global-update-in [:on-test-succeeded-fns-by-key tool-window] #(conj % #'on-test-succeeded)))
 
 (defn -manager [_ _ _])
 

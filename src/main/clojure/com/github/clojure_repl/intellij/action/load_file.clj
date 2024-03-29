@@ -22,17 +22,18 @@
 (defn -actionPerformed [_ ^AnActionEvent event]
   (when-let [vf ^VirtualFile (.getData event CommonDataKeys/VIRTUAL_FILE)]
     (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
-      (if (-> @db/db* :current-nrepl :session-id)
-        (tasks/run-background-task!
-         (.getProject editor)
-         "REPL: Loading file"
-         (fn [_indicator]
-           (let [path (.getCanonicalPath vf)
-                 file (io/file path)
-                 {:keys [err]} (nrepl/load-file (-> event .getProject .getName) file)]
-             (app-manager/invoke-later!
-              {:invoke-fn (fn []
-                            (when err
-                              (ui.repl/append-result-text (:console @config.factory.base/current-repl*) err))
-                            (ui.hint/show-repl-info :message (str "Loaded file " path) :editor editor))}))))
-        (ui.hint/show-error :message "No REPL connected" :editor editor)))))
+      (let [project (.getProject editor)]
+        (if (db/get-in project [:current-nrepl :session-id])
+          (tasks/run-background-task!
+           (.getProject editor)
+           "REPL: Loading file"
+           (fn [_indicator]
+             (let [path (.getCanonicalPath vf)
+                   file (io/file path)
+                   {:keys [err]} (nrepl/load-file project file)]
+               (app-manager/invoke-later!
+                {:invoke-fn (fn []
+                              (when err
+                                (ui.repl/append-result-text project (:console @config.factory.base/current-repl*) err))
+                              (ui.hint/show-repl-info :message (str "Loaded file " path) :editor editor))}))))
+          (ui.hint/show-error :message "No REPL connected" :editor editor))))))

@@ -49,11 +49,11 @@
                            (onTextAvailable [_ ^ProcessEvent event _key]
                              (if-let [[host port] (process-output->nrepl-uri (.getText event))]
                                (do
-                                 (swap! db/db* assoc-in [:settings :nrepl-host] host)
-                                 (swap! db/db* assoc-in [:settings :nrepl-port] port)
+                                 (db/assoc-in project [:settings :nrepl-host] host)
+                                 (db/assoc-in project [:settings :nrepl-port] port)
                                  (config.factory.base/repl-started project (repl-started-initial-text command-str)))
                                (ui.repl/append-text (:console @config.factory.base/current-repl*) (.getText event))))
-                           (processWillTerminate [_ _ _] (config.factory.base/repl-disconnected))))
+                           (processWillTerminate [_ _ _] (config.factory.base/repl-disconnected project))))
     (logger/info "Starting nREPL process:" command-str)
     handler))
 
@@ -72,14 +72,14 @@
         project (seesaw/text (seesaw/select editor [:#project]))]
     (.setProject (.getOptions configuration-base) project)))
 
-(defn ^:private setup-settings [^RunConfigurationBase configuration-base]
-  (when-let [project (not-empty (.getProject (.getOptions configuration-base)))]
-    (swap! db/db* assoc-in [:settings :project] project)))
+(defn ^:private setup-settings [project ^RunConfigurationBase configuration-base]
+  (when-let [project-path (not-empty (.getProject (.getOptions configuration-base)))]
+    (db/assoc-in project [:settings :project] project-path)))
 (set! *warn-on-reflection* true)
 
-(defn ^:private reset-editor-from-settings []
+(defn ^:private reset-editor-from-settings [project]
   (let [editor @config.factory.base/editor-view*
-        settings (:settings @db/db*)]
+        settings (db/get-in project [:settings])]
     (seesaw/text! (seesaw/select editor [:#project]) (:project settings))))
 
 (defn configuration-factory ^ConfigurationFactory [^ConfigurationType type]
@@ -102,14 +102,14 @@
                (apply-editor-to configuration-base))
 
              (resetEditorFrom [_ configuration-base]
-               (setup-settings configuration-base)
-               (reset-editor-from-settings))))
+               (setup-settings project configuration-base)
+               (reset-editor-from-settings project))))
 
          (getState
            ([])
            ([executor ^ExecutionEnvironment env]
             (let [command (repl-command/project->repl-start-command (.getBasePath project))]
-              (setup-settings this)
+              (setup-settings project this)
               (proxy [CommandLineState] [env]
                 (createConsole [_]
                   (config.factory.base/build-console-view project "Starting nREPL server via: "))

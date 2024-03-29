@@ -22,7 +22,7 @@
               string/trim)
       ""))
 
-(defn ^:private on-repl-input [^KeyEvent key-event on-eval]
+(defn ^:private on-repl-input [project ^KeyEvent key-event on-eval]
   (.consume key-event)
   (let [repl-content ^JTextArea (.getComponent key-event)
         repl-content-text (seesaw/text repl-content)
@@ -33,7 +33,7 @@
                        (when err (str "\n" err))
                        (when out (str "\n" out))
                        (when value (str "\n;; => " value)))
-          ns-text (str "\n" (-> @db/db* :current-nrepl :ns) "> ")]
+          ns-text (str "\n" (db/get-in project [:current-nrepl :ns]) "> ")]
       (.append repl-content (str result-text ns-text)))
     (let [new-text (seesaw/text repl-content)]
       (.setCaretPosition repl-content (count new-text))
@@ -43,16 +43,16 @@
   (.consume key-event)
   (.append ^JTextArea (.getComponent key-event) "\n"))
 
-(defn ^:private initial-text+ns [initial-text]
-  (str initial-text "\n\n" (-> @db/db* :current-nrepl :ns) "> "))
+(defn ^:private initial-text+ns [project initial-text]
+  (str initial-text "\n\n" (db/get-in project [:current-nrepl :ns]) "> "))
 
-(defn ^:private on-repl-clear [^KeyEvent key-event]
+(defn ^:private on-repl-clear [project ^KeyEvent key-event]
   (.consume key-event)
-  (let [text (initial-text+ns (:initial-text @console-state*))]
+  (let [text (initial-text+ns project (:initial-text @console-state*))]
     (seesaw/text! (.getComponent key-event) text)
     (swap! console-state* assoc :last-output text)))
 
-(defn build-console [{:keys [initial-text on-eval]}]
+(defn build-console [project {:keys [initial-text on-eval]}]
   (reset! console-state* {:status :disabled
                           :initial-text initial-text
                           :last-output ""})
@@ -78,19 +78,19 @@
                                             (on-repl-new-line event)
 
                                             (and enter? (not shift?))
-                                            (on-repl-input event on-eval)
+                                            (on-repl-input project event on-eval)
 
                                             (and ctrl? l?)
-                                            (on-repl-clear event)))
+                                            (on-repl-clear project event)))
                                         (.consume event)))]) "grow"]])))
 
-(defn set-initial-text [console text]
+(defn set-initial-text [project console text]
   (swap! console-state* assoc
          :status :enabled
          :initial-text text
-         :last-output (initial-text+ns text))
+         :last-output (initial-text+ns project text))
   (let [repl-content (seesaw/select console [:#repl-content])
-        ns-text (str "\n\n" (-> @db/db* :current-nrepl :ns) "> ")]
+        ns-text (str "\n\n" (db/get-in project [:current-nrepl :ns]) "> ")]
     (.setText ^JTextArea repl-content "")
     (.append ^JTextArea repl-content (str text ns-text))))
 
@@ -106,5 +106,5 @@
   (let [repl-content (seesaw/select console [:#repl-content])]
     (.append ^JTextArea repl-content text)))
 
-(defn append-result-text [console text]
-  (append-text console (str "\n" text (-> @db/db* :current-nrepl :ns) "> ")))
+(defn append-result-text [project console text]
+  (append-text console (str "\n" text (db/get-in project [:current-nrepl :ns]) "> ")))

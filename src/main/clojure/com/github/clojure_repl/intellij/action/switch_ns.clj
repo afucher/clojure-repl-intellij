@@ -18,14 +18,14 @@
 (defn -actionPerformed [_ ^AnActionEvent event]
   ;; TODO change for listeners here or a better way to know which repl is related to current opened file
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
-    (if (-> @db/db* :current-nrepl :session-id)
-      (let [project (.getData event CommonDataKeys/PROJECT)
-            text (.getText (.getDocument editor))
-            root-zloc (z/of-string text)
-            zloc (parser/find-namespace root-zloc)
-            namespace (z/string zloc)
-            {:keys [value err]} (nrepl/eval {:project project :code (format "(in-ns '%s)" namespace)})]
-        (if err
-          (ui.hint/show-repl-error :message err :editor editor)
-          (ui.hint/show-repl-info :message value :editor editor)))
-      (ui.hint/show-error :message "No REPL connected" :editor editor))))
+    (let [project (.getData event CommonDataKeys/PROJECT)]
+      (if (db/get-in project [:current-nrepl :session-id])
+        (let [text (.getText (.getDocument editor))
+              root-zloc (z/of-string text)
+              zloc (parser/find-namespace root-zloc)
+              namespace (z/string zloc)
+              {:keys [value err]} (nrepl/eval {:project project :code (format "(in-ns '%s)" namespace) :ns namespace})]
+          (if err
+            (ui.hint/show-repl-error :message err :editor editor)
+            (ui.hint/show-repl-info :message value :editor editor)))
+        (ui.hint/show-error :message "No REPL connected" :editor editor)))))
