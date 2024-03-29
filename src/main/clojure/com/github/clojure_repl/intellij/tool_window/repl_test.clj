@@ -42,7 +42,7 @@
        boolean))
 
 (def ^:private test-result-type->color
-  {:pass ui.color/success-foreground
+  {:pass ui.color/normal-foreground
    :fail ui.color/fail-foreground
    :error ui.color/error-foreground})
 
@@ -72,15 +72,15 @@
     (.moveToOffset (.getCaretModel editor) offset)))
 
 (defn ^:private test-report-content ^JComponent [vars]
-  (mig/mig-panel
-   :items
-   (remove
-    nil?
-    (for [[_var tests] vars]
-      (let [non-passing (remove #(= "pass" (:type %)) tests)]
-        (when (seq non-passing)
-          [(seesaw/scrollable
-            (mig/mig-panel
+  (seesaw/scrollable
+   (mig/mig-panel
+    :items
+    (remove
+     nil?
+     (for [[_var tests] vars]
+       (let [non-passing (remove #(= "pass" (:type %)) tests)]
+         (when (seq non-passing)
+           [(mig/mig-panel
              :items
              (for [{:keys [var context type message expected actual diffs error gen-input] :as test} non-passing]
                [(mig/mig-panel
@@ -108,7 +108,7 @@
                            (label "actual: " actual)))
                        (when (seq error)
                          [(label "error: " error)
-                           ;; TODO implement support to check stacktrace error
+                               ;; TODO implement support to check stacktrace error
                           #_[(seesaw/button :text "View stacktrace"
                                             :mnemonic "S"
                                             :listen [:action (fn [_]
@@ -121,8 +121,8 @@
                       flatten
                       (remove nil?)
                       (partition 2)
-                      vec)) "span"]))
-            :border nil) "span"]))))))
+                      vec)) "span"])) "span"])))))
+   :border nil))
 
 (defn ^:private test-report-title-summary [summary elapsed-time]
   (let [failed (when (> (:fail summary) 0) (:fail summary))

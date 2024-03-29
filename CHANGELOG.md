@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Improve success test report message UI.
+
 ## 0.1.7
 
 - Use cider-nrepl middleware to support more features.

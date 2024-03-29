@@ -1,8 +1,9 @@
 (ns com.github.clojure-repl.intellij.ui.color
   (:import
-   [com.intellij.ui JBColor]))
+   [com.intellij.ui JBColor]
+   [com.intellij.util.ui UIUtil]))
 
-(def success-foreground JBColor/GREEN)
+(def normal-foreground (UIUtil/getToolTipForeground))
 (def fail-foreground JBColor/RED)
 (def error-foreground JBColor/RED)
 
