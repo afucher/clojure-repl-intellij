@@ -13,10 +13,6 @@
 
 (set! *warn-on-reflection* true)
 
-(defonce current-repl* (atom {:handler nil
-                              :console nil}))
-(defonce editor-view* (atom nil))
-
 (defn ^:private initial-repl-text [project]
   (let [{:keys [clojure java nrepl]} (db/get-in project [:current-nrepl :versions])]
     (str (format ";; Connected to nREPL server - nrepl://%s:%s\n"
@@ -31,16 +27,15 @@
                  (:version-string nrepl)))))
 
 (defn build-console-view [project loading-text]
-  (reset! current-repl* {:handler nil
-                         :console nil})
-  (swap! current-repl* assoc :console (ui.repl/build-console
+  (db/assoc-in project [:console :process-handler] nil)
+  (db/assoc-in project [:console :ui] (ui.repl/build-console
                                        project
                                        {:on-eval (fn [code]
                                                    (nrepl/eval {:project project :code code}))}))
-  (ui.repl/append-text (:console @current-repl*) loading-text)
+  (ui.repl/append-text (db/get-in project [:console :ui]) loading-text)
   (proxy+ [] ConsoleView
-    (getComponent [_] (:console @current-repl*))
-    (getPreferredFocusableComponent [_] (:console @current-repl*))
+    (getComponent [_] (db/get-in project [:console :ui]))
+    (getPreferredFocusableComponent [_] (db/get-in project [:console :ui]))
     (dispose [_])
     (print [_ _ _])
     (clear [_])
@@ -59,9 +54,9 @@
     (allowHeavyFilters [_])))
 
 (defn repl-disconnected [^Project project]
-  (ui.repl/close-console (:console @current-repl*))
-  (reset! current-repl* {:handler nil
-                         :console nil})
+  (ui.repl/close-console project (db/get-in project [:console :ui]))
+  (db/assoc-in project [:console :process-handler] nil)
+  (db/assoc-in project [:console :ui] nil)
   (db/assoc-in project [:current-nrepl] nil))
 
 (defn repl-started [project extra-initial-text]
@@ -70,4 +65,4 @@
   (let [description (nrepl/describe project)]
     (db/assoc-in project [:current-nrepl :ops] (:ops description))
     (db/assoc-in project [:current-nrepl :versions] (:versions description))
-    (ui.repl/set-initial-text project (:console @current-repl*) (str (initial-repl-text project) extra-initial-text))))
+    (ui.repl/set-initial-text project (db/get-in project [:console :ui]) (str (initial-repl-text project) extra-initial-text))))

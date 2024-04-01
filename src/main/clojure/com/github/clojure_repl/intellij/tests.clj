@@ -1,6 +1,5 @@
 (ns com.github.clojure-repl.intellij.tests
   (:require
-   [com.github.clojure-repl.intellij.configuration.factory.base :as config.factory.base]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.parser :as parser]
@@ -34,9 +33,9 @@
                                 (fn []
                                   (ui.hint/show-error :message (format "No namespace '%s' found" ns) :editor editor))}))
            :on-out (fn [out]
-                     (ui.repl/append-result-text project (:console @config.factory.base/current-repl*) out))
+                     (ui.repl/append-result-text project (db/get-in project [:console :ui]) out))
            :on-err (fn [err]
-                     (ui.repl/append-result-text project (:console @config.factory.base/current-repl*) err))
+                     (ui.repl/append-result-text project (db/get-in project [:console :ui]) err))
            :on-failed (fn [result]
                         ;; TODO highlight errors on editor
                         (doseq [[key fns] (db/global-get-in [:on-test-failed-fns-by-key])]

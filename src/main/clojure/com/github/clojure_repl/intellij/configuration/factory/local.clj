@@ -43,7 +43,7 @@
                         (.setWorkDirectory (.getBasePath project)))
         handler (.createColoredProcessHandler (ProcessHandlerFactory/getInstance)
                                               command-line)]
-    (swap! config.factory.base/current-repl* assoc :handler handler)
+    (db/assoc-in project [:console :process-handler] handler)
     (.addProcessListener handler
                          (proxy+ [] ProcessListener
                            (onTextAvailable [_ ^ProcessEvent event _key]
@@ -52,7 +52,7 @@
                                  (db/assoc-in project [:settings :nrepl-host] host)
                                  (db/assoc-in project [:settings :nrepl-port] port)
                                  (config.factory.base/repl-started project (repl-started-initial-text command-str)))
-                               (ui.repl/append-text (:console @config.factory.base/current-repl*) (.getText event))))
+                               (ui.repl/append-text (db/get-in project [:console :ui]) (.getText event))))
                            (processWillTerminate [_ _ _] (config.factory.base/repl-disconnected project))))
     (logger/info "Starting nREPL process:" command-str)
     handler))
@@ -67,9 +67,9 @@
                                          (map #(.getName ^Project %)))) "wrap"]]))
 
 (set! *warn-on-reflection* false)
-(defn ^:private apply-editor-to [^RunConfigurationBase configuration-base]
-  (let [editor @config.factory.base/editor-view*
-        project (seesaw/text (seesaw/select editor [:#project]))]
+(defn ^:private apply-editor-to [project ^RunConfigurationBase configuration-base]
+  (let [ui (db/get-in project [:run-configuration :ui])
+        project (seesaw/text (seesaw/select ui [:#project]))]
     (.setProject (.getOptions configuration-base) project)))
 
 (defn ^:private setup-settings [project ^RunConfigurationBase configuration-base]
@@ -78,9 +78,9 @@
 (set! *warn-on-reflection* true)
 
 (defn ^:private reset-editor-from-settings [project]
-  (let [editor @config.factory.base/editor-view*
+  (let [ui (db/get-in project [:run-configuration :ui])
         settings (db/get-in project [:settings])]
-    (seesaw/text! (seesaw/select editor [:#project]) (:project settings))))
+    (seesaw/text! (seesaw/select ui [:#project]) (:project settings))))
 
 (defn configuration-factory ^ConfigurationFactory [^ConfigurationType type]
   (proxy [ConfigurationFactory] [type]
@@ -95,11 +95,11 @@
          (getConfigurationEditor []
            (proxy+ [] com.intellij.openapi.options.SettingsEditor
              (createEditor [_]
-               (let [editor-view (build-editor-view)]
-                 (reset! config.factory.base/editor-view* editor-view)
-                 editor-view))
+               (let [editor-ui (build-editor-view)]
+                 (db/assoc-in project [:run-configuration :ui] editor-ui)
+                 editor-ui))
              (applyEditorTo [_ configuration-base]
-               (apply-editor-to configuration-base))
+               (apply-editor-to project configuration-base))
 
              (resetEditorFrom [_ configuration-base]
                (setup-settings project configuration-base)

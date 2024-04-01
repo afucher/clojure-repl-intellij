@@ -3,7 +3,6 @@
    :name com.github.clojure_repl.intellij.action.EvalLastSexp
    :extends com.intellij.openapi.actionSystem.AnAction)
   (:require
-   [com.github.clojure-repl.intellij.configuration.factory.base :as config.factory.base]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.parser :as parser]
@@ -39,7 +38,7 @@
               ;; TODO how we can avoid coupling config.repl ns with this?
               ;; maybe have a listener only for stdout?
              (when out
-               (ui.repl/append-result-text project (:console @config.factory.base/current-repl*) out))
+               (ui.repl/append-result-text project (db/get-in project [:console :ui]) out))
              (app-manager/invoke-later!
               {:invoke-fn (fn []
                             (if err

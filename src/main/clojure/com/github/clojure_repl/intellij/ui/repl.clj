@@ -14,8 +14,6 @@
 (def ^:private code-to-eval-regexp #".*>\s+([^>]+)$")
 (def ^:private color-repl-primary "#1d252c")
 
-(defonce ^:private console-state* (atom {:last-output nil}))
-
 (defn ^:private extract-code-to-eval [repl-content-text]
   (or (some-> (re-find code-to-eval-regexp repl-content-text)
               last
@@ -26,8 +24,9 @@
   (.consume key-event)
   (let [repl-content ^JTextArea (.getComponent key-event)
         repl-content-text (seesaw/text repl-content)
-        code-to-eval (extract-code-to-eval repl-content-text)]
-    (seesaw/text! repl-content (str (:last-output @console-state*) code-to-eval))
+        code-to-eval (extract-code-to-eval repl-content-text)
+        last-output (db/get-in project [:console :state :last-output])]
+    (seesaw/text! repl-content (str last-output code-to-eval))
     (let [{:keys [value out err]} (on-eval code-to-eval)
           result-text (str
                        (when err (str "\n" err))
@@ -37,7 +36,7 @@
       (.append repl-content (str result-text ns-text)))
     (let [new-text (seesaw/text repl-content)]
       (.setCaretPosition repl-content (count new-text))
-      (swap! console-state* assoc :last-output new-text))))
+      (db/assoc-in project [:console :state :last-output] new-text))))
 
 (defn ^:private on-repl-new-line [^KeyEvent key-event]
   (.consume key-event)
@@ -48,14 +47,14 @@
 
 (defn ^:private on-repl-clear [project ^KeyEvent key-event]
   (.consume key-event)
-  (let [text (initial-text+ns project (:initial-text @console-state*))]
+  (let [text (initial-text+ns project (db/get-in project [:console :state :initial-text]))]
     (seesaw/text! (.getComponent key-event) text)
-    (swap! console-state* assoc :last-output text)))
+    (db/assoc-in project [:console :state :last-output] text)))
 
 (defn build-console [project {:keys [initial-text on-eval]}]
-  (reset! console-state* {:status :disabled
-                          :initial-text initial-text
-                          :last-output ""})
+  (db/assoc-in project [:console :state] {:status :disabled
+                                          :initial-text initial-text
+                                          :last-output ""})
   (seesaw/scrollable
    (mig/mig-panel
     :id :repl-input-layout
@@ -66,9 +65,9 @@
               :multi-line? true
               :editable? true
               :background color-repl-primary
-              :text (:last-output @console-state*)
+              :text (db/get-in project [:console :state :last-output])
               :listen [:key-pressed (fn [^KeyEvent event]
-                                      (if (identical? :enabled (:status @console-state*))
+                                      (if (identical? :enabled (db/get-in project [:console :state :status]))
                                         (let [ctrl? (not= 0 (bit-and (.getModifiers event) InputEvent/CTRL_MASK))
                                               shift? (not= 0 (bit-and (.getModifiers event) InputEvent/SHIFT_MASK))
                                               enter? (= KeyEvent/VK_ENTER (.getKeyCode event))
@@ -85,10 +84,9 @@
                                         (.consume event)))]) "grow"]])))
 
 (defn set-initial-text [project console text]
-  (swap! console-state* assoc
-         :status :enabled
-         :initial-text text
-         :last-output (initial-text+ns project text))
+  (db/assoc-in project [:console :state] {:status :enabled
+                                          :initial-text text
+                                          :last-output (initial-text+ns project text)})
   (let [repl-content (seesaw/select console [:#repl-content])
         ns-text (str "\n\n" (db/get-in project [:current-nrepl :ns]) "> ")]
     (.setText ^JTextArea repl-content "")
@@ -96,9 +94,9 @@
 
 (def ^:private ^DateTimeFormatter time-formatter (DateTimeFormatter/ofPattern "dd/MM/yyyy HH:mm:ss"))
 
-(defn close-console [console]
+(defn close-console [project console]
   (let [repl-content (seesaw/select console [:#repl-content])]
-    (swap! console-state* assoc :status :disabled)
+    (db/assoc-in project [:console :state :status] :disabled)
     (seesaw/config! repl-content :editable? false)
     (.append ^JTextArea repl-content (format "\n*** Closed on %s ***" (.format time-formatter (java.time.LocalDateTime/now))))))
 

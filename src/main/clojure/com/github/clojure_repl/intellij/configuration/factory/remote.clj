@@ -37,7 +37,7 @@
       (db/assoc-in project [:settings :nrepl-port] (parse-long port))))
 
   (let [handler (NopProcessHandler.)]
-    (swap! config.factory.base/current-repl* assoc :handler handler)
+    (db/assoc-in project [:console :process-handler] handler)
     (.addProcessListener handler
                          (proxy+ [] ProcessListener
                            (startNotified [_ _] (config.factory.base/repl-started project ""))
@@ -51,7 +51,7 @@
   (->> (seesaw/selection repl-mode)
        (seesaw/id-of)))
 
-(defn ^:private build-editor-view []
+(defn ^:private build-editor-ui []
   (let [repl-mode-group (seesaw/button-group)
         panel (mig/mig-panel
                :border (IdeBorderFactory/createTitledBorder "NREPL connection")
@@ -86,15 +86,15 @@
 
 (set! *warn-on-reflection* false)
 (defn ^:private apply-editor-to [^RunConfigurationBase configuration-base project]
-  (let [editor @config.factory.base/editor-view*
-        host (seesaw/text (seesaw/select editor [:#nrepl-host]))
-        project-path (seesaw/text (seesaw/select editor [:#project]))
-        mode (if (manual? editor) :manual-config :file-config)]
+  (let [ui (db/get-in project [:run-configuration :ui])
+        host (seesaw/text (seesaw/select ui [:#nrepl-host]))
+        project-path (seesaw/text (seesaw/select ui [:#project]))
+        mode (if (manual? ui) :manual-config :file-config)]
     (db/assoc-in project [:settings :nrepl-host] host)
     (.setNreplHost (.getOptions configuration-base) host)
     (db/assoc-in project [:settings :mode] mode)
     (.setMode (.getOptions configuration-base) (name mode))
-    (when-let [nrepl-port (parse-long (seesaw/text (seesaw/select editor [:#nrepl-port])))]
+    (when-let [nrepl-port (parse-long (seesaw/text (seesaw/select ui [:#nrepl-port])))]
       (db/assoc-in project [:settings :nrepl-port] nrepl-port)
       (.setNreplPort (.getOptions configuration-base) (str nrepl-port))
       (db/assoc-in project [:settings :project] host)
@@ -111,11 +111,11 @@
     (db/assoc-in project [:settings :mode] (keyword mode))))
 
 (defn ^:private reset-editor-from-settings [project]
-  (let [editor @config.factory.base/editor-view*
+  (let [ui (db/get-in project [:run-configuration :ui])
         settings (db/get-in project [:settings])]
-    (seesaw/text! (seesaw/select editor [:#nrepl-host]) (:nrepl-host settings))
-    (seesaw/text! (seesaw/select editor [:#nrepl-port]) (:nrepl-port settings))
-    (seesaw/text! (seesaw/select editor [:#project]) (:project settings))))
+    (seesaw/text! (seesaw/select ui [:#nrepl-host]) (:nrepl-host settings))
+    (seesaw/text! (seesaw/select ui [:#nrepl-port]) (:nrepl-port settings))
+    (seesaw/text! (seesaw/select ui [:#project]) (:project settings))))
 
 (defn configuration-factory ^ConfigurationFactory [^ConfigurationType type]
   (proxy [ConfigurationFactory] [type]
@@ -130,9 +130,9 @@
          (getConfigurationEditor []
            (proxy+ [] com.intellij.openapi.options.SettingsEditor
              (createEditor [_]
-               (let [editor-view (build-editor-view)]
-                 (reset! config.factory.base/editor-view* editor-view)
-                 editor-view))
+               (let [editor-ui (build-editor-ui)]
+                 (db/assoc-in project [:run-configuration :ui] editor-ui)
+                 editor-ui))
              (applyEditorTo [_ configuration-base]
                (apply-editor-to configuration-base project))
 
