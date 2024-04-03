@@ -9,6 +9,12 @@
 
 (def ^:private empty-project
   {:project nil
+   :console {:state {:last-output nil
+                     :initial-text nil
+                     :status nil}
+             :process-handler nil
+             :ui nil}
+   :run-configuration {:ui nil}
    :current-nrepl {:session-id nil
                    :ns "user"}
    :settings {:nrepl-port nil
