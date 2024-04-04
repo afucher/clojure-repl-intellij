@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.0.0
+
 - Improve success test report message UI.
 - Support multiple opened projects. #51
 - Fix eval not using same session as load-file. #52
