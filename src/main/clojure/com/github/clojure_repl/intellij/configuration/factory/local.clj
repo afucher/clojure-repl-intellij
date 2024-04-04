@@ -59,12 +59,12 @@
 
 (defn ^:private build-editor-view []
   (mig/mig-panel
-   :border (IdeBorderFactory/createTitledBorder "nREPL connection")
-   :items [[(seesaw/label "Project") ""]
-           [(seesaw/combobox :id    :project
-                             :model (->> (ProjectManager/getInstance)
-                                         .getOpenProjects
-                                         (map #(.getName ^Project %)))) "wrap"]]))
+    :border (IdeBorderFactory/createTitledBorder "nREPL connection")
+    :items [[(seesaw/label "Project") ""]
+            [(seesaw/combobox :id    :project
+                              :model (->> (ProjectManager/getInstance)
+                                          .getOpenProjects
+                                          (map #(.getName ^Project %)))) "wrap"]]))
 
 (set! *warn-on-reflection* false)
 (defn ^:private apply-editor-to [project ^RunConfigurationBase configuration-base]

@@ -43,6 +43,9 @@
 (defn assoc-in [^Project project fields value]
   (swap! db* clojure.core/assoc-in (concat [:projects (.getBasePath project)] fields) value))
 
+(defn update-in [^Project project fields fn]
+  (swap! db* clojure.core/update-in (concat [:projects (.getBasePath project)] fields) fn))
+
 (defn global-update-in [fields value]
   (swap! db* clojure.core/update-in fields value))
 

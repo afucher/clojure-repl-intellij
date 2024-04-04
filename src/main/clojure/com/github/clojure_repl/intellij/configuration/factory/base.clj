@@ -53,11 +53,18 @@
     (createConsoleActions [_] (into-array AnAction []))
     (allowHeavyFilters [_])))
 
+(defn ^:private on-repl-evaluated [project {:keys [out err]}]
+  (when err
+    (ui.repl/append-result-text project (db/get-in project [:console :ui]) err))
+  (when out
+    (ui.repl/append-result-text project (db/get-in project [:console :ui]) out)))
+
 (defn repl-disconnected [^Project project]
   (ui.repl/close-console project (db/get-in project [:console :ui]))
   (db/assoc-in project [:console :process-handler] nil)
   (db/assoc-in project [:console :ui] nil)
-  (db/assoc-in project [:current-nrepl] nil))
+  (db/assoc-in project [:current-nrepl] nil)
+  (db/update-in project [:on-repl-evaluated-fns] (fn [fns] (remove #(= on-repl-evaluated %) fns))))
 
 (defn repl-started [project extra-initial-text]
   (nrepl/clone-session project)
@@ -65,4 +72,5 @@
   (let [description (nrepl/describe project)]
     (db/assoc-in project [:current-nrepl :ops] (:ops description))
     (db/assoc-in project [:current-nrepl :versions] (:versions description))
-    (ui.repl/set-initial-text project (db/get-in project [:console :ui]) (str (initial-repl-text project) extra-initial-text))))
+    (ui.repl/set-initial-text project (db/get-in project [:console :ui]) (str (initial-repl-text project) extra-initial-text))
+    (db/update-in project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated))))

@@ -18,18 +18,15 @@
     (-> (nrepl.core/client conn 60000)
         (nrepl.core/message message)
         doall
-        first)))
+        nrepl.core/combine-responses)))
 
 (defn eval [& {:keys [^Project project ns code]
                :or {ns (or (db/get-in project [:current-nrepl :ns]) "user")}}]
-  (let [{:keys [ns out] :as response} (send-message project {:op "eval" :code code :ns ns :session (db/get-in project [:current-nrepl :session-id])})]
+  (let [{:keys [ns] :as response} (send-message project {:op "eval" :code code :ns ns :session (db/get-in project [:current-nrepl :session-id])})]
     (when ns
       (db/assoc-in project [:current-nrepl :ns] ns))
-    (when out
-      ;; TODO print `out` to current console. Depends on listeners for that.
-      out)
     (doseq [fn (db/get-in project [:on-repl-evaluated-fns])]
-      (fn response))
+      (fn project response))
     response))
 
 (defn clone-session [^Project project]
@@ -52,8 +49,7 @@
   (send-message project {:op "info" :ns ns :sym sym}))
 
 (defn run-tests [^Project project {:keys [ns tests on-ns-not-found on-out on-err on-succeeded on-failed]}]
-  (let [{:keys [summary results status out err] :as response}
-        (send-message project {:op "test" :ns ns :tests (when (seq tests) tests)})]
+  (let [{:keys [summary results status out err] :as response} (send-message project {:op "test" :ns ns :tests (when (seq tests) tests)})]
     (when (some #(= % "namespace-not-found") status)
       (on-ns-not-found ns))
     (when out (on-out out))

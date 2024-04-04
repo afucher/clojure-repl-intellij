@@ -31,7 +31,7 @@
           result-text (str
                        (when err (str "\n" err))
                        (when out (str "\n" out))
-                       (when value (str "\n;; => " value)))
+                       (when value (str "\n;; => " (last value))))
           ns-text (str "\n" (db/get-in project [:current-nrepl :ns]) "> ")]
       (.append repl-content (str result-text ns-text)))
     (let [new-text (seesaw/text repl-content)]
