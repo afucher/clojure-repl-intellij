@@ -14,12 +14,11 @@
                      :status nil}
              :process-handler nil
              :ui nil}
-   :run-configuration {:ui nil}
+   :run-configurations {}
    :current-nrepl {:session-id nil
-                   :ns "user"}
-   :settings {:nrepl-port nil
-              :nrepl-host "localhost"
-              :remote-repl-mode :manual-config}
+                   :ns "user"
+                   :port nil
+                   :host nil}
    :on-repl-file-loaded-fns []
    :on-repl-evaluated-fns []
    :ops {}})
@@ -40,10 +39,10 @@
   ([fields default]
    (clojure.core/get-in @db* fields default)))
 
-(defn assoc-in [^Project project fields value]
+(defn assoc-in! [^Project project fields value]
   (swap! db* clojure.core/assoc-in (concat [:projects (.getBasePath project)] fields) value))
 
-(defn update-in [^Project project fields fn]
+(defn update-in! [^Project project fields fn]
   (swap! db* clojure.core/update-in (concat [:projects (.getBasePath project)] fields) fn))
 
 (defn global-update-in [fields value]
