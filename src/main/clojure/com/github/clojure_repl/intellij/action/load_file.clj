@@ -7,7 +7,6 @@
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.ui.hint :as ui.hint]
-   [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
    [com.github.ericdallo.clj4intellij.tasks :as tasks])
   (:import
@@ -29,10 +28,8 @@
            (fn [_indicator]
              (let [path (.getCanonicalPath vf)
                    file (io/file path)
-                   {:keys [err]} (nrepl/load-file project file)]
+                   _ (nrepl/load-file project file)]
                (app-manager/invoke-later!
                 {:invoke-fn (fn []
-                              (when err
-                                (ui.repl/append-result-text project (db/get-in project [:console :ui]) err))
                               (ui.hint/show-repl-info :message (str "Loaded file " path) :editor editor))}))))
           (ui.hint/show-error :message "No REPL connected" :editor editor))))))

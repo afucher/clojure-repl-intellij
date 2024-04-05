@@ -3,6 +3,7 @@
    :name com.github.clojure_repl.intellij.action.SwitchNs
    :extends com.intellij.openapi.actionSystem.AnAction)
   (:require
+   [clojure.string :as string]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.parser :as parser]
@@ -27,5 +28,5 @@
               {:keys [value err]} (nrepl/eval {:project project :code (format "(in-ns '%s)" namespace) :ns namespace})]
           (if err
             (ui.hint/show-repl-error :message err :editor editor)
-            (ui.hint/show-repl-info :message value :editor editor)))
+            (ui.hint/show-repl-info :message (string/join "\n" value) :editor editor)))
         (ui.hint/show-error :message "No REPL connected" :editor editor)))))

@@ -7,11 +7,11 @@
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.parser :as parser]
    [com.github.clojure-repl.intellij.ui.hint :as ui.hint]
-   [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
    [com.github.ericdallo.clj4intellij.tasks :as tasks]
    [com.github.ericdallo.clj4intellij.util :as util]
-   [rewrite-clj.zip :as z])
+   [rewrite-clj.zip :as z]
+   [clojure.string :as string])
   (:import
    [com.intellij.openapi.actionSystem CommonDataKeys]
    [com.intellij.openapi.actionSystem AnActionEvent]
@@ -34,14 +34,10 @@
                  zloc (parser/find-form-at-pos root-zloc (inc row) col)
                  code (z/string zloc)
                  ns (some-> (parser/find-namespace root-zloc) z/string)
-                 {:keys [value out err]} (nrepl/eval {:project project :code code :ns ns})]
-              ;; TODO how we can avoid coupling config.repl ns with this?
-              ;; maybe have a listener only for stdout?
-             (when out
-               (ui.repl/append-result-text project (db/get-in project [:console :ui]) out))
+                 {:keys [value err]} (nrepl/eval {:project project :code code :ns ns})]
              (app-manager/invoke-later!
               {:invoke-fn (fn []
                             (if err
                               (ui.hint/show-repl-error :message err :editor editor)
-                              (ui.hint/show-repl-info :message value :editor editor)))}))))
+                              (ui.hint/show-repl-info :message (string/join "\n" value) :editor editor)))}))))
         (ui.hint/show-error :message "No REPL connected" :editor editor)))))
