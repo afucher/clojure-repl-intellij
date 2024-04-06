@@ -1,7 +1,4 @@
-(ns com.github.clojure-repl.intellij.action.run-ns-tests
-  (:gen-class
-   :name com.github.clojure_repl.intellij.action.RunNsTests
-   :extends com.intellij.openapi.actionSystem.AnAction)
+(ns com.github.clojure-repl.intellij.action.test
   (:require
    [com.github.clojure-repl.intellij.tests :as tests])
   (:import
@@ -11,6 +8,10 @@
 
 (set! *warn-on-reflection* true)
 
-(defn -actionPerformed [_ ^AnActionEvent event]
+(defn run-ns-tests-action [^AnActionEvent event]
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
     (tests/run-ns-tests editor)))
+
+(defn run-cursor-test-action [^AnActionEvent event]
+  (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
+    (tests/run-at-cursor editor)))
