@@ -31,7 +31,7 @@
                               (app-manager/invoke-later!
                                {:invoke-fn
                                 (fn []
-                                  (ui.hint/show-error :message (format "No namespace '%s' found" ns) :editor editor))}))
+                                  (ui.hint/show-error :message (format "No namespace '%s' found. Did you load the file?" ns) :editor editor))}))
            :on-out (fn [out]
                      (ui.repl/append-result-text project (db/get-in project [:console :ui]) out))
            :on-err (fn [err]
@@ -68,7 +68,7 @@
         ns (-> (parser/find-namespace root-zloc) z/string)]
     (if-let [test (some-> (parser/find-var-at-pos root-zloc (inc row) col) z/string)]
       (run editor ns [test])
-      (ui.hint/show-error :message "No test var found" :editor editor))))
+      (ui.hint/show-error :message "No test var found, did you eval the var?" :editor editor))))
 
 (defn run-ns-tests [^Editor editor]
   (let [text (.getText (.getDocument editor))
