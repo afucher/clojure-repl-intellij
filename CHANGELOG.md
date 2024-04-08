@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ## 1.0.1
+ 
+- Fix support for IntelliJ 2024.1
 
 ## 1.0.0
 
