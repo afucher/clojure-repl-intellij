@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.0.2
+
 - Fix noisy exceptions introduced on 1.0.1 when opening multiple projects.
 
 ## 1.0.1
