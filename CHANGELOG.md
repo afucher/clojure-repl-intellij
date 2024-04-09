@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix noisy exceptions introduced on 1.0.1 when opening multiple projects.
+
 ## 1.0.1
  
 - Fix support for IntelliJ 2024.1
