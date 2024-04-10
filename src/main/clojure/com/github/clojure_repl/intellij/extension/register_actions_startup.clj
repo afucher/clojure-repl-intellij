@@ -19,31 +19,31 @@
                            :description "Run test at cursor"
                            :icon Icons/CLOJURE_REPL
                            :keyboard-shortcut {:first "shift alt T" :second "shift alt T" :replace-all true}
-                           :on-performed a.test/run-cursor-test-action)
+                           :on-performed #'a.test/run-cursor-test-action)
   (action/register-action! :id "ClojureREPL.RunNsTests"
                            :title "Run namespace tests"
                            :description "Run all namespaces tests"
                            :icon Icons/CLOJURE_REPL
                            :keyboard-shortcut {:first "shift alt T" :second "shift alt N" :replace-all true}
-                           :on-performed a.test/run-ns-tests-action)
+                           :on-performed #'a.test/run-ns-tests-action)
   (action/register-action! :id "ClojureREPL.LoadFile"
                            :title "Load file to REPL"
                            :description "Load file to REPL"
                            :icon Icons/CLOJURE_REPL
                            :keyboard-shortcut {:first "shift alt L" :replace-all true}
-                           :on-performed a.eval/load-file-action)
+                           :on-performed #'a.eval/load-file-action)
   (action/register-action! :id "ClojureREPL.EvalLastSexp"
                            :title "Eval last sexp"
                            :description "Eval the expression preceding cursor"
                            :icon Icons/CLOJURE_REPL
                            :keyboard-shortcut {:first "shift alt E" :replace-all true}
-                           :on-performed a.eval/eval-last-sexpr-action)
+                           :on-performed #'a.eval/eval-last-sexpr-action)
   (action/register-action! :id "ClojureREPL.SwitchNs"
                            :title "Switch REPL namespace"
                            :description "Switch REPL namespace to current opened file namespace"
                            :icon Icons/CLOJURE_REPL
                            :keyboard-shortcut {:first "shift alt N" :replace-all true}
-                           :on-performed a.eval/switch-ns-action)
+                           :on-performed #'a.eval/switch-ns-action)
 
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true
