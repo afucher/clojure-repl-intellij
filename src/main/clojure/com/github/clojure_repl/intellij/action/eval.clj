@@ -12,7 +12,8 @@
   (:import
    [com.intellij.openapi.actionSystem CommonDataKeys]
    [com.intellij.openapi.actionSystem AnActionEvent]
-   [com.intellij.openapi.editor Editor]))
+   [com.intellij.openapi.editor Editor]
+   [com.intellij.openapi.vfs VirtualFile]))
 
 (set! *warn-on-reflection* true)
 
@@ -24,12 +25,13 @@
          (.getProject editor)
          "REPL: Loading file"
          (fn [_indicator]
-           (let [{:keys [status err]} (nrepl/load-file project editor)]
+           (let [virtual-file (.getData event CommonDataKeys/VIRTUAL_FILE)
+                 {:keys [status err]} (nrepl/load-file project editor virtual-file)]
              (app-manager/invoke-later!
               {:invoke-fn (fn []
                             (if (and (contains? status "eval-error") err)
                               (ui.hint/show-repl-error :message err :editor editor)
-                              (ui.hint/show-repl-info :message (str "Loaded file " (.getPath (.getVirtualFile editor))) :editor editor)))}))))
+                              (ui.hint/show-repl-info :message (str "Loaded file " (.getPath ^VirtualFile virtual-file)) :editor editor)))}))))
         (ui.hint/show-error :message "No REPL connected" :editor editor)))))
 
 (defn eval-last-sexpr-action [^AnActionEvent event]
