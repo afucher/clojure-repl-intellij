@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.0.3
+
 - Fix Load file action not showing the error in case of eval error.
 - Fix Override configuration when editing multiple configs in same project. #42
 
