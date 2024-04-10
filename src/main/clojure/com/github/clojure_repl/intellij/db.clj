@@ -14,11 +14,10 @@
                      :status nil}
              :process-handler nil
              :ui nil}
-   :run-configurations {}
    :current-nrepl {:session-id nil
                    :ns "user"
-                   :port nil
-                   :host nil}
+                   :nrepl-port nil
+                   :nrepl-host nil}
    :on-repl-file-loaded-fns []
    :on-repl-evaluated-fns []
    :ops {}})
@@ -53,3 +52,12 @@
                                 (if (clojure.core/get projects (.getBasePath project))
                                   projects
                                   (assoc projects (.getBasePath project) (assoc empty-project :project project))))))
+
+(comment
+  ;; Useful for db debugging
+  (require '[clojure.pprint :as pp])
+  (defn db-p [] (second (first  (second (first @db*)))))
+  (def p (:project (db-p)))
+
+  (assoc-in! p [:ops] {})
+  (pp/pprint (:ops (db-p))))

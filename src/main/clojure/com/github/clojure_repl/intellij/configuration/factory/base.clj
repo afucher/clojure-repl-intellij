@@ -5,7 +5,6 @@
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.rpl.proxy-plus :refer [proxy+]])
   (:import
-   [com.intellij.execution.configurations RunConfigurationBase]
    [com.intellij.execution.ui ConsoleView]
    [com.intellij.ide.plugins PluginManagerCore]
    [com.intellij.openapi.actionSystem AnAction]
@@ -13,12 +12,6 @@
    [com.intellij.openapi.project Project]))
 
 (set! *warn-on-reflection* true)
-
-(defn get-in-configuration [project ^RunConfigurationBase configuration-base fields]
-  (db/get-in project (concat [:run-configurations (.getName configuration-base)] fields)))
-
-(defn assoc-in-configuration! [project ^RunConfigurationBase configuration-base fields value]
-  (db/assoc-in! project (concat [:run-configurations (.getName configuration-base)] fields) value))
 
 (defn ^:private initial-repl-text [project]
   (let [{:keys [clojure java nrepl]} (db/get-in project [:current-nrepl :versions])]
