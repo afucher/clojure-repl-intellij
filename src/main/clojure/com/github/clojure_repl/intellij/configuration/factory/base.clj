@@ -16,8 +16,8 @@
 (defn ^:private initial-repl-text [project]
   (let [{:keys [clojure java nrepl]} (db/get-in project [:current-nrepl :versions])]
     (str (format ";; Connected to nREPL server - nrepl://%s:%s\n"
-                 (db/get-in project [:settings :nrepl-host])
-                 (db/get-in project [:settings :nrepl-port]))
+                 (db/get-in project [:current-nrepl :nrepl-host])
+                 (db/get-in project [:current-nrepl :nrepl-port]))
          (format ";; Clojure REPL Intellij %s\n"
                  (.getVersion
                   (PluginManagerCore/getPlugin (PluginId/getId "com.github.clojure-repl"))))
@@ -27,11 +27,11 @@
                  (:version-string nrepl)))))
 
 (defn build-console-view [project loading-text]
-  (db/assoc-in project [:console :process-handler] nil)
-  (db/assoc-in project [:console :ui] (ui.repl/build-console
-                                       project
-                                       {:on-eval (fn [code]
-                                                   (nrepl/eval {:project project :code code}))}))
+  (db/assoc-in! project [:console :process-handler] nil)
+  (db/assoc-in! project [:console :ui] (ui.repl/build-console
+                                        project
+                                        {:on-eval (fn [code]
+                                                    (nrepl/eval {:project project :code code}))}))
   (ui.repl/append-text (db/get-in project [:console :ui]) loading-text)
   (proxy+ [] ConsoleView
     (getComponent [_] (db/get-in project [:console :ui]))
@@ -61,16 +61,16 @@
 
 (defn repl-disconnected [^Project project]
   (ui.repl/close-console project (db/get-in project [:console :ui]))
-  (db/assoc-in project [:console :process-handler] nil)
-  (db/assoc-in project [:console :ui] nil)
-  (db/assoc-in project [:current-nrepl] nil)
-  (db/update-in project [:on-repl-evaluated-fns] (fn [fns] (remove #(= on-repl-evaluated %) fns))))
+  (db/assoc-in! project [:console :process-handler] nil)
+  (db/assoc-in! project [:console :ui] nil)
+  (db/assoc-in! project [:current-nrepl] nil)
+  (db/update-in! project [:on-repl-evaluated-fns] (fn [fns] (remove #(= on-repl-evaluated %) fns))))
 
 (defn repl-started [project extra-initial-text]
   (nrepl/clone-session project)
   (nrepl/eval {:project project :code "*ns*"})
   (let [description (nrepl/describe project)]
-    (db/assoc-in project [:current-nrepl :ops] (:ops description))
-    (db/assoc-in project [:current-nrepl :versions] (:versions description))
+    (db/assoc-in! project [:current-nrepl :ops] (:ops description))
+    (db/assoc-in! project [:current-nrepl :versions] (:versions description))
     (ui.repl/set-initial-text project (db/get-in project [:console :ui]) (str (initial-repl-text project) extra-initial-text))
-    (db/update-in project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated))))
+    (db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated))))

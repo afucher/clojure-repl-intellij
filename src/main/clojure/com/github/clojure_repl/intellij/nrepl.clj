@@ -6,14 +6,15 @@
   (:import
    [com.intellij.openapi.editor Editor]
    [com.intellij.openapi.project Project]
+   [com.intellij.openapi.vfs VirtualFile]
    [nrepl.transport FnTransport]))
 
 (set! *warn-on-reflection* true)
 
 (defn ^:private send-message [project message]
   (with-open [conn ^FnTransport (nrepl.core/connect
-                                 :host (db/get-in project [:settings :nrepl-host])
-                                 :port (db/get-in project [:settings :nrepl-port]))]
+                                 :host (db/get-in project [:current-nrepl :nrepl-host])
+                                 :port (db/get-in project [:current-nrepl :nrepl-port]))]
     ;; TODO Improve this timeout, what will happen for tests/evals
     ;; taking more than this timeout? should we really fail?
     (-> (nrepl.core/client conn 60000)
@@ -25,20 +26,20 @@
                :or {ns (or (db/get-in project [:current-nrepl :ns]) "user")}}]
   (let [{:keys [ns] :as response} (send-message project {:op "eval" :code code :ns ns :session (db/get-in project [:current-nrepl :session-id])})]
     (when ns
-      (db/assoc-in project [:current-nrepl :ns] ns))
+      (db/assoc-in! project [:current-nrepl :ns] ns))
     (doseq [fn (db/get-in project [:on-repl-evaluated-fns])]
       (fn project response))
     response))
 
 (defn clone-session [^Project project]
-  (db/assoc-in project [:current-nrepl :session-id] (:new-session (send-message project {:op "clone"}))))
+  (db/assoc-in! project [:current-nrepl :session-id] (:new-session (send-message project {:op "clone"}))))
 
-(defn load-file [project ^Editor editor]
+(defn load-file [project ^Editor editor ^VirtualFile virtual-file]
   (let [response (send-message project {:op "load-file"
                                         :session (db/get-in project [:current-nrepl :session-id])
                                         :file (.getText (.getDocument editor))
-                                        :file-path  (some-> (.getVirtualFile editor) .getPath)
-                                        :file-name (some-> (.getVirtualFile editor) .getName)})]
+                                        :file-path  (some-> virtual-file .getPath)
+                                        :file-name (some-> virtual-file .getName)})]
     (doseq [fn (db/get-in project [:on-repl-evaluated-fns])]
       (fn project response))
     response))
