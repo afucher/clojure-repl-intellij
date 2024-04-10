@@ -4,6 +4,7 @@
    [com.github.clojure-repl.intellij.db :as db]
    [nrepl.core :as nrepl.core])
   (:import
+   [com.intellij.openapi.editor Editor]
    [com.intellij.openapi.project Project]
    [nrepl.transport FnTransport]))
 
@@ -32,15 +33,15 @@
 (defn clone-session [^Project project]
   (db/assoc-in! project [:current-nrepl :session-id] (:new-session (send-message project {:op "clone"}))))
 
-(defn load-file [project ^java.io.File file]
-  (let [result (send-message project {:op "load-file"
-                                      :session (db/get-in project [:current-nrepl :session-id])
-                                      :file (slurp file)
-                                      :file-path (.getCanonicalPath file)
-                                      :file-name (.getName file)})]
-    (doseq [fn (db/get-in project [:on-repl-file-loaded-fns])]
-      (fn file))
-    result))
+(defn load-file [project ^Editor editor]
+  (let [response (send-message project {:op "load-file"
+                                        :session (db/get-in project [:current-nrepl :session-id])
+                                        :file (.getText (.getDocument editor))
+                                        :file-path  (some-> (.getVirtualFile editor) .getPath)
+                                        :file-name (some-> (.getVirtualFile editor) .getName)})]
+    (doseq [fn (db/get-in project [:on-repl-evaluated-fns])]
+      (fn project response))
+    response))
 
 (defn describe [^Project project]
   (send-message project {:op "describe"}))

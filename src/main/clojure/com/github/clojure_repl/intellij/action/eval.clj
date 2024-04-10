@@ -1,6 +1,5 @@
 (ns com.github.clojure-repl.intellij.action.eval
   (:require
-   [clojure.java.io :as io]
    [clojure.string :as string]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
@@ -13,27 +12,25 @@
   (:import
    [com.intellij.openapi.actionSystem CommonDataKeys]
    [com.intellij.openapi.actionSystem AnActionEvent]
-   [com.intellij.openapi.editor Editor]
-   [com.intellij.openapi.vfs VirtualFile]))
+   [com.intellij.openapi.editor Editor]))
 
 (set! *warn-on-reflection* true)
 
 (defn load-file-action [^AnActionEvent event]
-  (when-let [vf ^VirtualFile (.getData event CommonDataKeys/VIRTUAL_FILE)]
-    (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
-      (let [project (.getProject editor)]
-        (if (db/get-in project [:current-nrepl :session-id])
-          (tasks/run-background-task!
-           (.getProject editor)
-           "REPL: Loading file"
-           (fn [_indicator]
-             (let [path (.getCanonicalPath vf)
-                   file (io/file path)
-                   _ (nrepl/load-file project file)]
-               (app-manager/invoke-later!
-                {:invoke-fn (fn []
-                              (ui.hint/show-repl-info :message (str "Loaded file " path) :editor editor))}))))
-          (ui.hint/show-error :message "No REPL connected" :editor editor))))))
+  (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
+    (let [project (.getProject editor)]
+      (if (db/get-in project [:current-nrepl :session-id])
+        (tasks/run-background-task!
+         (.getProject editor)
+         "REPL: Loading file"
+         (fn [_indicator]
+           (let [{:keys [status err]} (nrepl/load-file project editor)]
+             (app-manager/invoke-later!
+              {:invoke-fn (fn []
+                            (if (and (contains? status "eval-error") err)
+                              (ui.hint/show-repl-error :message err :editor editor)
+                              (ui.hint/show-repl-info :message (str "Loaded file " (.getPath (.getVirtualFile editor))) :editor editor)))}))))
+        (ui.hint/show-error :message "No REPL connected" :editor editor)))))
 
 (defn eval-last-sexpr-action [^AnActionEvent event]
   ;; TODO change for listeners here or a better way to know which repl is related to current opened file

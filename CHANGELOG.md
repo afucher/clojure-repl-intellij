@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix Load file action not showing the error in case of eval error.
+
 ## 1.0.2
 
 - Fix noisy exceptions introduced on 1.0.1 when opening multiple projects.
