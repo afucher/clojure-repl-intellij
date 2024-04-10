@@ -18,21 +18,21 @@
 (set! *warn-on-reflection* true)
 
 (defn load-file-action [^AnActionEvent event]
-  (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
-    (let [project (.getProject editor)]
-      (if (db/get-in project [:current-nrepl :session-id])
-        (tasks/run-background-task!
-         (.getProject editor)
-         "REPL: Loading file"
-         (fn [_indicator]
-           (let [virtual-file (.getData event CommonDataKeys/VIRTUAL_FILE)
-                 {:keys [status err]} (nrepl/load-file project editor virtual-file)]
-             (app-manager/invoke-later!
-              {:invoke-fn (fn []
-                            (if (and (contains? status "eval-error") err)
-                              (ui.hint/show-repl-error :message err :editor editor)
-                              (ui.hint/show-repl-info :message (str "Loaded file " (.getPath ^VirtualFile virtual-file)) :editor editor)))}))))
-        (ui.hint/show-error :message "No REPL connected" :editor editor)))))
+  (when-let [virtual-file ^VirtualFile (.getData event CommonDataKeys/VIRTUAL_FILE)]
+    (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
+      (let [project (.getProject editor)]
+        (if (db/get-in project [:current-nrepl :session-id])
+          (tasks/run-background-task!
+           (.getProject editor)
+           "REPL: Loading file"
+           (fn [_indicator]
+             (let [{:keys [status err]} (nrepl/load-file project editor virtual-file)]
+               (app-manager/invoke-later!
+                {:invoke-fn (fn []
+                              (if (and (contains? status "eval-error") err)
+                                (ui.hint/show-repl-error :message err :editor editor)
+                                (ui.hint/show-repl-info :message (str "Loaded file " (.getPath ^VirtualFile virtual-file)) :editor editor)))}))))
+          (ui.hint/show-error :message "No REPL connected" :editor editor))))))
 
 (defn eval-last-sexpr-action [^AnActionEvent event]
   ;; TODO change for listeners here or a better way to know which repl is related to current opened file
