@@ -70,6 +70,8 @@
   (nrepl/clone-session project)
   (nrepl/eval {:project project :code "*ns*"})
   (let [description (nrepl/describe project)]
+    (when (:out-subscribe (:ops description))
+      (nrepl/out-subscribe project))
     (db/assoc-in! project [:current-nrepl :ops] (:ops description))
     (db/assoc-in! project [:current-nrepl :versions] (:versions description))
     (ui.repl/set-initial-text project (db/get-in project [:console :ui]) (str (initial-repl-text project) extra-initial-text))

@@ -54,6 +54,9 @@
 (defn describe [^Project project]
   (send-message project {:op "describe"}))
 
+(defn out-subscribe [^Project project]
+  (send-message project {:op "out-subscribe" :session (db/get-in project [:current-nrepl :session-id])}))
+
 (defn sym-info [^Project project ns sym]
   (send-message project {:op "info" :ns ns :sym sym :session (db/get-in project [:current-nrepl :session-id])}))
 
