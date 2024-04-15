@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix print failing tests. #62
+
 ## 1.0.3
 
 - Fix Load file action not showing the error in case of eval error.
