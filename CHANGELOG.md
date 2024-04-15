@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.0.4
+
 - Fix print failing tests. #62
 
 ## 1.0.3
