@@ -16,9 +16,10 @@
     ConfigurationType
     GeneralCommandLine
     RunConfigurationBase]
-   [com.intellij.execution.process ProcessEvent ProcessHandlerFactory ProcessListener]
+   [com.intellij.execution.process ColoredProcessHandler ProcessEvent ProcessListener]
    [com.intellij.execution.runners ExecutionEnvironment]
    [com.intellij.openapi.project Project]
+   [com.intellij.util.io BaseOutputReader$Options]
    [java.nio.charset Charset]))
 
 (set! *warn-on-reflection* true)
@@ -39,8 +40,9 @@
         command-line  (doto (GeneralCommandLine. ^java.util.List command)
                         (.setCharset (Charset/forName "UTF-8"))
                         (.setWorkDirectory (.getBasePath project)))
-        handler (.createColoredProcessHandler (ProcessHandlerFactory/getInstance)
-                                              command-line)]
+        handler (proxy [ColoredProcessHandler] [command-line]
+                  (readerOptions []
+                    (BaseOutputReader$Options/forMostlySilentProcess)))]
     (db/assoc-in! project [:console :process-handler] handler)
     (.addProcessListener handler
                          (proxy+ [] ProcessListener

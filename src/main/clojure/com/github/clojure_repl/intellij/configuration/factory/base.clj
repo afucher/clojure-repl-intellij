@@ -67,6 +67,11 @@
   (db/update-in! project [:on-repl-evaluated-fns] (fn [fns] (remove #(= on-repl-evaluated %) fns))))
 
 (defn repl-started [project extra-initial-text]
+  (nrepl/start-client!
+   :project project
+   :on-receive-async-message (fn [msg]
+                               (when (:out msg)
+                                 (ui.repl/append-result-text project (db/get-in project [:console :ui]) (:out msg)))))
   (nrepl/clone-session project)
   (nrepl/eval {:project project :code "*ns*"})
   (let [description (nrepl/describe project)]
