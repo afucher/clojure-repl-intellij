@@ -17,57 +17,72 @@
 
 (set! *warn-on-reflection* true)
 
-(defn load-file-action [^AnActionEvent event]
-  (when-let [virtual-file ^VirtualFile (.getData event CommonDataKeys/VIRTUAL_FILE)]
-    (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
-      (let [project (.getProject editor)]
-        (if (db/get-in project [:current-nrepl :session-id])
-          (tasks/run-background-task!
-           (.getProject editor)
-           "REPL: Loading file"
-           (fn [_indicator]
-             (let [{:keys [status err]} (nrepl/load-file project editor virtual-file)]
-               (app-manager/invoke-later!
-                {:invoke-fn (fn []
-                              (if (and (contains? status "eval-error") err)
-                                (ui.hint/show-repl-error :message err :editor editor)
-                                (ui.hint/show-repl-info :message (str "Loaded file " (.getPath ^VirtualFile virtual-file)) :editor editor)))}))))
-          (ui.hint/show-error :message "No REPL connected" :editor editor))))))
-
-(defn eval-last-sexpr-action [^AnActionEvent event]
-  ;; TODO change for listeners here or a better way to know which repl is related to current opened file
+(defn ^:private eval-action [^AnActionEvent event loading-msg eval-fn success-msg-fn]
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
-    (let [[row col] (util/editor->cursor-position editor)
-          project (.getData event CommonDataKeys/PROJECT)
-          text (.getText (.getDocument editor))]
+    (let [project (.getProject editor)]
       (if (db/get-in project [:current-nrepl :session-id])
         (tasks/run-background-task!
-         (.getProject editor)
-         "REPL: Evaluating"
+         project
+         loading-msg
          (fn [_indicator]
-           (let [root-zloc (z/of-string text)
-                 zloc (parser/find-form-at-pos root-zloc (inc row) col)
-                 code (z/string zloc)
-                 ns (some-> (parser/find-namespace root-zloc) z/string)
-                 {:keys [value err]} (nrepl/eval {:project project :code code :ns ns})]
-             (app-manager/invoke-later!
-              {:invoke-fn (fn []
-                            (if err
+           (app-manager/invoke-later!
+            {:invoke-fn (fn []
+                          (let [{:keys [status err] :as response} (eval-fn editor)]
+                            (if (and (contains? status "eval-error") err)
                               (ui.hint/show-repl-error :message err :editor editor)
-                              (ui.hint/show-repl-info :message (string/join "\n" value) :editor editor)))}))))
+                              (ui.hint/show-repl-info :message (success-msg-fn response) :editor editor))))})))
         (ui.hint/show-error :message "No REPL connected" :editor editor)))))
 
+(defn load-file-action [^AnActionEvent event]
+  (when-let [virtual-file ^VirtualFile (.getData event CommonDataKeys/VIRTUAL_FILE)]
+    (eval-action
+     event
+     "REPL: Loading file"
+     (fn [^Editor editor]
+       (nrepl/load-file (.getProject editor) editor virtual-file))
+     (fn [_response]
+       (str "Loaded file " (.getPath ^VirtualFile virtual-file))))))
+
+(defn eval-last-sexpr-action [^AnActionEvent event]
+  (eval-action
+   event
+   "REPL: Evaluating"
+   (fn [^Editor editor]
+     (let [[row col] (util/editor->cursor-position editor)
+           text (.getText (.getDocument editor))
+           root-zloc (z/of-string text)
+           zloc (parser/find-form-at-pos root-zloc (inc row) col)
+           code (z/string zloc)
+           ns (some-> (parser/find-namespace root-zloc) z/string)]
+       (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
+   (fn [response]
+     (string/join "\n" (:value response)))))
+
+(defn eval-defun-action [^AnActionEvent event]
+  (eval-action
+   event
+   "REPL: Evaluating"
+   (fn [^Editor editor]
+     (let [[row col] (util/editor->cursor-position editor)
+           text (.getText (.getDocument editor))
+           root-zloc (z/of-string text)
+           zloc (-> (parser/find-form-at-pos root-zloc (inc row) col)
+                    parser/to-top)
+           code (z/string zloc)
+           ns (some-> (parser/find-namespace root-zloc) z/string)]
+       (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
+   (fn [response]
+     (string/join "\n" (:value response)))))
+
 (defn switch-ns-action [^AnActionEvent event]
-  ;; TODO change for listeners here or a better way to know which repl is related to current opened file
-  (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
-    (let [project (.getData event CommonDataKeys/PROJECT)]
-      (if (db/get-in project [:current-nrepl :session-id])
-        (let [text (.getText (.getDocument editor))
-              root-zloc (z/of-string text)
-              zloc (parser/find-namespace root-zloc)
-              namespace (z/string zloc)
-              {:keys [value err]} (nrepl/eval {:project project :code (format "(in-ns '%s)" namespace) :ns namespace})]
-          (if err
-            (ui.hint/show-repl-error :message err :editor editor)
-            (ui.hint/show-repl-info :message (string/join "\n" value) :editor editor)))
-        (ui.hint/show-error :message "No REPL connected" :editor editor)))))
+  (eval-action
+   event
+   "REPL: Switching ns"
+   (fn [^Editor editor]
+     (let [text (.getText (.getDocument editor))
+           root-zloc (z/of-string text)
+           zloc (parser/find-namespace root-zloc)
+           namespace (z/string zloc)]
+       (nrepl/eval {:project (.getProject editor) :code (format "(in-ns '%s)" namespace) :ns namespace})))
+   (fn [response]
+     (string/join "\n" (:value response)))))
