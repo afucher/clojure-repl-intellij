@@ -38,6 +38,12 @@
                            :icon Icons/CLOJURE_REPL
                            :keyboard-shortcut {:first "shift alt E" :replace-all true}
                            :on-performed #'a.eval/eval-last-sexpr-action)
+  (action/register-action! :id "ClojureREPL.EvalDefun"
+                           :title "Eval defun at cursor"
+                           :description "Evaluate the current toplevel form"
+                           :icon Icons/CLOJURE_REPL
+                           :keyboard-shortcut {:first "shift alt D" :replace-all true}
+                           :on-performed #'a.eval/eval-defun-action)
   (action/register-action! :id "ClojureREPL.SwitchNs"
                            :title "Switch REPL namespace"
                            :description "Switch REPL namespace to current opened file namespace"
@@ -55,5 +61,6 @@
                                      {:type :reference :ref "ClojureREPL.RunNsTests"}
                                      {:type :reference :ref "ClojureREPL.LoadFile"}
                                      {:type :reference :ref "ClojureREPL.EvalLastSexp"}
+                                     {:type :reference :ref "ClojureREPL.ClojureREPL.EvalDefun"}
                                      {:type :reference :ref "ClojureREPL.SwitchNs"}
                                      {:type :separator}]))

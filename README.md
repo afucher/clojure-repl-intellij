@@ -43,6 +43,7 @@ configurations.
 - Connect to an existing nREPL process
 - Load file to REPL (`alt + shift + l` / `opt + shift + l`)
 - Eval code at point (`alt + shift + e` / `opt + shift + e`)
+- Eval defun at point (`alt + shift + d` / `opt + shift + d`)
 - Switch to file namespace (`alt + shift + n` / `opt + shift + n`)
 - Run ns tests  (`alt + shift + t` `alt + shift + n` / `opt + shift + t` `opt + shift + n`)
 - Run test at cursor (`alt + shift + t` `alt + shift + t` / `opt + shift + t` `opt + shift + t`)
