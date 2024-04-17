@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.1.0
+
 - Fixes Prints to stdout/stderr do not show on REPL when happens async (tests, async threads) #65
 - Fix a exception that happens after some seconds of repl running
 - Add new eval defun action.
