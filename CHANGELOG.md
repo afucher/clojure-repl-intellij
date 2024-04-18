@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.1.1
+
 - Fix minor regression exception on 1.1.0. 
 
 ## 1.1.0
