@@ -61,6 +61,6 @@
                                      {:type :reference :ref "ClojureREPL.RunNsTests"}
                                      {:type :reference :ref "ClojureREPL.LoadFile"}
                                      {:type :reference :ref "ClojureREPL.EvalLastSexp"}
-                                     {:type :reference :ref "ClojureREPL.ClojureREPL.EvalDefun"}
+                                     {:type :reference :ref "ClojureREPL.EvalDefun"}
                                      {:type :reference :ref "ClojureREPL.SwitchNs"}
                                      {:type :separator}]))

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix minor regression exception on 1.1.0. 
+
 ## 1.1.0
 
 - Fixes Prints to stdout/stderr do not show on REPL when happens async (tests, async threads) #65
