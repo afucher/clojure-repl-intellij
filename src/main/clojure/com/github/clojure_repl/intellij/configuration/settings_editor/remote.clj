@@ -10,7 +10,7 @@
   (:import
    [com.intellij.openapi.project Project ProjectManager]
    [com.intellij.ui IdeBorderFactory]
-   [javax.swing JRadioButton JTextField]))
+   [javax.swing JRadioButton]))
 
 (set! *warn-on-reflection* false)
 
@@ -46,8 +46,8 @@
                    (fn [_e]
                      (let [mode-key (mode-id-key repl-mode-group)
                            manual? (= mode-key :manual)]
-                       (.setEnabled ^JTextField (seesaw/select panel [:#nrepl-host]) manual?)
-                       (.setEnabled ^JTextField (seesaw/select panel [:#nrepl-port]) manual?))))
+                       (seesaw/config! (seesaw/select panel [:#nrepl-host]) :enabled? manual?)
+                       (seesaw/config! (seesaw/select panel [:#nrepl-port]) :enabled? manual?))))
 
     panel))
 
@@ -73,7 +73,19 @@
 
 (defn -resetEditorFrom [this configuration]
   (let [ui @(.state this)
-        options (.getOptions configuration)]
+        options (.getOptions configuration)
+        mode (name (.getMode options))]
+    (if (= :manual-config mode)
+      (do
+        (seesaw/config! (seesaw/select ui [:#manual]) :selected? true)
+        (seesaw/config! (seesaw/select ui [:#repl-file]) :selected? false)
+        (seesaw/config! (seesaw/select ui [:#nrepl-host]) :enabled? true)
+        (seesaw/config! (seesaw/select ui [:#nrepl-port]) :enabled? true))
+      (do
+        (seesaw/config! (seesaw/select ui [:#manual]) :selected? false)
+        (seesaw/config! (seesaw/select ui [:#repl-file]) :selected? true)
+        (seesaw/config! (seesaw/select ui [:#nrepl-host]) :enabled? false)
+        (seesaw/config! (seesaw/select ui [:#nrepl-port]) :enabled? false)))
     (seesaw/text! (seesaw/select ui [:#nrepl-host]) (.getNreplHost options))
     (seesaw/text! (seesaw/select ui [:#nrepl-port]) (.getNreplPort options))
     (seesaw/text! (seesaw/select ui [:#project]) (.getProject options))))
