@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.1.2
+
 - Fix ANSI chars in console removing it. #70
 
 ## 1.1.1
