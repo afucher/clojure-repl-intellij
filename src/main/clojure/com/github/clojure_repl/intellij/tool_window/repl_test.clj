@@ -48,7 +48,7 @@
 
 (defn ^:private label [key value]
   ;; TODO support ANSI colors for libs like matcher-combinators pretty prints.
-  (let [code ^String (string/replace value #"\u001B\[[;\d]*m" "")
+  (let [code (ui.color/remove-ansi-color value)
         document (.createDocument (EditorFactory/getInstance) code)
         clojure-file-type (.getStdFileType (FileTypeManager/getInstance) "clojure")
         any-project (first (.getOpenProjects (ProjectManager/getInstance)))]

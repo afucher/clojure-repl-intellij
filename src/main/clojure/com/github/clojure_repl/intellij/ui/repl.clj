@@ -2,6 +2,7 @@
   (:require
    [clojure.string :as string]
    [com.github.clojure-repl.intellij.db :as db]
+   [com.github.clojure-repl.intellij.ui.color :as ui.color]
    [seesaw.core :as seesaw]
    [seesaw.mig :as mig])
   (:import
@@ -101,7 +102,8 @@
     (.append ^JTextArea repl-content (format "\n*** Closed on %s ***" (.format time-formatter (java.time.LocalDateTime/now))))))
 
 (defn append-text [console text]
-  (let [repl-content (seesaw/select console [:#repl-content])]
+  (let [repl-content (seesaw/select console [:#repl-content])
+        text (ui.color/remove-ansi-color text)]
     (.append ^JTextArea repl-content text)))
 
 (defn append-result-text [project console text]

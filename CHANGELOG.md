@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix ANSI chars in console removing it. #70
+
 ## 1.1.1
 
 - Fix minor regression exception on 1.1.0. 
