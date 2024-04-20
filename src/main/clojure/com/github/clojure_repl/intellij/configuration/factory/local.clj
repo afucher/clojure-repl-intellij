@@ -18,10 +18,14 @@
     RunConfigurationBase]
    [com.intellij.execution.process ColoredProcessHandler ProcessEvent ProcessListener]
    [com.intellij.execution.runners ExecutionEnvironment]
-   [com.intellij.openapi.project Project]
+   [com.intellij.openapi.project Project ProjectManager]
    [com.intellij.util.io BaseOutputReader$Options]
    [java.nio.charset Charset]))
 
+(set! *warn-on-reflection* false)
+(defn ^:private project-name [configuration] (.getProject (.getOptions configuration)))
+(defn ^:private project-type [configuration] (keyword (.getProjectType (.getOptions configuration))))
+(defn ^:private aliases [configuration] (seq (.getAliases (.getOptions configuration))))
 (set! *warn-on-reflection* true)
 
 (def ^:private options-class ReplLocalRunOptions)
@@ -73,7 +77,12 @@
          (getState
            ([])
            ([executor ^ExecutionEnvironment env]
-            (let [command (repl-command/project->repl-start-command (.getBasePath project))]
+            (let [project ^Project (->> (ProjectManager/getInstance)
+                                        .getOpenProjects
+                                        (filter #(= (project-name this) (.getName ^Project %)))
+                                        first)
+                  project-type (project-type this)
+                  command (repl-command/project->repl-start-command project-type (aliases this))]
               (proxy [CommandLineState] [env]
                 (createConsole [_]
                   (config.factory.base/build-console-view project "Starting nREPL server via: "))
