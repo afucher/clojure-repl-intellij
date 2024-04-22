@@ -29,9 +29,19 @@ class ReplRemoteRunOptions : RunConfigurationOptions() {
 class ReplLocalRunOptions : RunConfigurationOptions() {
 
     private var projectOption = string("").provideDelegate(this, "project")
+    private var projectTypeOption = string("").provideDelegate(this, "projectType")
+    private var aliasesOption = list<String>().provideDelegate(this, "aliases")
 
     var project: String
         get() = projectOption.getValue(this) ?: ""
         set(value) = projectOption.setValue(this, value)
+
+    var projectType: String?
+        get() = projectTypeOption.getValue(this)
+        set(value) = projectTypeOption.setValue(this, value)
+
+    var aliases: MutableList<String>
+        get() = aliasesOption.getValue(this)
+        set(value) = aliasesOption.setValue(this, value)
 
 }

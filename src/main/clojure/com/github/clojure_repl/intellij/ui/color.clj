@@ -5,6 +5,8 @@
    [com.intellij.ui JBColor]
    [com.intellij.util.ui UIUtil]))
 
+(set! *warn-on-reflection* true)
+
 (def normal-foreground (UIUtil/getToolTipForeground))
 (def fail-foreground JBColor/RED)
 (def error-foreground JBColor/RED)

@@ -1,5 +1,7 @@
 (ns com.github.clojure-repl.intellij.interop)
 
+(set! *warn-on-reflection* true)
+
 ;; TODO move to clj4intellij
 (defn new-class
   "Dynamically resolves the class-name in class loader and creates a new instance.
