@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.2.0
+
 - Fix remote run configuration wrong state after open a previously saved configuration.
 
 ## 1.1.2
