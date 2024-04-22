@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix remote run configuration wrong state after open a previously saved configuration.
+
 ## 1.1.2
 
 - Fix ANSI chars in console removing it. #70
