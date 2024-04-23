@@ -48,16 +48,16 @@
         current-index (db/get-in project [:current-nrepl :entry-index])
         entries (db/get-in project [:current-nrepl :entry-history])]
     (when (pos? (count entries))
-      (when page-up?
-        (when (< current-index (count entries))
+      (when (and page-up?
+                 (< current-index (count entries)))
           (db/update-in! project [:current-nrepl :entry-index] inc)
           (let [entry (get entries (inc current-index))]
-            (.setText repl-content (str last-output entry)))))
-      (when page-down?
-        (when-not (neg? current-index)
+            (seesaw/config! repl-content :text (str last-output entry))))
+      (when (and page-down?
+                 (not (neg? current-index)))
           (db/update-in! project [:current-nrepl :entry-index] dec)
           (let [entry (get entries (dec current-index))]
-            (.setText repl-content (str last-output entry))))))))
+            (seesaw/config! repl-content :text (str last-output entry)))))))
 
 (defn ^:private on-repl-new-line [^KeyEvent key-event]
   (.consume key-event)
