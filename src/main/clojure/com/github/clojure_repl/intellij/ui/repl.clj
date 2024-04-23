@@ -41,24 +41,23 @@
       (db/assoc-in! project [:console :state :last-output] new-text))))
 
 (defn ^:private on-repl-history-entry [project ^KeyEvent key-event]
-  (.consume key-event)
   (let [repl-content ^JTextArea (.getComponent key-event)
         last-output (db/get-in project [:console :state :last-output])
-        up? (= KeyEvent/VK_UP (.getKeyCode key-event))
-        down? (= KeyEvent/VK_DOWN (.getKeyCode key-event))
+        page-up? (= KeyEvent/VK_PAGE_UP (.getKeyCode key-event))
+        page-down? (= KeyEvent/VK_PAGE_DOWN (.getKeyCode key-event))
         current-index (db/get-in project [:current-nrepl :entry-index])
         entries (db/get-in project [:current-nrepl :entry-history])]
-    (when up?
-      (when (<= current-index (count entries))
-        (db/update-in! project [:current-nrepl :entry-index] inc)
-        (let [entry (get entries (inc current-index))] 
-          (.setText repl-content (str last-output entry)))))
-    (when down?
-      (when (pos? current-index)
-        (db/update-in! project [:current-nrepl :entry-index] dec)
-        (let [entry (get entries (dec current-index))]
-          (.setText repl-content (str last-output entry)))))))
-  
+    (when (pos? (count entries))
+      (when page-up?
+        (when (< current-index (count entries))
+          (db/update-in! project [:current-nrepl :entry-index] inc)
+          (let [entry (get entries (inc current-index))]
+            (.setText repl-content (str last-output entry)))))
+      (when page-down?
+        (when-not (neg? current-index)
+          (db/update-in! project [:current-nrepl :entry-index] dec)
+          (let [entry (get entries (dec current-index))]
+            (.setText repl-content (str last-output entry))))))))
 
 (defn ^:private on-repl-new-line [^KeyEvent key-event]
   (.consume key-event)
@@ -92,13 +91,12 @@
                                       (if (identical? :enabled (db/get-in project [:console :state :status]))
                                         (let [ctrl? (not= 0 (bit-and (.getModifiers event) InputEvent/CTRL_MASK))
                                               shift? (not= 0 (bit-and (.getModifiers event) InputEvent/SHIFT_MASK))
-                                              alt? (not= 0 (bit-and (.getModifiers event) InputEvent/ALT_MASK))
                                               enter? (= KeyEvent/VK_ENTER (.getKeyCode event))
                                               l? (= KeyEvent/VK_L (.getKeyCode event))
-                                              up? (= KeyEvent/VK_UP (.getKeyCode event))
-                                              down? (= KeyEvent/VK_DOWN (.getKeyCode event))]
+                                              page-up? (= KeyEvent/VK_PAGE_UP (.getKeyCode event))
+                                              page-down? (= KeyEvent/VK_PAGE_DOWN (.getKeyCode event))]
                                           (cond
-                                            (or (and alt? up?) (and alt? down?))
+                                            (or (and ctrl? page-up?) (and ctrl? page-down?))
                                             (on-repl-history-entry project event)
 
                                             (and shift? enter?)

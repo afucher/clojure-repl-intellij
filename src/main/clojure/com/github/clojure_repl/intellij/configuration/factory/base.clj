@@ -79,5 +79,7 @@
       (nrepl/out-subscribe project))
     (db/assoc-in! project [:current-nrepl :ops] (:ops description))
     (db/assoc-in! project [:current-nrepl :versions] (:versions description))
+    (db/assoc-in! project [:current-nrepl :entry-history] [])
+    (db/assoc-in! project [:current-nrepl :entry-index] -1)
     (ui.repl/set-initial-text project (db/get-in project [:console :ui]) (str (initial-repl-text project) extra-initial-text))
     (db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated))))
