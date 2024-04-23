@@ -2,9 +2,13 @@
 
 ## [Unreleased]
 
+- Add entry history navigation with `ctrl + PG_UP` and `ctrl + PG_DOWN`
+
 ## 1.2.0
 
 - Fix remote run configuration wrong state after open a previously saved configuration.
+- Add support alias for Clojure and Lein project types
+- Add support choosing project type for local repl instead of only guess, now we guess when creating the run configuration but let user choose a different one.
 
 ## 1.1.2
 
