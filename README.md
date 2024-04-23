@@ -47,6 +47,7 @@ configurations.
 - Switch to file namespace (`alt + shift + n` / `opt + shift + n`)
 - Run ns tests  (`alt + shift + t` `alt + shift + n` / `opt + shift + t` `opt + shift + n`)
 - Run test at cursor (`alt + shift + t` `alt + shift + t` / `opt + shift + t` `opt + shift + t`)
+- Entry history navigation in REPL (`ctrl + PAGE_UP` or `ctrl + PAGE_DOWN`)
 
 ### Soon
 

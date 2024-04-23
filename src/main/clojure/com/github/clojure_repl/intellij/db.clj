@@ -17,7 +17,9 @@
    :current-nrepl {:session-id nil
                    :ns "user"
                    :nrepl-port nil
-                   :nrepl-host nil}
+                   :nrepl-host nil
+                   :entry-history []
+                   :entry-index -1}
    :on-repl-file-loaded-fns []
    :on-repl-evaluated-fns []
    :ops {}})

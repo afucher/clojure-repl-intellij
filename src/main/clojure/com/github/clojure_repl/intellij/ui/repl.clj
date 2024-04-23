@@ -28,6 +28,7 @@
         code-to-eval (extract-code-to-eval repl-content-text)
         last-output (db/get-in project [:console :state :last-output])]
     (seesaw/text! repl-content (str last-output code-to-eval))
+    (db/update-in! project [:current-nrepl :entry-history] #(conj % code-to-eval))
     (let [{:keys [value out err]} (on-eval code-to-eval)
           result-text (str
                        (when err (str "\n" err))
@@ -38,6 +39,25 @@
     (let [new-text (seesaw/text repl-content)]
       (.setCaretPosition repl-content (count new-text))
       (db/assoc-in! project [:console :state :last-output] new-text))))
+
+(defn ^:private on-repl-history-entry [project ^KeyEvent key-event]
+  (let [repl-content ^JTextArea (.getComponent key-event)
+        last-output (db/get-in project [:console :state :last-output])
+        page-up? (= KeyEvent/VK_PAGE_UP (.getKeyCode key-event))
+        page-down? (= KeyEvent/VK_PAGE_DOWN (.getKeyCode key-event))
+        current-index (db/get-in project [:current-nrepl :entry-index])
+        entries (db/get-in project [:current-nrepl :entry-history])]
+    (when (pos? (count entries))
+      (when (and page-up?
+                 (< current-index (count entries)))
+          (db/update-in! project [:current-nrepl :entry-index] inc)
+          (let [entry (get entries (inc current-index))]
+            (seesaw/config! repl-content :text (str last-output entry))))
+      (when (and page-down?
+                 (not (neg? current-index)))
+          (db/update-in! project [:current-nrepl :entry-index] dec)
+          (let [entry (get entries (dec current-index))]
+            (seesaw/config! repl-content :text (str last-output entry)))))))
 
 (defn ^:private on-repl-new-line [^KeyEvent key-event]
   (.consume key-event)
@@ -72,8 +92,13 @@
                                         (let [ctrl? (not= 0 (bit-and (.getModifiers event) InputEvent/CTRL_MASK))
                                               shift? (not= 0 (bit-and (.getModifiers event) InputEvent/SHIFT_MASK))
                                               enter? (= KeyEvent/VK_ENTER (.getKeyCode event))
-                                              l? (= KeyEvent/VK_L (.getKeyCode event))]
+                                              l? (= KeyEvent/VK_L (.getKeyCode event))
+                                              page-up? (= KeyEvent/VK_PAGE_UP (.getKeyCode event))
+                                              page-down? (= KeyEvent/VK_PAGE_DOWN (.getKeyCode event))]
                                           (cond
+                                            (or (and ctrl? page-up?) (and ctrl? page-down?))
+                                            (on-repl-history-entry project event)
+
                                             (and shift? enter?)
                                             (on-repl-new-line event)
 
