@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.3.0
+
 - Add entry history navigation with `ctrl + PG_UP` and `ctrl + PG_DOWN`
 
 ## 1.2.0
