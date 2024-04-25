@@ -82,8 +82,10 @@
                                         .getOpenProjects
                                         (filter #(= (project-name this) (.getName ^Project %)))
                                         first)
-                  project-type (or (project-type this)
-                                   (project/project->project-type project))
+                  config-project-type (project-type this)
+                  project-type (if (contains? project/known-project-types config-project-type)
+                                 config-project-type
+                                 (project/project->project-type project))
                   command (repl-command/project->repl-start-command project-type (aliases this))]
               (proxy [CommandLineState] [env]
                 (createConsole [_]
