@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix regression on 1.2.0: unable to run old local REPL configurations.
+
 ## 1.3.0
 
 - Add entry history navigation with `ctrl + PG_UP` and `ctrl + PG_DOWN`

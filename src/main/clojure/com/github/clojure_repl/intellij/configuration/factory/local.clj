@@ -7,7 +7,8 @@
    [com.github.clojure-repl.intellij.repl-command :as repl-command]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.logger :as logger]
-   [com.rpl.proxy-plus :refer [proxy+]])
+   [com.rpl.proxy-plus :refer [proxy+]]
+   [com.github.clojure-repl.intellij.project :as project])
   (:import
    [com.github.clojure_repl.intellij.configuration ReplLocalRunOptions]
    [com.intellij.execution.configurations
@@ -81,7 +82,10 @@
                                         .getOpenProjects
                                         (filter #(= (project-name this) (.getName ^Project %)))
                                         first)
-                  project-type (project-type this)
+                  config-project-type (project-type this)
+                  project-type (if (contains? project/known-project-types config-project-type)
+                                 config-project-type
+                                 (project/project->project-type project))
                   command (repl-command/project->repl-start-command project-type (aliases this))]
               (proxy [CommandLineState] [env]
                 (createConsole [_]

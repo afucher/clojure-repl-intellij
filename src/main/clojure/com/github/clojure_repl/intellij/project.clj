@@ -16,6 +16,8 @@
    "build.gradle" :gradle
    "build.gradle.kts" :gradle})
 
+(def known-project-types (set (vals type-by-file)))
+
 (def types
   (set (vals type-by-file)))
 
