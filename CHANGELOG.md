@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.3.1
+
 - Fix regression on 1.2.0: unable to run old local REPL configurations.
 
 ## 1.3.0
