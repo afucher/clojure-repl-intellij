@@ -14,18 +14,20 @@
    [com.github.ericdallo.clj4intellij.util :as util]
    [com.rpl.proxy-plus :refer [proxy+]]
    [seesaw.core :as seesaw]
-   [seesaw.mig :as mig])
+   [seesaw.mig :as mig]
+   [com.github.ericdallo.clj4intellij.logger :as logger])
   (:import
    [com.intellij.openapi.editor Editor EditorFactory]
    [com.intellij.openapi.editor.impl EditorImpl]
    [com.intellij.openapi.fileEditor FileDocumentManager FileEditorManager]
    [com.intellij.openapi.fileTypes FileTypeManager]
    [com.intellij.openapi.project Project ProjectManager]
+   [com.intellij.openapi.util Disposer]
    [com.intellij.openapi.util.text StringUtil]
    [com.intellij.openapi.wm ToolWindow]
    [com.intellij.ui EditorTextField]
    [com.intellij.ui.components ActionLink]
-   [com.intellij.ui.content ContentFactory$SERVICE]
+   [com.intellij.ui.content ContentFactory$SERVICE Content]
    [java.io File]
    [javax.swing JComponent JScrollPane]))
 
@@ -142,30 +144,39 @@
       (str " in " ms "ms"))))
 
 (defn ^:private on-test-failed [^Project project ^ToolWindow tool-window {:keys [results summary elapsed-time]}]
-  (when-not (.isDisposed tool-window)
+  (logger/info (str ">>>>>> .isDisposed " (.isDisposed tool-window)))
+  (logger/info (str ">>>>>> Disposer/isDisposed " (Disposer/isDisposed (.getDisposable tool-window))))
+  #_(logger/info (str ">>>>>> Disposer/isDisposing" (Disposer/isDisposing (.getDisposable tool-window))))
+  #_(logger/info (str ">>>>>> .getDisposable .isDisposed" (.isDisposed(.getDisposable tool-window))))
+  (when-not (Disposer/isDisposed (.getDisposable tool-window))
     (let [content-factory (ContentFactory$SERVICE/getInstance)
           content-manager (.getContentManager tool-window)]
       (app-manager/invoke-later!
        {:invoke-fn (fn []
                      (.removeAllContents content-manager false)
                      (doseq [[_ vars] results]
-                       (.addContent content-manager
-                                    (.createContent content-factory
-                                                    (test-report-content project vars)
-                                                    (test-report-title-summary summary elapsed-time)
-                                                    false)))
+                       (let [^Content content (.createContent content-factory
+                                                     (test-report-content project vars)
+                                                     (test-report-title-summary summary elapsed-time)
+                                                     false)]
+                         (.setDisposer content (.getDisposable tool-window))
+                         (.addContent content-manager
+                                      content)))
                      (.setAvailable tool-window true)
                      (.show tool-window))}))))
 
 (defn ^:private on-test-succeeded [^Project _project ^ToolWindow tool-window _]
+  (logger/info (str ">>>>>>" (.isDisposed tool-window)))
   (when-not (.isDisposed tool-window)
     (.removeAllContents (.getContentManager tool-window) false)
     (.setAvailable tool-window false)
     (.hide tool-window)))
 
 (defn -init [_ ^ToolWindow tool-window]
-  (db/global-update-in [:on-test-failed-fns-by-key tool-window] #(conj % #'on-test-failed))
-  (db/global-update-in [:on-test-succeeded-fns-by-key tool-window] #(conj % #'on-test-succeeded)))
+  (logger/info (str ">>>>>>" (.isDisposed tool-window)))
+  (when-not (.isDisposed tool-window)
+    (db/global-update-in [:on-test-failed-fns-by-key tool-window] #(conj % #'on-test-failed))
+    (db/global-update-in [:on-test-succeeded-fns-by-key tool-window] #(conj % #'on-test-succeeded))))
 
 (defn -manager [_ _ _])
 
