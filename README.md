@@ -49,6 +49,7 @@ configurations.
 - Switch to file namespace (`alt/opt + shift + N`)
 - Clear REPL output (`alt/opt + shift + R` `alt/opt + shift + C`)
 - Refresh all ns (`alt/opt + shift + R` `alt/opt + shift + A`)
+- Refresh changed ns (`alt/opt + shift + R` `alt/opt + shift + R`)
 - Entry history navigation in REPL (`ctrl + PAGE_UP` or `ctrl + PAGE_DOWN`)
 
 ### Soon

@@ -104,4 +104,15 @@
    (fn [response]
      (if (contains? (:status response) "ok")
        "Refreshed sucessfully"
-       "Refresh failed"))))
+       (str "Refresh failed:\n" (:error response))))))
+
+(defn refresh-changed-action [^AnActionEvent event]
+  (eval-action
+   event
+   "REPL: Refreshing changed ns"
+   (fn [^Editor editor]
+     (nrepl/refresh (.getProject editor)))
+   (fn [response]
+     (if (contains? (:status response) "ok")
+       "Refreshed sucessfully"
+       (str "Refresh failed:\n" (:error response))))))

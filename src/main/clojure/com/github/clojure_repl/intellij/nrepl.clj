@@ -126,3 +126,6 @@
 
 (defn refresh-all [^Project project]
   @(send-msg project {:op "refresh-all"}))
+
+(defn refresh [^Project project]
+  @(send-msg project {:op "refresh"}))
