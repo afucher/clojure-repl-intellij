@@ -19,18 +19,19 @@
 
 (defn ^:private eval-action [^AnActionEvent event loading-msg eval-fn success-msg-fn]
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
+
     (let [project (.getProject editor)]
       (if (db/get-in project [:current-nrepl :session-id])
         (tasks/run-background-task!
          project
          loading-msg
          (fn [_indicator]
-           (app-manager/invoke-later!
-            {:invoke-fn (fn []
-                          (let [{:keys [status err] :as response} (eval-fn editor)]
+           (let [{:keys [status err] :as response} (eval-fn editor)]
+             (app-manager/invoke-later!
+              {:invoke-fn (fn []
                             (if (and (contains? status "eval-error") err)
                               (ui.hint/show-repl-error :message err :editor editor)
-                              (ui.hint/show-repl-info :message (success-msg-fn response) :editor editor))))})))
+                              (ui.hint/show-repl-info :message (success-msg-fn response) :editor editor)))}))))
         (ui.hint/show-error :message "No REPL connected" :editor editor)))))
 
 (defn load-file-action [^AnActionEvent event]
