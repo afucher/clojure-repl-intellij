@@ -44,10 +44,11 @@ configurations.
 - Load file to REPL (`alt/opt + shift + L`)
 - Eval code at point (`alt/opt + shift + E`)
 - Eval defun at point (`alt/opt + shift + D`)
-- Clear REPL output (`alt/opt + shift + R` `alt/opt + shift + C`)
-- Switch to file namespace (`alt/opt + shift + N`)
 - Run ns tests  (`alt/opt + shift + T` `alt/opt + shift + N`)
 - Run test at cursor (`alt/opt + shift + T` `alt/opt + shift + T`)
+- Switch to file namespace (`alt/opt + shift + N`)
+- Clear REPL output (`alt/opt + shift + R` `alt/opt + shift + C`)
+- Refresh all ns (`alt/opt + shift + R` `alt/opt + shift + A`)
 - Entry history navigation in REPL (`ctrl + PAGE_UP` or `ctrl + PAGE_DOWN`)
 
 ### Soon

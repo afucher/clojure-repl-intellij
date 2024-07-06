@@ -56,6 +56,12 @@
                            :icon Icons/CLOJURE_REPL
                            :keyboard-shortcut {:first "shift alt N" :replace-all true}
                            :on-performed #'a.eval/switch-ns-action)
+  (action/register-action! :id "ClojureREPL.RefreshAll"
+                           :title "Refresh all namespaces"
+                           :description "Refresh all namespaces"
+                           :icon Icons/CLOJURE_REPL
+                           :keyboard-shortcut {:first "shift alt R" :second "shift alt A" :replace-all true}
+                           :on-performed #'a.eval/refresh-all-action)
 
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true
@@ -72,5 +78,6 @@
                                      {:type :reference :ref "ClojureREPL.EvalDefun"}
                                      {:type :separator}
                                      {:type :reference :ref "ClojureREPL.ClearReplOutput"}
+                                     {:type :reference :ref "ClojureREPL.RefreshAll"}
                                      {:type :reference :ref "ClojureREPL.SwitchNs"}
                                      {:type :separator}]))

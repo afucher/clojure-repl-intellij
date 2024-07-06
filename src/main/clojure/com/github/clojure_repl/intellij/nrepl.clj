@@ -123,3 +123,6 @@
       (if (zero? (+ (:error summary) (:fail summary)))
         (on-succeeded response)
         (on-failed response)))))
+
+(defn refresh-all [^Project project]
+  @(send-msg project {:op "refresh-all"}))

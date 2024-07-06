@@ -94,3 +94,14 @@
        (nrepl/eval {:project (.getProject editor) :code (format "(in-ns '%s)" namespace) :ns namespace})))
    (fn [response]
      (string/join "\n" (:value response)))))
+
+(defn refresh-all-action [^AnActionEvent event]
+  (eval-action
+   event
+   "REPL: Refreshing all ns"
+   (fn [^Editor editor]
+     (nrepl/refresh-all (.getProject editor)))
+   (fn [response]
+     (if (contains? (:status response) "ok")
+       "Refreshed sucessfully"
+       "Refresh failed"))))
