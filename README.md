@@ -41,12 +41,13 @@ configurations.
 
 - Start a nREPL server from IntelliJ
 - Connect to an existing nREPL process
-- Load file to REPL (`alt + shift + l` / `opt + shift + l`)
-- Eval code at point (`alt + shift + e` / `opt + shift + e`)
-- Eval defun at point (`alt + shift + d` / `opt + shift + d`)
-- Switch to file namespace (`alt + shift + n` / `opt + shift + n`)
-- Run ns tests  (`alt + shift + t` `alt + shift + n` / `opt + shift + t` `opt + shift + n`)
-- Run test at cursor (`alt + shift + t` `alt + shift + t` / `opt + shift + t` `opt + shift + t`)
+- Load file to REPL (`alt/opt + shift + L`)
+- Eval code at point (`alt/opt + shift + E`)
+- Eval defun at point (`alt/opt + shift + D`)
+- Clear REPL output (`alt/opt + shift + R` `alt/opt + shift + C`)
+- Switch to file namespace (`alt/opt + shift + N`)
+- Run ns tests  (`alt/opt + shift + T` `alt/opt + shift + N`)
+- Run test at cursor (`alt/opt + shift + T` `alt/opt + shift + T`)
 - Entry history navigation in REPL (`ctrl + PAGE_UP` or `ctrl + PAGE_DOWN`)
 
 ### Soon

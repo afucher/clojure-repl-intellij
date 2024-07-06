@@ -5,6 +5,7 @@
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.parser :as parser]
    [com.github.clojure-repl.intellij.ui.hint :as ui.hint]
+   [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
    [com.github.ericdallo.clj4intellij.tasks :as tasks]
    [com.github.ericdallo.clj4intellij.util :as util]
@@ -45,19 +46,20 @@
        (str "Loaded file " (.getPath ^VirtualFile virtual-file))))))
 
 (defn eval-last-sexpr-action [^AnActionEvent event]
-  (eval-action
-   event
-   "REPL: Evaluating"
-   (fn [^Editor editor]
-     (let [[row col] (util/editor->cursor-position editor)
-           text (.getText (.getDocument editor))
-           root-zloc (z/of-string text)
-           zloc (parser/find-form-at-pos root-zloc (inc row) col)
-           code (z/string zloc)
-           ns (some-> (parser/find-namespace root-zloc) z/string)]
-       (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
-   (fn [response]
-     (string/join "\n" (:value response)))))
+  (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
+    (let [[row col] (util/editor->cursor-position editor)]
+      (eval-action
+       event
+       "REPL: Evaluating"
+       (fn [^Editor editor]
+         (let [text (.getText (.getDocument editor))
+               root-zloc (z/of-string text)
+               zloc (parser/find-form-at-pos root-zloc (inc row) col)
+               code (z/string zloc)
+               ns (some-> (parser/find-namespace root-zloc) z/string)]
+           (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
+       (fn [response]
+         (string/join "\n" (:value response)))))))
 
 (defn eval-defun-action [^AnActionEvent event]
   (eval-action
@@ -74,6 +76,11 @@
        (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
    (fn [response]
      (string/join "\n" (:value response)))))
+
+(defn clear-repl-output-action [^AnActionEvent event]
+  (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
+    (let [project (.getProject editor)]
+      (ui.repl/clear-repl project (db/get-in project [:console :ui])))))
 
 (defn switch-ns-action [^AnActionEvent event]
   (eval-action

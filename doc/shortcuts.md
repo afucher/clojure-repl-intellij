@@ -2,11 +2,13 @@
 
 ## Actions
 
-| Shortcut                            | Description              |
-|-------------------------------------|--------------------------|
-| `alt/opt+shift+e`                   | Evaluate last sexp       |
-| `alt/opt+shift+d`                   | Evaluate defun at cursor |
-| `alt/opt+shift+l`                   | Load file                |
-| `alt/opt+shift+n`                   | Switch namespace         |
-| `alt/opt+shift+t` `alt/opt+shift+t` | Run test at cursor       |
-| `alt/opt+shift+t` `alt/opt+shift+n` | Run ns tests             |
+| Shortcut                                   | Description              |
+|--------------------------------------------|--------------------------|
+| `alt/opt + shift + E`                      | Evaluate last sexp       |
+| `alt/opt +shift + D`                       | Evaluate defun at cursor |
+| `alt/opt +shift + L`                       | Load file                |
+| `alt/opt +shift + N`                       | Switch namespace         |
+| `alt/opt +shift + R` `alt/opt + shift + C` | Clear REPL output        |
+| `alt/opt +shift + T` `alt/opt + shift + T` | Run test at cursor       |
+| `alt/opt +shift + T` `alt/opt + shift + N` | Run ns tests             |
+| `ctrl + PAGE_UP` or `ctrl + PAGE_DOWN`     | REPL history navigation  |

@@ -44,6 +44,12 @@
                            :icon Icons/CLOJURE_REPL
                            :keyboard-shortcut {:first "shift alt D" :replace-all true}
                            :on-performed #'a.eval/eval-defun-action)
+  (action/register-action! :id "ClojureREPL.ClearReplOutput"
+                           :title "Clear REPL output"
+                           :description "Clear REPL output"
+                           :icon Icons/CLOJURE_REPL
+                           :keyboard-shortcut {:first "shift alt R" :second "shift alt C"  :replace-all true}
+                           :on-performed #'a.eval/clear-repl-output-action)
   (action/register-action! :id "ClojureREPL.SwitchNs"
                            :title "Switch REPL namespace"
                            :description "Switch REPL namespace to current opened file namespace"
@@ -65,5 +71,6 @@
                                      {:type :reference :ref "ClojureREPL.EvalLastSexp"}
                                      {:type :reference :ref "ClojureREPL.EvalDefun"}
                                      {:type :separator}
+                                     {:type :reference :ref "ClojureREPL.ClearReplOutput"}
                                      {:type :reference :ref "ClojureREPL.SwitchNs"}
                                      {:type :separator}]))

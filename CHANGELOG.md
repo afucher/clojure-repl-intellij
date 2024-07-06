@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Fix freezing when running actions.
+- Add action to clear REPL output. #78
 
 ## 1.3.1
 

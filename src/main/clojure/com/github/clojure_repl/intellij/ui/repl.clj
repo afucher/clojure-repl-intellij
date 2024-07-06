@@ -6,6 +6,7 @@
    [seesaw.core :as seesaw]
    [seesaw.mig :as mig])
   (:import
+   [com.intellij.openapi.project Project]
    [java.awt.event InputEvent KeyEvent]
    [java.time.format DateTimeFormatter]
    [javax.swing JTextArea]))
@@ -50,14 +51,14 @@
     (when (pos? (count entries))
       (when (and page-up?
                  (< current-index (count entries)))
-          (db/update-in! project [:current-nrepl :entry-index] inc)
-          (let [entry (get entries (inc current-index))]
-            (seesaw/config! repl-content :text (str last-output entry))))
+        (db/update-in! project [:current-nrepl :entry-index] inc)
+        (let [entry (get entries (inc current-index))]
+          (seesaw/config! repl-content :text (str last-output entry))))
       (when (and page-down?
                  (not (neg? current-index)))
-          (db/update-in! project [:current-nrepl :entry-index] dec)
-          (let [entry (get entries (dec current-index))]
-            (seesaw/config! repl-content :text (str last-output entry)))))))
+        (db/update-in! project [:current-nrepl :entry-index] dec)
+        (let [entry (get entries (dec current-index))]
+          (seesaw/config! repl-content :text (str last-output entry)))))))
 
 (defn ^:private on-repl-new-line [^KeyEvent key-event]
   (.consume key-event)
@@ -66,11 +67,14 @@
 (defn ^:private initial-text+ns [project initial-text]
   (str initial-text "\n\n" (db/get-in project [:current-nrepl :ns]) "> "))
 
+(defn clear-repl [^Project project console]
+  (let [text (initial-text+ns project (db/get-in project [:console :state :initial-text]))]
+    (seesaw/text! (seesaw/select console [:#repl-content]) text)
+    (db/assoc-in! project [:console :state :last-output] text)))
+
 (defn ^:private on-repl-clear [project ^KeyEvent key-event]
   (.consume key-event)
-  (let [text (initial-text+ns project (db/get-in project [:console :state :initial-text]))]
-    (seesaw/text! (.getComponent key-event) text)
-    (db/assoc-in! project [:console :state :last-output] text)))
+  (clear-repl project (.getComponent key-event)))
 
 (defn build-console [project {:keys [initial-text on-eval]}]
   (db/assoc-in! project [:console :state] {:status :disabled
