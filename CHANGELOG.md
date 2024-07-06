@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.4.0
+
 - Fix freezing when running actions.
 - Add action to clear REPL output. #78
 - Add action to refresh all namespaces. #80
