@@ -57,10 +57,13 @@
                           :icon Icons/CLOJURE_REPL
                           :children [{:type :add-to-group :group-id "ToolsMenu" :anchor :first}
                                      {:type :add-to-group :group-id "EditorPopupMenu" :anchor :before :relative-to "RefactoringMenu"}
+                                     {:type :separator}
                                      {:type :reference :ref "ClojureREPL.RunCursorTest"}
                                      {:type :reference :ref "ClojureREPL.RunNsTests"}
+                                     {:type :separator}
                                      {:type :reference :ref "ClojureREPL.LoadFile"}
                                      {:type :reference :ref "ClojureREPL.EvalLastSexp"}
                                      {:type :reference :ref "ClojureREPL.EvalDefun"}
+                                     {:type :separator}
                                      {:type :reference :ref "ClojureREPL.SwitchNs"}
                                      {:type :separator}]))
