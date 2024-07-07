@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix REPL input parse of functions with `>` char. #79
+
 ## 1.4.0
 
 - Fix freezing when running actions.

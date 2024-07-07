@@ -13,11 +13,18 @@
 
 (set! *warn-on-reflection* true)
 
-(def ^:private code-to-eval-regexp #".*>\s+([^>]+)$")
 (def ^:private color-repl-primary "#1d252c")
 
+(def ^:private code-to-eval-regexp
+  #"(?mx)                    # match multiline and allow comments
+    (^[\w-.]+>\s*)        # group1: match the prompt
+    ([\s\S]*?)               # group2: match entry
+                             # - we use [\s\S] instead of . because . does not match newlines
+    (?=\n^[\w-.]+>\s*|\z) # lookahead for next prompt or end of string")
+
 (defn ^:private extract-code-to-eval [repl-content-text]
-  (or (some-> (re-find code-to-eval-regexp repl-content-text)
+  (or (some-> (re-seq code-to-eval-regexp repl-content-text)
+              last
               last
               string/trim)
       ""))
