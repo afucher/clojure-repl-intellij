@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.4.1
+
 - Fix REPL input parse of functions with `>` char. #79
 
 ## 1.4.0
