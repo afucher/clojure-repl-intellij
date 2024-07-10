@@ -10,7 +10,7 @@
 (def normal-foreground (UIUtil/getToolTipForeground))
 (def fail-foreground JBColor/RED)
 (def error-foreground JBColor/RED)
-
+(def editor-background-color (JBColor/background))
 (def low-light-foreground JBColor/GRAY)
 
 (defn remove-ansi-color ^String [text]
