@@ -1,7 +1,8 @@
 # Changelog
 
 ## [Unreleased]
-
+- add dynamic background color to REPL
+- add instructions to download babashka
 ## 1.4.1
 
 - Fix REPL input parse of functions with `>` char. #79
