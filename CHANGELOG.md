@@ -1,7 +1,6 @@
 # Changelog
 
 ## [Unreleased]
-## 1.4.2
 - add dynamic background color to REPL
 - add instructions to download babashka
 ## 1.4.1
