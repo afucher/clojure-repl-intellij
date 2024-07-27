@@ -65,7 +65,7 @@
   (let [text (.getText (.getDocument editor))
         root-zloc (z/of-string text)
         [row col] (util/editor->cursor-position editor)
-        ns (-> (parser/find-namespace root-zloc) z/string)]
+        ns (-> (parser/find-namespace root-zloc) z/string parser/remove-metadata)]
     (if-let [test (some-> (parser/find-var-at-pos root-zloc (inc row) col) z/string)]
       (run editor ns [test])
       (ui.hint/show-error :message "No test var found, did you eval the var?" :editor editor))))
@@ -74,5 +74,5 @@
   (let [text (.getText (.getDocument editor))
         root-zloc (z/of-string text)
         zloc (parser/find-namespace root-zloc)
-        ns (z/string zloc)]
+        ns (parser/remove-metadata (z/string zloc))]
     (run editor ns nil)))
