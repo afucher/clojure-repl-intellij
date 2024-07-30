@@ -62,6 +62,7 @@ Contributions are very welcome, check the [issues page](https://github.com/afuch
 
 
 ## Developing
+install babashka from https://github.com/babashka/babashka#installation
 
 `bb run-ide` to spawn a new IntelliJ session with the plugin.
 

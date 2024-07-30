@@ -13,7 +13,7 @@
 
 (set! *warn-on-reflection* true)
 
-(def ^:private color-repl-primary "#1d252c")
+(def ^:private color-repl-primary ui.color/editor-background-color)
 
 (def ^:private code-to-eval-regexp
   #"(?mx)                    # match multiline and allow comments
