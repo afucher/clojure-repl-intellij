@@ -1,5 +1,6 @@
 (ns com.github.clojure-repl.intellij.parser
   (:require
+   [clojure.string :as string]
    [rewrite-clj.zip :as z]))
 
 (defn find-by-heritability
@@ -98,3 +99,7 @@
   (-> (to-root zloc)
       (z/find-value z/next 'ns)
       z/next))
+
+(defn remove-metadata [zloc]
+  (-> (string/replace zloc #"(\^\S+\s+)+" "")
+      (string/trim)))
