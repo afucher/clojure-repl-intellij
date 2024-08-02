@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.4.2
+
 - Fix ignore namespace metadata in REPL 
 - add dynamic background color to REPL
 - add instructions to download babashka
