@@ -17,7 +17,7 @@ Checkout all available [features](https://github.com/afucher/clojure-repl-intell
 
 ---
 ## Getting Started
-After installing the plugin in IntelliJ, you can add a REPL to your Run
+After installing [the plugin](https://plugins.jetbrains.com/plugin/23073-clojure-repl) in IntelliJ, you can add a REPL to your Run
 configurations.
 
 ### Local: Start a nREPL server from IntelliJ
