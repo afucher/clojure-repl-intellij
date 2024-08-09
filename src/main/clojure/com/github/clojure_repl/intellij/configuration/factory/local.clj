@@ -4,11 +4,11 @@
    [com.github.clojure-repl.intellij.configuration.factory.base :as config.factory.base]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.interop :as interop]
+   [com.github.clojure-repl.intellij.project :as project]
    [com.github.clojure-repl.intellij.repl-command :as repl-command]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.logger :as logger]
-   [com.rpl.proxy-plus :refer [proxy+]]
-   [com.github.clojure-repl.intellij.project :as project])
+   [com.rpl.proxy-plus :refer [proxy+]])
   (:import
    [com.github.clojure_repl.intellij.configuration ReplLocalRunOptions]
    [com.intellij.execution.configurations
@@ -27,6 +27,10 @@
 (defn ^:private project-name [configuration] (.getProject (.getOptions configuration)))
 (defn ^:private project-type [configuration] (keyword (.getProjectType (.getOptions configuration))))
 (defn ^:private aliases [configuration] (seq (.getAliases (.getOptions configuration))))
+(defn ^:private env-vars [configuration]
+  (into {}
+        (mapv #(string/split % #"=")
+              (seq (.getEnvVars (.getOptions configuration))))))
 (set! *warn-on-reflection* true)
 
 (def ^:private options-class ReplLocalRunOptions)
@@ -40,11 +44,13 @@
       (when-let [[_ host port] (re-find #"Started nREPL server at (\w+):(\d+)" text)]
         [host (parse-long port)])))
 
-(defn ^:private setup-process [^Project project command]
+(defn ^:private setup-process [^Project project command env-vars]
+  (logger/info "----------__>" env-vars)
   (let [command-str (string/join " " command)
         command-line  (doto (GeneralCommandLine. ^java.util.List command)
                         (.setCharset (Charset/forName "UTF-8"))
-                        (.setWorkDirectory (.getBasePath project)))
+                        (.setWorkDirectory (.getBasePath project))
+                        (.withEnvironment env-vars))
         handler (proxy [ColoredProcessHandler] [command-line]
                   (readerOptions []
                     (BaseOutputReader$Options/forMostlySilentProcess)))]
@@ -86,9 +92,10 @@
                   project-type (if (contains? project/known-project-types config-project-type)
                                  config-project-type
                                  (project/project->project-type project))
-                  command (repl-command/project->repl-start-command project-type (aliases this))]
+                  command (repl-command/project->repl-start-command project-type (aliases this))
+                  env-vars (env-vars this)]
               (proxy [CommandLineState] [env]
                 (createConsole [_]
                   (config.factory.base/build-console-view project "Starting nREPL server via: "))
                 (startProcess []
-                  (setup-process project command)))))))))))
+                  (setup-process project command env-vars)))))))))))

@@ -31,6 +31,7 @@ class ReplLocalRunOptions : RunConfigurationOptions() {
     private var projectOption = string("").provideDelegate(this, "project")
     private var projectTypeOption = string("").provideDelegate(this, "projectType")
     private var aliasesOption = list<String>().provideDelegate(this, "aliases")
+    private var envVarsOption = list<String>().provideDelegate(this, "envVars")
 
     var project: String
         get() = projectOption.getValue(this) ?: ""
@@ -43,5 +44,9 @@ class ReplLocalRunOptions : RunConfigurationOptions() {
     var aliases: MutableList<String>
         get() = aliasesOption.getValue(this)
         set(value) = aliasesOption.setValue(this, value)
+
+    var envVars: MutableList<String>
+        get() = envVarsOption.getValue(this)
+        set(value) = envVarsOption.setValue(this, value)
 
 }

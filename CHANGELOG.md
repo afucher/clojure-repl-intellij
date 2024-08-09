@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add support for env vars on local repl.
+
 ## 1.4.2
 
 - Fix ignore namespace metadata in REPL 
