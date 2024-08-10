@@ -6,6 +6,7 @@
         com.github.ericdallo/clj4intellij {:mvn/version "0.5.2"}
         com.rpl/proxy-plus {:mvn/version "0.0.9"}
         seesaw/seesaw {:mvn/version "1.5.0"}
+        babashka/fs {:mvn/version "0.5.22"}
         rewrite-clj/rewrite-clj {:mvn/version "1.1.47"}}
  :aliases {:dev {:deps {nrepl/nrepl {:mvn/version "1.0.0"}
                         com.jetbrains.intellij.platform/ide-impl {:mvn/version "213.7172.48"

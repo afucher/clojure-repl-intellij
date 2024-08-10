@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Add support for env vars on local repl.
+- Fix support for windows. #85
 
 ## 1.4.2
 

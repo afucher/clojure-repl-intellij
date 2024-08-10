@@ -1,21 +1,69 @@
 (ns com.github.clojure-repl.intellij.repl-command
   (:require
+   [babashka.fs :as fs]
+   [clojure.java.shell :as shell]
    [clojure.string :as string]))
 
 (set! *warn-on-reflection* true)
 
 (def ^:private project-type->command
-  {:lein "lein"
-   :clojure "clojure"
-   :babashka "bb"
-   :shadow-cljs "npx shadow-cljs"
-   :boot "boot"
-   :nbb "nbb"
-   :gradle "./gradlew"})
+  {:lein ["lein"]
+   :clojure ["clojure"]
+   :babashka ["bb"]
+   :shadow-cljs ["npx" "shadow-cljs"]
+   :boot ["boot"]
+   :nbb ["nbb"]
+   :gradle ["./gradlew"]})
 
 (def ^:private middleware-versions
   {"nrepl/nrepl" "1.0.0"
    "cider/cider-nrepl" "0.45.0"})
+
+(defn ^:private psh-cmd
+  "Return the command vector that uses the PowerShell executable PSH to
+  invoke CMD-AND-ARGS."
+  ([psh & cmd-and-args]
+   (into [psh "-NoProfile" "-Command"] cmd-and-args)))
+
+(defn ^:private locate-executable
+  "Locate and return the full path to the EXECUTABLE."
+  [executable]
+  (some-> ^java.nio.file.Path (fs/which executable) .toString))
+
+(defn ^:private shell
+  [& cmd-and-args]
+  (println cmd-and-args)
+  (apply shell/sh cmd-and-args))
+
+(def ^:private windows-os?
+  (.contains (System/getProperty "os.name") "Windows"))
+
+(defn ^:private normalize-command
+  "Return CLASSPATH-CMD, but with the EXEC expanded to its full path (if found).
+
+  If the EXEC cannot be found, is one of clojure or lein and the
+  program is running on MS-Windows, then, if possible, it tries to
+  replace it with a PowerShell cmd invocation sequence in the
+  following manner, while keeping ARGS the same.
+
+  There could be two PowerShell executable available in the system
+  path: powershell.exe (up to version 5.1, comes with windows) and/or
+  pwsh.exe (versions 6 and beyond, can be installed on demand).
+
+  If powershell.exe is available, it checks if the EXEC is installed
+  in it as a module, and creates an invocation sequence as such to
+  replace the EXEC. If not, it tries the same with pwsh.exe."
+  [[exec & args :as cmd]]
+  (if (and windows-os?
+           (#{"clojure" "lein"} exec)
+           (not (locate-executable exec)))
+    (if-let [up (some #(when-let [ps (locate-executable %)]
+                         (when (= 0 (:exit (apply shell (psh-cmd ps "Get-Command" exec))))
+                           (psh-cmd ps exec)))
+                      ["powershell" "pwsh"])]
+      (into up args)
+      cmd)
+    cmd))
 
 (defn ^:private project-type->parameters [project-type aliases]
   (flatten
@@ -46,6 +94,6 @@
    middleware-versions))
 
 (defn project->repl-start-command [project-type aliases]
-  (let [command (project-type->command project-type)
+  (let [command (normalize-command (project-type->command project-type))
         parameters (replace-versions middleware-versions (project-type->parameters project-type aliases))]
-    (concat [command] parameters)))
+    (flatten (concat command parameters))))
