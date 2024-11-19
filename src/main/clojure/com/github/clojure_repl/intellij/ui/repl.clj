@@ -34,14 +34,18 @@
   (let [repl-content ^JTextArea (.getComponent key-event)
         repl-content-text (seesaw/text repl-content)
         code-to-eval (extract-code-to-eval repl-content-text)
-        last-output (db/get-in project [:console :state :last-output])]
+        last-output (db/get-in project [:console :state :last-output])
+        entries (db/get-in project [:current-nrepl :entry-history])]
     (seesaw/text! repl-content (str last-output code-to-eval))
-    (db/update-in! project [:current-nrepl :entry-history] #(conj % code-to-eval))
+    (db/assoc-in! project [:current-nrepl :entry-index] -1)
+    (when-not (or (string/blank? code-to-eval)
+                  (= code-to-eval (first entries)))
+      (db/update-in! project [:current-nrepl :entry-history] #(conj % code-to-eval)))
     (let [{:keys [value out err]} (on-eval code-to-eval)
           result-text (str
-                       (when err (str "\n" err))
-                       (when out (str "\n" out))
-                       (when value (str "\n;; => " (last value))))
+                        (when err (str "\n" err))
+                        (when out (str "\n" out))
+                        (when value (str "\n;; => " (last value))))
           ns-text (str "\n" (db/get-in project [:current-nrepl :ns]) "> ")]
       (.append repl-content (str result-text ns-text)))
     (let [new-text (seesaw/text repl-content)]
@@ -57,25 +61,28 @@
         entries (db/get-in project [:current-nrepl :entry-history])]
     (when (pos? (count entries))
       (when (and page-up?
-                 (< current-index (count entries)))
+                 (< current-index (dec (count entries))))
         (db/update-in! project [:current-nrepl :entry-index] inc)
-        (let [entry (get entries (inc current-index))]
+        (let [entry (nth entries (inc current-index))]
           (seesaw/config! repl-content :text (str last-output entry))))
       (when (and page-down?
-                 (not (neg? current-index)))
+                 (> current-index 0))
         (db/update-in! project [:current-nrepl :entry-index] dec)
-        (let [entry (get entries (dec current-index))]
+        (let [entry (nth entries (dec current-index))]
           (seesaw/config! repl-content :text (str last-output entry)))))))
 
 (defn ^:private on-repl-new-line [^KeyEvent key-event]
   (.consume key-event)
   (.append ^JTextArea (.getComponent key-event) "\n"))
 
+(defn ^:private ns-text [project]
+  (str (db/get-in project [:current-nrepl :ns]) "> "))
+
 (defn ^:private initial-text+ns [project initial-text]
-  (str initial-text "\n\n" (db/get-in project [:current-nrepl :ns]) "> "))
+  (str initial-text "\n\n" (ns-text project)))
 
 (defn clear-repl [^Project project console]
-  (let [text (initial-text+ns project (db/get-in project [:console :state :initial-text]))]
+  (let [text (str ";; Output cleared\n" (ns-text project))]
     (seesaw/text! (seesaw/select console [:#repl-content]) text)
     (db/assoc-in! project [:console :state :last-output] text)))
 

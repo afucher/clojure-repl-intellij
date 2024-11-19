@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix entries history navigation in REPL.
+
 ## 1.5.0
 
 - Add support for env vars on local repl.

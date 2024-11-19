@@ -18,7 +18,7 @@
                    :ns "user"
                    :nrepl-port nil
                    :nrepl-host nil
-                   :entry-history []
+                   :entry-history '()
                    :entry-index -1}
    :on-repl-file-loaded-fns []
    :on-repl-evaluated-fns []
