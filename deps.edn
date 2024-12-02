@@ -3,7 +3,7 @@
              "intellij-2" {:url "https://www.jetbrains.com/intellij-repository/releases"}}
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
         org.clojure/core.async {:mvn/version "1.5.648"}
-        com.github.ericdallo/clj4intellij {:mvn/version "0.5.2"}
+        com.github.ericdallo/clj4intellij {:mvn/version "0.5.3"}
         com.rpl/proxy-plus {:mvn/version "0.0.9"}
         seesaw/seesaw {:mvn/version "1.5.0"}
         babashka/fs {:mvn/version "0.5.22"}
