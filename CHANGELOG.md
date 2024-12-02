@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Fix entries history navigation in REPL.
+- Fix Local repl configuration setup when more than one project is opened.
 
 ## 1.5.0
 

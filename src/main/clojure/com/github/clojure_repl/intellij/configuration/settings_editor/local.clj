@@ -44,7 +44,7 @@
 
 (defn ^:private build-editor-ui []
   (let [opened-projects (.getOpenProjects (ProjectManager/getInstance))
-        project-type (name (project/project->project-type (first opened-projects)))]
+        project-type (name (or (project/project->project-type (first opened-projects)) :clojure))]
     (mig/mig-panel
       :border (IdeBorderFactory/createTitledBorder "nREPL connection")
       :items (remove
