@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.5.1
+
 - Fix entries history navigation in REPL.
 - Fix Local repl configuration setup when more than one project is opened.
 - Fix default shortcuts being added for already customized shortcuts. #94
