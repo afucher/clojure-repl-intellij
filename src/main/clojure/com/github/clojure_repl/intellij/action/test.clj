@@ -15,3 +15,7 @@
 (defn run-cursor-test-action [^AnActionEvent event]
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
     (tests/run-at-cursor editor)))
+
+(defn re-run-test-action [^AnActionEvent event]
+  (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
+    (tests/re-run-test editor)))

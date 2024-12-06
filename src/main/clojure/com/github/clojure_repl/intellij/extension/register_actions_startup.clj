@@ -26,6 +26,12 @@
                            :icon Icons/CLOJURE_REPL
                            :keyboard-shortcut {:first "shift alt T" :second "shift alt N" :replace-all true}
                            :on-performed #'a.test/run-ns-tests-action)
+  (action/register-action! :id "ClojureREPL.ReRunTest"
+                           :title "Re-run last test"
+                           :description "Re-run last executed test"
+                           :icon Icons/CLOJURE_REPL
+                           :keyboard-shortcut {:first "shift alt T" :second "shift alt A" :replace-all true}
+                           :on-performed #'a.test/re-run-test-action)
   (action/register-action! :id "ClojureREPL.LoadFile"
                            :title "Load file to REPL"
                            :description "Load file to REPL"
@@ -78,6 +84,7 @@
                                      {:type :separator}
                                      {:type :reference :ref "ClojureREPL.RunCursorTest"}
                                      {:type :reference :ref "ClojureREPL.RunNsTests"}
+                                     {:type :reference :ref "ClojureREPL.ReRunTest"}
                                      {:type :separator}
                                      {:type :reference :ref "ClojureREPL.LoadFile"}
                                      {:type :reference :ref "ClojureREPL.EvalLastSexp"}

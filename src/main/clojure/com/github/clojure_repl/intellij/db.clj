@@ -19,7 +19,8 @@
                    :nrepl-port nil
                    :nrepl-host nil
                    :entry-history '()
-                   :entry-index -1}
+                   :entry-index -1
+                   :last-test nil}
    :on-repl-file-loaded-fns []
    :on-repl-evaluated-fns []
    :ops {}})

@@ -23,6 +23,7 @@
        project
        "REPL: Running test"
        (fn [_indicator]
+         (db/assoc-in! project [:current-nrepl :last-test] {:ns ns :tests tests})
          (nrepl/run-tests
           project
           {:ns ns
@@ -76,3 +77,8 @@
         zloc (parser/find-namespace root-zloc)
         ns (parser/remove-metadata (z/string zloc))]
     (run editor ns nil)))
+
+(defn re-run-test [^Editor editor]
+  (if-let [{:keys [ns tests]} (db/get-in (.getProject editor) [:current-nrepl :last-test])]
+    (run editor ns tests)
+    (ui.hint/show-error :message "No last test found" :editor editor)))

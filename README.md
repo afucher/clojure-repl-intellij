@@ -46,6 +46,7 @@ configurations.
 - Eval defun at point (`alt/opt + shift + D`)
 - Run ns tests  (`alt/opt + shift + T` `alt/opt + shift + N`)
 - Run test at cursor (`alt/opt + shift + T` `alt/opt + shift + T`)
+- Re-run last test  (`alt/opt + shift + T` `alt/opt + shift + A`)
 - Switch to file namespace (`alt/opt + shift + N`)
 - Clear REPL output (`alt/opt + shift + R` `alt/opt + shift + C`)
 - Refresh all ns (`alt/opt + shift + R` `alt/opt + shift + A`)
