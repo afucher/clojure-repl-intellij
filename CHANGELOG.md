@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.6.0
+
 - Fix shortcuts not being added after 1.5.1.
 - Add Re-run last test action. #93
 
