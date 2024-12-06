@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix shortcuts not being added after 1.5.1.
+
 ## 1.5.1
 
 - Fix entries history navigation in REPL.
