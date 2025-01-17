@@ -163,9 +163,12 @@
     (.setAvailable tool-window false)
     (.hide tool-window)))
 
+(set! *warn-on-reflection* false)
 (defn -init [_ ^ToolWindow tool-window]
-  (db/global-update-in [:on-test-failed-fns-by-key tool-window] #(conj % #'on-test-failed))
-  (db/global-update-in [:on-test-succeeded-fns-by-key tool-window] #(conj % #'on-test-succeeded)))
+  (let [project (.getProject tool-window)]
+    (db/update-in! project [:on-test-failed-fns-by-key tool-window] #(conj % #'on-test-failed))
+    (db/update-in! project [:on-test-succeeded-fns-by-key tool-window] #(conj % #'on-test-succeeded))))
+(set! *warn-on-reflection* true)
 
 (defn -manager [_ _ _])
 
