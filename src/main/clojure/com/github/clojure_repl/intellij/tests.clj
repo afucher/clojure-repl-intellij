@@ -39,7 +39,7 @@
                      (ui.repl/append-result-text project (db/get-in project [:console :ui]) err))
            :on-failed (fn [result]
                         ;; TODO highlight errors on editor
-                        (doseq [[key fns] (db/global-get-in [:on-test-failed-fns-by-key])]
+                        (doseq [[key fns] (db/get-in project [:on-test-failed-fns-by-key])]
                           (doseq [fn fns]
                             (fn project key result))))
            :on-succeeded (fn [{{:keys [ns test var fail error]} :summary results :results elapsed-time :elapsed-time :as response}]
@@ -58,7 +58,7 @@
                                                                         error
                                                                         (or (some->> (:ms elapsed-time) (format " in %s ms"))
                                                                             ".")) :editor editor))
-                               (doseq [[key fns] (db/global-get-in [:on-test-succeeded-fns-by-key])]
+                               (doseq [[key fns] (db/get-in project [:on-test-succeeded-fns-by-key])]
                                  (doseq [fn fns]
                                    (fn project key response))))}))}))))))
 

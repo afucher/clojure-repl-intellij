@@ -23,11 +23,11 @@
                    :last-test nil}
    :on-repl-file-loaded-fns []
    :on-repl-evaluated-fns []
+   :on-test-failed-fns-by-key {}
+   :on-test-succeeded-fns-by-key {}
    :ops {}})
 
-(defonce ^:private db* (atom {:projects {}
-                              :on-test-failed-fns-by-key {}
-                              :on-test-succeeded-fns-by-key {}}))
+(defonce ^:private db* (atom {:projects {}}))
 
 (defn get-in
   ([project fields]
@@ -35,20 +35,11 @@
   ([^Project project fields default]
    (clojure.core/get-in @db* (concat [:projects (.getBasePath project)] fields) default)))
 
-(defn global-get-in
-  ([fields]
-   (global-get-in fields nil))
-  ([fields default]
-   (clojure.core/get-in @db* fields default)))
-
 (defn assoc-in! [^Project project fields value]
   (swap! db* clojure.core/assoc-in (concat [:projects (.getBasePath project)] fields) value))
 
 (defn update-in! [^Project project fields fn]
   (swap! db* clojure.core/update-in (concat [:projects (.getBasePath project)] fields) fn))
-
-(defn global-update-in [fields value]
-  (swap! db* clojure.core/update-in fields value))
 
 (defn init-db-for-project [^Project project]
   (swap! db* update :projects (fn [projects]
