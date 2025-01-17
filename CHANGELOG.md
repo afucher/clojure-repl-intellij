@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix error when running tests after open multiple projects
+
 ## 1.6.0
 
 - Fix shortcuts not being added after 1.5.1.
