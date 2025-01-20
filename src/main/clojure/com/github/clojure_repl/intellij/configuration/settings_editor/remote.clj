@@ -74,7 +74,7 @@
 (defn -resetEditorFrom [this configuration]
   (let [ui @(.state this)
         options (.getOptions configuration)
-        mode (name (.getMode options))]
+        mode (keyword (.getMode options))]
     (if (= :manual-config mode)
       (do
         (seesaw/config! (seesaw/select ui [:#manual]) :selected? true)
