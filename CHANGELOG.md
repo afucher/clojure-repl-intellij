@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix remote config running wrongly as repl-file.
+
 ## 1.6.1
 
 - Fix error when running tests after open multiple projects

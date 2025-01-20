@@ -20,7 +20,7 @@
 (set! *warn-on-reflection* false)
 (defn ^:private nrepl-host [configuration] (.getNreplHost (.getOptions configuration)))
 (defn ^:private nrepl-port [configuration] (.getNreplPort (.getOptions configuration)))
-(defn ^:private mode [configuration] (.getProject (.getOptions configuration)))
+(defn ^:private mode [configuration] (keyword (.getMode (.getOptions configuration))))
 (set! *warn-on-reflection* true)
 
 (def ^:private options-class ReplRemoteRunOptions)
