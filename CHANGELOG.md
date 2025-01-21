@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.6.2
+
 - Fix remote config running wrongly as repl-file.
 
 ## 1.6.1
