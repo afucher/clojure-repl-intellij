@@ -7,10 +7,9 @@
   (:import
    [com.intellij.execution.ui ConsoleView]
    [com.intellij.ide.plugins PluginManagerCore]
-   [com.intellij.openapi.actionSystem AnAction]
+   [com.intellij.openapi.actionSystem ActionManager AnAction]
    [com.intellij.openapi.extensions PluginId]
-   [com.intellij.openapi.project Project]
-   [com.github.clojure_repl.intellij Icons]))
+   [com.intellij.openapi.project Project]))
 
 (set! *warn-on-reflection* true)
 
@@ -26,6 +25,12 @@
                  (:version-string clojure)
                  (:version-string java)
                  (:version-string nrepl)))))
+
+(defn ^:private build-console-actions
+  []
+  (let [manager (ActionManager/getInstance)
+        clear-repl (.getAction manager "ClojureREPL.ClearReplOutput")]
+    [clear-repl]))
 
 (defn build-console-view [project loading-text]
   (db/assoc-in! project [:console :process-handler] nil)
@@ -51,10 +56,7 @@
     (printHyperlink [_ _ _])
     (getContentSize [_] 0)
     (canPause [_] false)
-    (createConsoleActions [_] (into-array AnAction [(proxy+
-                                                     ["Clear console" "Empty the REPL window" Icons/CLOJURE_REPL]
-                                                     AnAction
-                                                      (actionPerformed [_this _event] (ui.repl/clear-repl project (db/get-in project [:console :ui]))))]))
+    (createConsoleActions [_] (into-array AnAction (build-console-actions)))
     (allowHeavyFilters [_])))
 
 (defn ^:private on-repl-evaluated [project {:keys [out err]}]
