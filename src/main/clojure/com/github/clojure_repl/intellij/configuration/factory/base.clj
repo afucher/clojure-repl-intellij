@@ -9,7 +9,8 @@
    [com.intellij.ide.plugins PluginManagerCore]
    [com.intellij.openapi.actionSystem AnAction]
    [com.intellij.openapi.extensions PluginId]
-   [com.intellij.openapi.project Project]))
+   [com.intellij.openapi.project Project]
+   [com.github.clojure_repl.intellij Icons]))
 
 (set! *warn-on-reflection* true)
 
@@ -50,7 +51,10 @@
     (printHyperlink [_ _ _])
     (getContentSize [_] 0)
     (canPause [_] false)
-    (createConsoleActions [_] (into-array AnAction []))
+    (createConsoleActions [_] (into-array AnAction [(proxy+
+                                                     ["Clear console" "Empty the REPL window" Icons/CLOJURE_REPL]
+                                                     AnAction
+                                                      (actionPerformed [_this _event] (ui.repl/clear-repl project (db/get-in project [:console :ui]))))]))
     (allowHeavyFilters [_])))
 
 (defn ^:private on-repl-evaluated [project {:keys [out err]}]
