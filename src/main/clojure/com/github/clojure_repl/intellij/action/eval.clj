@@ -7,6 +7,7 @@
    [com.github.clojure-repl.intellij.ui.hint :as ui.hint]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
+   [com.github.ericdallo.clj4intellij.logger :as logger]
    [com.github.ericdallo.clj4intellij.tasks :as tasks]
    [com.github.ericdallo.clj4intellij.util :as util]
    [rewrite-clj.zip :as z])
@@ -14,6 +15,7 @@
    [com.intellij.openapi.actionSystem CommonDataKeys]
    [com.intellij.openapi.actionSystem AnActionEvent]
    [com.intellij.openapi.editor Editor]
+   [com.intellij.openapi.project Project]
    [com.intellij.openapi.vfs VirtualFile]))
 
 (set! *warn-on-reflection* true)
@@ -78,9 +80,10 @@
      (string/join "\n" (:value response)))))
 
 (defn clear-repl-output-action [^AnActionEvent event]
-  (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
-    (let [project (.getProject editor)]
-      (ui.repl/clear-repl project (db/get-in project [:console :ui])))))
+  (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
+        project ^Project (or (.getData event CommonDataKeys/PROJECT)
+                             (.getProject editor))]
+    (ui.repl/clear-repl project (db/get-in project [:console :ui]))))
 
 (defn switch-ns-action [^AnActionEvent event]
   (eval-action
