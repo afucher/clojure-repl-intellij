@@ -13,6 +13,7 @@
    [com.intellij.openapi.editor Editor]
    [com.intellij.openapi.project Project]
    [com.github.clojure_repl.intellij Icons]
+   [com.intellij.icons AllIcons$Actions]
    [com.intellij.openapi.actionSystem CommonDataKeys]))
 
 (set! *warn-on-reflection* true)
@@ -35,7 +36,7 @@
   (let [manager (ActionManager/getInstance)
         clear-repl (.getAction manager "ClojureREPL.ClearReplOutput")
         history-up (proxy+
-            ["Entry history navigation up" "Entry history navigation up" Icons/CLOJURE_REPL]
+            ["Entry history navigation up" "Entry history navigation up" AllIcons$Actions/PreviousOccurence]
             AnAction
              (actionPerformed [_this ^AnActionEvent event]
                               (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
@@ -43,7 +44,7 @@
                                                          (.getProject editor))]
                                    (ui.repl/history-up project))))
         history-down (proxy+
-              ["Entry history navigation down" "Entry history navigation down" Icons/CLOJURE_REPL]
+              ["Entry history navigation down" "Entry history navigation down" AllIcons$Actions/NextOccurence]
               AnAction
                (actionPerformed [_this ^AnActionEvent event]
                                 (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
