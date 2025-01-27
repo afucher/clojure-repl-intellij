@@ -7,6 +7,7 @@
   (:import
    [com.intellij.execution.ui ConsoleView]
    [com.intellij.ide.plugins PluginManagerCore]
+   [com.intellij.openapi.actionSystem AnActionEvent]
    [com.intellij.openapi.actionSystem ActionManager AnAction]
    [com.intellij.openapi.extensions PluginId]
    [com.intellij.openapi.editor Editor]
@@ -33,19 +34,23 @@
   []
   (let [manager (ActionManager/getInstance)
         clear-repl (.getAction manager "ClojureREPL.ClearReplOutput")
-        up (proxy+
+        history-up (proxy+
             ["Entry history navigation up" "Entry history navigation up" Icons/CLOJURE_REPL]
             AnAction
-             (actionPerformed [_this event]
+             (actionPerformed [_this ^AnActionEvent event]
                               (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
                                     project ^Project (or (.getData event CommonDataKeys/PROJECT)
                                                          (.getProject editor))]
                                    (ui.repl/history-up project))))
-        down (proxy+
+        history-down (proxy+
               ["Entry history navigation down" "Entry history navigation down" Icons/CLOJURE_REPL]
               AnAction
-               (actionPerformed [_this _event] #_(ui.repl/clear-repl project (db/get-in project [:console :ui]))))]
-    [clear-repl up down]))
+               (actionPerformed [_this ^AnActionEvent event]
+                                (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
+                                      project ^Project (or (.getData event CommonDataKeys/PROJECT)
+                                                           (.getProject editor))]
+                                  (ui.repl/history-down project))))]
+    [clear-repl history-up history-down]))
 
 (defn build-console-view [project loading-text]
   (db/assoc-in! project [:console :process-handler] nil)
