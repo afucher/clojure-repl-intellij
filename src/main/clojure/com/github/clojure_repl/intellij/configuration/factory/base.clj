@@ -9,7 +9,10 @@
    [com.intellij.ide.plugins PluginManagerCore]
    [com.intellij.openapi.actionSystem ActionManager AnAction]
    [com.intellij.openapi.extensions PluginId]
-   [com.intellij.openapi.project Project]))
+   [com.intellij.openapi.editor Editor]
+   [com.intellij.openapi.project Project]
+   [com.github.clojure_repl.intellij Icons]
+   [com.intellij.openapi.actionSystem CommonDataKeys]))
 
 (set! *warn-on-reflection* true)
 
@@ -29,8 +32,20 @@
 (defn ^:private build-console-actions
   []
   (let [manager (ActionManager/getInstance)
-        clear-repl (.getAction manager "ClojureREPL.ClearReplOutput")]
-    [clear-repl]))
+        clear-repl (.getAction manager "ClojureREPL.ClearReplOutput")
+        up (proxy+
+            ["Entry history navigation up" "Entry history navigation up" Icons/CLOJURE_REPL]
+            AnAction
+             (actionPerformed [_this event]
+                              (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
+                                    project ^Project (or (.getData event CommonDataKeys/PROJECT)
+                                                         (.getProject editor))]
+                                   (ui.repl/history-up project))))
+        down (proxy+
+              ["Entry history navigation down" "Entry history navigation down" Icons/CLOJURE_REPL]
+              AnAction
+               (actionPerformed [_this _event] #_(ui.repl/clear-repl project (db/get-in project [:console :ui]))))]
+    [clear-repl up down]))
 
 (defn build-console-view [project loading-text]
   (db/assoc-in! project [:console :process-handler] nil)
