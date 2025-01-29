@@ -9,7 +9,8 @@
    [com.github.ericdallo.clj4intellij.action :as action])
   (:import
    [com.github.clojure_repl.intellij Icons]
-   [com.intellij.openapi.project Project]))
+   [com.intellij.openapi.project Project]
+   [com.intellij.icons AllIcons$Actions]))
 
 (set! *warn-on-reflection* true)
 
@@ -74,6 +75,13 @@
                            :icon Icons/CLOJURE_REPL
                            :keyboard-shortcut {:first "shift alt R" :second "shift alt R" :replace-all true}
                            :on-performed #'a.eval/refresh-changed-action)
+  (action/register-action! :id "ClojureREPL.HistoryUp"
+                           :title "Moves up in history"
+                           :description "Moves up in history"
+                           :icon AllIcons$Actions/PreviousOccurence
+                           :keyboard-shortcut {:first "Control Page Down" :replace-all true}
+                           :on-performed #'a.eval/refresh-changed-action)
+  
 
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true

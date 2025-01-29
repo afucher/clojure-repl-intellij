@@ -7,14 +7,14 @@
   (:import
    [com.intellij.execution.ui ConsoleView]
    [com.intellij.ide.plugins PluginManagerCore]
-   [com.intellij.openapi.actionSystem AnActionEvent]
+   [com.intellij.openapi.actionSystem AnActionEvent KeyboardShortcut]
    [com.intellij.openapi.actionSystem ActionManager AnAction]
-   [com.intellij.openapi.extensions PluginId]
+   [com.intellij.openapi.actionSystem CommonDataKeys]
    [com.intellij.openapi.editor Editor]
+   [com.intellij.openapi.extensions PluginId]
+   [com.intellij.openapi.keymap KeymapManager]
    [com.intellij.openapi.project Project]
-   [com.github.clojure_repl.intellij Icons]
-   [com.intellij.icons AllIcons$Actions]
-   [com.intellij.openapi.actionSystem CommonDataKeys]))
+   [javax.swing KeyStroke]))
 
 (set! *warn-on-reflection* true)
 
@@ -31,9 +31,10 @@
                  (:version-string java)
                  (:version-string nrepl)))))
 
+
 (defn ^:private build-console-actions
   []
-  (let [manager (ActionManager/getInstance)
+  (let [manager (ActionManager/getInstance) 
         clear-repl (.getAction manager "ClojureREPL.ClearReplOutput")
         history-up (proxy+
             ["Entry history navigation up" "Entry history navigation up" AllIcons$Actions/PreviousOccurence]
@@ -44,7 +45,7 @@
                                                          (.getProject editor))]
                                    (ui.repl/history-up project))))
         history-down (proxy+
-              ["Entry history navigation down" "Entry history navigation down" AllIcons$Actions/NextOccurence]
+              ["Entry history navigation down" "Entry history navigation down (CTRL + PG DW)" AllIcons$Actions/NextOccurence]
               AnAction
                (actionPerformed [_this ^AnActionEvent event]
                                 (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
