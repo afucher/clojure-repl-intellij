@@ -23,7 +23,7 @@
    [com.intellij.openapi.fileTypes FileTypeManager]
    [com.intellij.openapi.project Project ProjectManager]
    [com.intellij.openapi.util.text StringUtil]
-   [com.intellij.openapi.wm ToolWindow]
+   [com.intellij.openapi.wm ToolWindow ToolWindowAnchor]
    [com.intellij.ui EditorTextField]
    [com.intellij.ui.components ActionLink]
    [com.intellij.ui.content ContentFactory$SERVICE]
@@ -187,3 +187,7 @@
 (defn -createToolWindowContent [_ _ _])
 
 (defn -getIcon [_] Icons/CLOJURE_REPL)
+
+(defn -getAnchor [_] ToolWindowAnchor/BOTTOM)
+
+(defn -manage [_ _ _ _])
