@@ -7,15 +7,9 @@
   (:import
    [com.intellij.execution.ui ConsoleView]
    [com.intellij.ide.plugins PluginManagerCore]
-   [com.intellij.openapi.actionSystem AnActionEvent KeyboardShortcut]
    [com.intellij.openapi.actionSystem ActionManager AnAction]
-   [com.intellij.openapi.actionSystem CommonDataKeys]
-   [com.intellij.openapi.editor Editor]
    [com.intellij.openapi.extensions PluginId]
-   [com.intellij.openapi.keymap KeymapManager]
-   [com.intellij.openapi.project Project]
-   [javax.swing KeyStroke]
-   [com.intellij.icons AllIcons$Actions]))
+   [com.intellij.openapi.project Project]))
 
 (set! *warn-on-reflection* true)
 
