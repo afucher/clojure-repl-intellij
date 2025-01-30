@@ -69,7 +69,12 @@ install babashka from https://github.com/babashka/babashka#installation
 
 or
 
-`bb build-plugin` to build the plugin, then install it from disk in IntelliJ, the zip should be on `./build/distributions/*.zip`.
+`bb install-plugin` to build the plugin, and install it from disk in IntelliJ automatically. You need to pass the IntelliJ plugins path:  
+e.g: ```bb install-plugin /home/youruser/.local/share/JetBrains/IdeaIC2024.3```
+
+or
+
+`bb build-plugin` to build the plugin, then install it manually from disk in IntelliJ, the zip should be on `./build/distributions/*.zip`.
 
 ## Release
 
