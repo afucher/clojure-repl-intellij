@@ -38,14 +38,7 @@
   (let [manager (ActionManager/getInstance) 
         clear-repl (.getAction manager "ClojureREPL.ClearReplOutput")
         history-up (.getAction manager "ClojureREPL.HistoryUp")
-        history-down (proxy+
-              ["Entry history navigation down" "Entry history navigation down (CTRL + PG DW)" AllIcons$Actions/NextOccurence]
-              AnAction
-               (actionPerformed [_this ^AnActionEvent event]
-                                (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
-                                      project ^Project (or (.getData event CommonDataKeys/PROJECT)
-                                                           (.getProject editor))]
-                                  (ui.repl/history-down project))))]
+        history-down (.getAction manager "ClojureREPL.HistoryDown")]
     [clear-repl history-up history-down]))
 
 (defn build-console-view [project loading-text]

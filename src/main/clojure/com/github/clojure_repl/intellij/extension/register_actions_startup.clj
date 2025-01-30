@@ -82,7 +82,13 @@
                            :description "Moves up in history"
                            :icon AllIcons$Actions/PreviousOccurence
                            :keyboard-shortcut {:first "control PAGE_UP" :replace-all true}
-                           :on-performed #'a.eval/refresh-changed-action)
+                           :on-performed #'a.eval/history-up-action)
+  (action/register-action! :id "ClojureREPL.HistoryDown"
+                           :title "Moves down in history"
+                           :description "Moves down in history"
+                           :icon AllIcons$Actions/NextOccurence
+                           :keyboard-shortcut {:first "control PAGE_DOWN" :replace-all true}
+                           :on-performed #'a.eval/history-down-action)
   
 
   (action/register-group! :id "ClojureREPL.ReplActions"
