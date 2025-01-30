@@ -16,6 +16,7 @@
    [seesaw.core :as seesaw]
    [seesaw.mig :as mig])
   (:import
+   [com.github.clojure_repl.intellij Icons]
    [com.intellij.openapi.editor Editor EditorFactory]
    [com.intellij.openapi.editor.impl EditorImpl]
    [com.intellij.openapi.fileEditor FileDocumentManager FileEditorManager]
@@ -26,6 +27,7 @@
    [com.intellij.ui EditorTextField]
    [com.intellij.ui.components ActionLink]
    [com.intellij.ui.content ContentFactory$SERVICE]
+
    [java.io File]
    [javax.swing JComponent JScrollPane]))
 
@@ -93,7 +95,7 @@
                                         :foreground (test-result-type->color (keyword type)))
                           (seesaw/label :text " in ")
                           (ActionLink. ^String var (proxy+ [] java.awt.event.ActionListener
-                                                     (actionPerformed [_ _] (navigate-to-test project test))))]) "span"]
+                                                           (actionPerformed [_ _] (navigate-to-test project test))))]) "span"]
                        (when (seq context) [(seesaw/label :text (str context)) "span"])
                        (when (seq message) [(seesaw/label :text (str message)) "span"])
                        (when (seq expected)
@@ -172,11 +174,16 @@
 
 (defn -manager [_ _ _])
 
-(defn -isApplicableAsync [_ ^Project project]
-  (any-clj-files? (.getBasePath project)))
+(defn -isApplicableAsync
+  ([_ ^Project project]
+   (any-clj-files? (.getBasePath project)))
+  ([_ ^Project project _]
+   (-isApplicableAsync _ project)))
 
 (def -isApplicable -isApplicableAsync)
 
 (defn -shouldBeAvailable [_ _] false)
 
 (defn -createToolWindowContent [_ _ _])
+
+(defn -getIcon [_] Icons/CLOJURE_REPL)
