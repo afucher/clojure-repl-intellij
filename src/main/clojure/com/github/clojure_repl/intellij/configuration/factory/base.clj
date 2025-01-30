@@ -14,7 +14,8 @@
    [com.intellij.openapi.extensions PluginId]
    [com.intellij.openapi.keymap KeymapManager]
    [com.intellij.openapi.project Project]
-   [javax.swing KeyStroke]))
+   [javax.swing KeyStroke]
+   [com.intellij.icons AllIcons$Actions]))
 
 (set! *warn-on-reflection* true)
 
@@ -36,14 +37,7 @@
   []
   (let [manager (ActionManager/getInstance) 
         clear-repl (.getAction manager "ClojureREPL.ClearReplOutput")
-        history-up (proxy+
-            ["Entry history navigation up" "Entry history navigation up" AllIcons$Actions/PreviousOccurence]
-            AnAction
-             (actionPerformed [_this ^AnActionEvent event]
-                              (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
-                                    project ^Project (or (.getData event CommonDataKeys/PROJECT)
-                                                         (.getProject editor))]
-                                   (ui.repl/history-up project))))
+        history-up (.getAction manager "ClojureREPL.HistoryUp")
         history-down (proxy+
               ["Entry history navigation down" "Entry history navigation down (CTRL + PG DW)" AllIcons$Actions/NextOccurence]
               AnAction

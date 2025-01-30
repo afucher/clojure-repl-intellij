@@ -14,7 +14,9 @@
 
 (set! *warn-on-reflection* true)
 
-(defn -runActivity [_this ^Project _project]
+(defn -runActivity 
+  "Shortcuts: https://github.com/JetBrains/intellij-community/blob/master/platform/platform-resources/src/keymaps/%24default.xml"
+  [_this ^Project _project]
   (action/register-action! :id "ClojureREPL.RunCursorTest"
                            :title "Run test at cursor"
                            :description "Run test at cursor"
@@ -79,7 +81,7 @@
                            :title "Moves up in history"
                            :description "Moves up in history"
                            :icon AllIcons$Actions/PreviousOccurence
-                           :keyboard-shortcut {:first "Control Page Down" :replace-all true}
+                           :keyboard-shortcut {:first "control PAGE_UP" :replace-all true}
                            :on-performed #'a.eval/refresh-changed-action)
   
 
