@@ -7,7 +7,7 @@
   (:import
    [com.intellij.execution.ui ConsoleView]
    [com.intellij.ide.plugins PluginManagerCore]
-   [com.intellij.openapi.actionSystem AnAction]
+   [com.intellij.openapi.actionSystem ActionManager AnAction]
    [com.intellij.openapi.extensions PluginId]
    [com.intellij.openapi.project Project]))
 
@@ -25,6 +25,15 @@
                  (:version-string clojure)
                  (:version-string java)
                  (:version-string nrepl)))))
+
+
+(defn ^:private build-console-actions
+  []
+  (let [manager (ActionManager/getInstance) 
+        clear-repl (.getAction manager "ClojureREPL.ClearReplOutput")
+        history-up (.getAction manager "ClojureREPL.HistoryUp")
+        history-down (.getAction manager "ClojureREPL.HistoryDown")]
+    [clear-repl history-up history-down]))
 
 (defn build-console-view [project loading-text]
   (db/assoc-in! project [:console :process-handler] nil)
@@ -50,7 +59,7 @@
     (printHyperlink [_ _ _])
     (getContentSize [_] 0)
     (canPause [_] false)
-    (createConsoleActions [_] (into-array AnAction []))
+    (createConsoleActions [_] (into-array AnAction (build-console-actions)))
     (allowHeavyFilters [_])))
 
 (defn ^:private on-repl-evaluated [project {:keys [out err]}]
@@ -79,7 +88,7 @@
       (nrepl/out-subscribe project))
     (db/assoc-in! project [:current-nrepl :ops] (:ops description))
     (db/assoc-in! project [:current-nrepl :versions] (:versions description))
-    (db/assoc-in! project [:current-nrepl :entry-history] [])
+    (db/assoc-in! project [:current-nrepl :entry-history] '())
     (db/assoc-in! project [:current-nrepl :entry-index] -1)
     (ui.repl/set-initial-text project (db/get-in project [:console :ui]) (str (initial-repl-text project) extra-initial-text))
     (db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated))))

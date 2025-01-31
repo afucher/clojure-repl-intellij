@@ -14,6 +14,7 @@
    [com.intellij.openapi.actionSystem CommonDataKeys]
    [com.intellij.openapi.actionSystem AnActionEvent]
    [com.intellij.openapi.editor Editor]
+   [com.intellij.openapi.project Project]
    [com.intellij.openapi.vfs VirtualFile]))
 
 (set! *warn-on-reflection* true)
@@ -78,9 +79,22 @@
      (string/join "\n" (:value response)))))
 
 (defn clear-repl-output-action [^AnActionEvent event]
-  (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
-    (let [project (.getProject editor)]
-      (ui.repl/clear-repl project (db/get-in project [:console :ui])))))
+  (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
+        project ^Project (or (.getData event CommonDataKeys/PROJECT)
+                             (.getProject editor))]
+    (ui.repl/clear-repl project (db/get-in project [:console :ui]))))
+
+(defn history-up-action [^AnActionEvent event]
+  (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
+        project ^Project (or (.getData event CommonDataKeys/PROJECT)
+                             (.getProject editor))]
+    (ui.repl/history-up project)))
+
+(defn history-down-action [^AnActionEvent event]
+  (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
+        project ^Project (or (.getData event CommonDataKeys/PROJECT)
+                             (.getProject editor))]
+    (ui.repl/history-down project)))
 
 (defn switch-ns-action [^AnActionEvent event]
   (eval-action

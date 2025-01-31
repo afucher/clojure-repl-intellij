@@ -9,11 +9,14 @@
    [com.github.ericdallo.clj4intellij.action :as action])
   (:import
    [com.github.clojure_repl.intellij Icons]
-   [com.intellij.openapi.project Project]))
+   [com.intellij.openapi.project Project]
+   [com.intellij.icons AllIcons$Actions]))
 
 (set! *warn-on-reflection* true)
 
-(defn -runActivity [_this ^Project _project]
+(defn -runActivity
+  "Shortcuts: https://github.com/JetBrains/intellij-community/blob/master/platform/platform-resources/src/keymaps/%24default.xml"
+  [_this ^Project _project]
   (action/register-action! :id "ClojureREPL.RunCursorTest"
                            :title "Run test at cursor"
                            :description "Run test at cursor"
@@ -53,7 +56,7 @@
   (action/register-action! :id "ClojureREPL.ClearReplOutput"
                            :title "Clear REPL output"
                            :description "Clear REPL output"
-                           :icon Icons/CLOJURE_REPL
+                           :icon AllIcons$Actions/GC
                            :keyboard-shortcut {:first "shift alt R" :second "shift alt C"  :replace-all true}
                            :on-performed #'a.eval/clear-repl-output-action)
   (action/register-action! :id "ClojureREPL.SwitchNs"
@@ -74,6 +77,19 @@
                            :icon Icons/CLOJURE_REPL
                            :keyboard-shortcut {:first "shift alt R" :second "shift alt R" :replace-all true}
                            :on-performed #'a.eval/refresh-changed-action)
+  (action/register-action! :id "ClojureREPL.HistoryUp"
+                           :title "Moves up in history"
+                           :description "Moves up in history"
+                           :icon AllIcons$Actions/PreviousOccurence
+                           :keyboard-shortcut {:first "control PAGE_UP" :replace-all true}
+                           :on-performed #'a.eval/history-up-action)
+  (action/register-action! :id "ClojureREPL.HistoryDown"
+                           :title "Moves down in history"
+                           :description "Moves down in history"
+                           :icon AllIcons$Actions/NextOccurence
+                           :keyboard-shortcut {:first "control PAGE_DOWN" :replace-all true}
+                           :on-performed #'a.eval/history-down-action)
+
 
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true

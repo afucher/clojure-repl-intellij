@@ -65,16 +65,16 @@ changelog {
 }
 
 java {
-    targetCompatibility = JavaVersion.VERSION_11
-    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_17
 }
 
 tasks {
     compileKotlin {
         kotlinOptions {
-            jvmTarget = "11"
-            apiVersion = "1.5"
-            languageVersion = "1.5"
+            jvmTarget = "17"
+            apiVersion = "1.9"
+            languageVersion = "1.9"
             freeCompilerArgs = listOf("-Xjvm-default=all")
         }
     }

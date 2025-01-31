@@ -52,24 +52,41 @@
       (.setCaretPosition repl-content (count new-text))
       (db/assoc-in! project [:console :state :last-output] new-text))))
 
+(defn history-up
+      [project]
+      (let [entries (db/get-in project [:current-nrepl :entry-history])
+            current-index (db/get-in project [:current-nrepl :entry-index])]
+           (when (and (pos? (count entries))
+                      (< current-index (dec (count entries))))
+                 (let [entry (nth entries (inc current-index))
+                       console (db/get-in project [:console :ui])
+                       repl-content (seesaw/select console [:#repl-content])
+                       last-output (db/get-in project [:console :state :last-output])]
+                      (db/update-in! project [:current-nrepl :entry-index] inc)
+                      (seesaw/config! repl-content :text (str last-output entry))))))
+
+(defn history-down
+  [project]
+  (let [entries (db/get-in project [:current-nrepl :entry-history])
+        current-index (db/get-in project [:current-nrepl :entry-index])]
+    (when (and (pos? (count entries))
+               (> current-index 0))
+      (let [entry (nth entries (dec current-index))
+            console (db/get-in project [:console :ui])
+            repl-content (seesaw/select console [:#repl-content])
+            last-output (db/get-in project [:console :state :last-output])]
+        (db/update-in! project [:current-nrepl :entry-index] dec)
+        (seesaw/config! repl-content :text (str last-output entry))))))
+
 (defn ^:private on-repl-history-entry [project ^KeyEvent key-event]
-  (let [repl-content ^JTextArea (.getComponent key-event)
-        last-output (db/get-in project [:console :state :last-output])
-        page-up? (= KeyEvent/VK_PAGE_UP (.getKeyCode key-event))
+  (let [page-up? (= KeyEvent/VK_PAGE_UP (.getKeyCode key-event))
         page-down? (= KeyEvent/VK_PAGE_DOWN (.getKeyCode key-event))
-        current-index (db/get-in project [:current-nrepl :entry-index])
         entries (db/get-in project [:current-nrepl :entry-history])]
     (when (pos? (count entries))
-      (when (and page-up?
-                 (< current-index (dec (count entries))))
-        (db/update-in! project [:current-nrepl :entry-index] inc)
-        (let [entry (nth entries (inc current-index))]
-          (seesaw/config! repl-content :text (str last-output entry))))
-      (when (and page-down?
-                 (> current-index 0))
-        (db/update-in! project [:current-nrepl :entry-index] dec)
-        (let [entry (nth entries (dec current-index))]
-          (seesaw/config! repl-content :text (str last-output entry)))))))
+          (when page-up?
+                (history-up project))
+          (when page-down? 
+            (history-down project)))))
 
 (defn ^:private on-repl-new-line [^KeyEvent key-event]
   (.consume key-event)
