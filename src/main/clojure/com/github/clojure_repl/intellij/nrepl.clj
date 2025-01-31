@@ -129,3 +129,11 @@
 
 (defn refresh [^Project project]
   @(send-msg project {:op "refresh"}))
+
+(defn interrupt [^Project project]
+  @(send-msg project {:op "interrupt" :session (db/get-in project [:current-nrepl :session-id])}))
+
+(comment
+  (do 
+    (eval ()))
+  )

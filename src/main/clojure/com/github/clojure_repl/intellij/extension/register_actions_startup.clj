@@ -89,6 +89,12 @@
                            :icon AllIcons$Actions/NextOccurence
                            :keyboard-shortcut {:first "control PAGE_DOWN" :replace-all true}
                            :on-performed #'a.eval/history-down-action)
+  (action/register-action! :id "ClojureREPL.Interrupt"
+                           :title "Interrupts current evaluation"
+                           :description "Interrupts current evaluation"
+                           :icon AllIcons$Actions/NextOccurence
+                           :keyboard-shortcut {:first "shift alt S" :replace-all true}
+                           :on-performed #'a.eval/interrupt)
 
 
   (action/register-group! :id "ClojureREPL.ReplActions"

@@ -20,6 +20,12 @@
 
 (set! *warn-on-reflection* true)
 
+(defn ^:private action-event->project [^AnActionEvent event]
+  (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
+        project ^Project (or (.getData event CommonDataKeys/PROJECT)
+                             (.getProject editor))]
+    project))
+
 (defn ^:private eval-action [^AnActionEvent event loading-msg eval-fn success-msg-fn]
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
 
@@ -63,6 +69,11 @@
        (fn [response]
          (string/join "\n" (:value response)))))))
 
+(defn ^:private interrupt [^AnActionEvent event]
+  (-> event
+      action-event->project
+      nrepl/interrupt))
+
 (defn eval-defun-action [^AnActionEvent event]
   (eval-action
    event
@@ -79,23 +90,19 @@
    (fn [response]
      (string/join "\n" (:value response)))))
 
-(defn clear-repl-output-action [^AnActionEvent event]
-  (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
-        project ^Project (or (.getData event CommonDataKeys/PROJECT)
-                             (.getProject editor))]
+(defn clear-repl-output-action [^AnActionEvent event] 
+  (let [project (action-event->project event)]
     (ui.repl/clear-repl project (db/get-in project [:console :ui]))))
 
 (defn history-up-action [^AnActionEvent event]
-  (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
-        project ^Project (or (.getData event CommonDataKeys/PROJECT)
-                             (.getProject editor))]
-    (ui.repl/history-up project)))
+  (-> event
+       action-event->project
+       ui.repl/history-up))
 
 (defn history-down-action [^AnActionEvent event]
-  (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
-        project ^Project (or (.getData event CommonDataKeys/PROJECT)
-                             (.getProject editor))]
-    (ui.repl/history-down project)))
+  (-> event
+      action-event->project
+      ui.repl/history-down))
 
 (defn switch-ns-action [^AnActionEvent event]
   (eval-action
