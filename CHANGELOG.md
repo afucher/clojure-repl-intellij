@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.7.0
+
  - Add icons of REPL commands to REPL window (clear and entry history navigation)
  - Drop support of older IntelliJ versions (2021/2022). Now requires minimum IntelliJ 2023.3 (Build 233)
 
