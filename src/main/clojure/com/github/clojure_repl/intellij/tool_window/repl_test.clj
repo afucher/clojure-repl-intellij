@@ -43,10 +43,11 @@
        (some #(and (.isFile ^File %) (.endsWith (str %) ".clj")))
        boolean))
 
-(def ^:private test-result-type->color
-  {:pass ui.color/normal-foreground
-   :fail ui.color/fail-foreground
-   :error ui.color/error-foreground})
+(defn ^:private test-result-type->color [type]
+  (get {:pass (ui.color/normal-foreground)
+        :fail ui.color/fail-foreground
+        :error ui.color/error-foreground}
+       type))
 
 (defn ^:private label [key value]
   ;; TODO support ANSI colors for libs like matcher-combinators pretty prints.
@@ -95,7 +96,7 @@
                                         :foreground (test-result-type->color (keyword type)))
                           (seesaw/label :text " in ")
                           (ActionLink. ^String var (proxy+ [] java.awt.event.ActionListener
-                                                           (actionPerformed [_ _] (navigate-to-test project test))))]) "span"]
+                                                     (actionPerformed [_ _] (navigate-to-test project test))))]) "span"]
                        (when (seq context) [(seesaw/label :text (str context)) "span"])
                        (when (seq message) [(seesaw/label :text (str message)) "span"])
                        (when (seq expected)

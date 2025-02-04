@@ -7,7 +7,7 @@
 
 (set! *warn-on-reflection* true)
 
-(def normal-foreground (UIUtil/getToolTipForeground))
+(defn normal-foreground [] (UIUtil/getToolTipForeground))
 (def fail-foreground JBColor/RED)
 (def error-foreground JBColor/RED)
 (def editor-background-color (JBColor/background))
