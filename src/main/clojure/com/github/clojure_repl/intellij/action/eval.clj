@@ -7,6 +7,7 @@
    [com.github.clojure-repl.intellij.ui.hint :as ui.hint]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
+   [com.github.ericdallo.clj4intellij.logger :as logger]
    [com.github.ericdallo.clj4intellij.tasks :as tasks]
    [com.github.ericdallo.clj4intellij.util :as util]
    [rewrite-clj.zip :as z])
@@ -18,6 +19,12 @@
    [com.intellij.openapi.vfs VirtualFile]))
 
 (set! *warn-on-reflection* true)
+
+(defn ^:private action-event->project [^AnActionEvent event]
+  (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
+        project ^Project (or (.getData event CommonDataKeys/PROJECT)
+                             (.getProject editor))]
+    project))
 
 (defn ^:private eval-action [^AnActionEvent event loading-msg eval-fn success-msg-fn]
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
@@ -62,6 +69,11 @@
        (fn [response]
          (string/join "\n" (:value response)))))))
 
+(defn ^:private interrupt [^AnActionEvent event]
+  (-> event
+      action-event->project
+      nrepl/interrupt))
+
 (defn eval-defun-action [^AnActionEvent event]
   (eval-action
    event
@@ -79,22 +91,18 @@
      (string/join "\n" (:value response)))))
 
 (defn clear-repl-output-action [^AnActionEvent event]
-  (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
-        project ^Project (or (.getData event CommonDataKeys/PROJECT)
-                             (.getProject editor))]
+  (let [project (action-event->project event)]
     (ui.repl/clear-repl project (db/get-in project [:console :ui]))))
 
 (defn history-up-action [^AnActionEvent event]
-  (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
-        project ^Project (or (.getData event CommonDataKeys/PROJECT)
-                             (.getProject editor))]
-    (ui.repl/history-up project)))
+  (-> event
+       action-event->project
+       ui.repl/history-up))
 
 (defn history-down-action [^AnActionEvent event]
-  (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
-        project ^Project (or (.getData event CommonDataKeys/PROJECT)
-                             (.getProject editor))]
-    (ui.repl/history-down project)))
+  (-> event
+      action-event->project
+      ui.repl/history-down))
 
 (defn switch-ns-action [^AnActionEvent event]
   (eval-action
