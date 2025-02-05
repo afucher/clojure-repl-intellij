@@ -75,7 +75,7 @@
              "--" (when (seq aliases)
                     ["with-profile" (str "+" (string/join ",+" aliases))]) "repl" ":headless" ":host" "localhost"]
       :clojure ["-Sdeps"
-                "{:deps {nrepl/nrepl {:mvn/version \"%nrepl/nrepl%\"} cider/cider-nrepl {:mvn/version \"%cider/cider-nrepl%\"}} :aliases {:cider/nrepl {:main-opts [\"-m\" \"nrepl.cmdline\" \"--middleware\" \"[cider.nrepl/cider-middleware]\"]}}}"
+                "'{:deps {nrepl/nrepl {:mvn/version \"\"\"%nrepl/nrepl%\"\"\"} cider/cider-nrepl {:mvn/version \"\"\"%cider/cider-nrepl%\"\"\"}} :aliases {:cider/nrepl {:main-opts [\"-m\" \"nrepl.cmdline\" \"--middleware\" \"[cider.nrepl/cider-middleware]\"]}}}'"
                 (str "-M:" (string/join ":" (conj aliases "cider/nrepl")))]
       :babashka ["nrepl-server" "localhost:0"]
       :shadow-cljs ["server"]
