@@ -6,8 +6,11 @@
 
 (set! *warn-on-reflection* true)
 
+(def ^:private windows-os?
+  (.contains (System/getProperty "os.name") "Windows"))
+
 (def ^:private project-type->command
-  {:lein ["lein"]
+  {:lein (if windows-os? ["lein.bat"] ["lein"])
    :clojure ["clojure"]
    :babashka ["bb"]
    :shadow-cljs ["npx" "shadow-cljs"]
@@ -35,9 +38,6 @@
   [& cmd-and-args]
   (println cmd-and-args)
   (apply shell/sh cmd-and-args))
-
-(def ^:private windows-os?
-  (.contains (System/getProperty "os.name") "Windows"))
 
 (defn ^:private normalize-command
   "Return CLASSPATH-CMD, but with the EXEC expanded to its full path (if found).
