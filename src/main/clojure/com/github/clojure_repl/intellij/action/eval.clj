@@ -20,7 +20,7 @@
 
 (set! *warn-on-reflection* true)
 
-(defn ^:private eval-action [^AnActionEvent event loading-msg eval-fn success-msg-fn {:keys [inlay-feedback?]}]
+(defn ^:private eval-action [^AnActionEvent event loading-msg eval-fn success-msg-fn {:keys [inlay-hint-feedback?]}]
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
 
     (let [project (.getProject editor)]
@@ -34,8 +34,8 @@
               {:invoke-fn (fn []
                             (if (and (contains? status "eval-error") err)
                               (ui.hint/show-repl-error :message err :editor editor)
-                              (if inlay-feedback?
-                                (ui.inlay-hint/show (success-msg-fn response) editor)
+                              (if inlay-hint-feedback?
+                                (ui.inlay-hint/show-code (success-msg-fn response) editor)
                                 (ui.hint/show-repl-info :message (success-msg-fn response) :editor editor))))}))))
         (ui.hint/show-error :message "No REPL connected" :editor editor)))))
 
@@ -65,7 +65,7 @@
            (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
        (fn [response]
          (string/join "\n" (:value response)))
-       {:inlay-feedback? true}))))
+       {:inlay-hint-feedback? true}))))
 
 (defn eval-defun-action [^AnActionEvent event]
   (eval-action
@@ -82,7 +82,7 @@
        (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
    (fn [response]
      (string/join "\n" (:value response)))
-   {:inlay-feedback? true}))
+   {:inlay-hint-feedback? true}))
 
 (defn clear-repl-output-action [^AnActionEvent event]
   (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)

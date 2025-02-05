@@ -60,7 +60,7 @@
         background-x (+ (.x r) space)
         text-x* (atom (int (+ background-x margin)))
         background-height (- (.height r) (* 2 gap))
-        presentation (simple-colored-text editor text) #_(SimpleColoredText. text SimpleTextAttributes/LINK_ATTRIBUTES)]
+        presentation (simple-colored-text editor text)]
     (.setFont g font)
     (let [config (GraphicsUtil/setupAAPainting g)]
       (GraphicsUtil/paintWithAlpha g 0.55)
@@ -82,7 +82,7 @@
          (.drawString g cur-text ^Integer @text-x* (+ (.y r) (.getAscent editor)))
          (reset! text-x* (+ @text-x* (.stringWidth font-metrics cur-text))))))))
 
-(defn show [^String text ^Editor editor]
+(defn show-code [^String text ^Editor editor]
   (let [inlay-model (.getInlayModel editor)
         offset (.getOffset (.getCaretModel editor))]
     (remove-in-current-line editor)
