@@ -5,6 +5,7 @@
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.parser :as parser]
    [com.github.clojure-repl.intellij.ui.hint :as ui.hint]
+   [com.github.clojure-repl.intellij.ui.inlay-hint :as ui.inlay-hint]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
    [com.github.ericdallo.clj4intellij.tasks :as tasks]
@@ -33,7 +34,7 @@
               {:invoke-fn (fn []
                             (if (and (contains? status "eval-error") err)
                               (ui.hint/show-repl-error :message err :editor editor)
-                              (ui.hint/show-repl-info :message (success-msg-fn response) :editor editor)))}))))
+                              (ui.inlay-hint/show (success-msg-fn response) editor)))}))))
         (ui.hint/show-error :message "No REPL connected" :editor editor)))))
 
 (defn load-file-action [^AnActionEvent event]

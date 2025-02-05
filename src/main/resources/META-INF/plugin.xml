@@ -13,6 +13,11 @@
         <toolWindow id="Clojure test summary" secondary="true" icon="com.github.clojure_repl.intellij.Icons.CLOJURE_REPL" anchor="right"
                     factoryClass="com.github.clojure_repl.intellij.tool_window.ReplTestToolWindow"/>
         <codeInsight.lineMarkerProvider language="clojure" implementationClass="com.github.clojure_repl.intellij.extension.RunTestLineMarkerProvider"/>
+        <editorActionHandler
+            action="EditorEscape"
+            implementationClass="com.github.clojure_repl.intellij.extension.InlayEscHandler"
+            id="clojure-repl-inlays"
+            order="after hide-search"/>
     </extensions>
 
     <applicationListeners>
