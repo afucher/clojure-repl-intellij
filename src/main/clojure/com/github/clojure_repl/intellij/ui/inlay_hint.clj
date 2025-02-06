@@ -4,7 +4,8 @@
    [clojure.pprint :as pprint]
    [com.github.clojure-repl.intellij.ui.color :as ui.color]
    [com.github.ericdallo.clj4intellij.logger :as logger]
-   [com.rpl.proxy-plus :refer [proxy+]])
+   [com.rpl.proxy-plus :refer [proxy+]]
+   [seesaw.core :as seesaw])
   (:import
    [com.intellij.ide.highlighter HighlighterFactory]
    [com.intellij.ide.ui.laf.darcula DarculaUIUtil]
@@ -38,7 +39,7 @@
 
 (defonce ^:private inlays* (atom {}))
 
-(defn renderer-class [] (try (Class/forName "com.github.clojure_repl.intellij.ui.inlay_hint.EvalInlineInlayHintRenderer") (catch Exception _ nil)))
+(defn renderer-class [] (try (Class/forName (str *ns* "com.github.clojure_repl.intellij.ui.inlay_hint.EvalInlineInlayHintRenderer")) (catch Exception _ nil)))
 
 (defn ^:private font+metrics [^Inlay inlay]
   (let [editor (.getEditor inlay)
@@ -143,22 +144,17 @@
 (defn ^:private create-renderer [^String text ^Editor editor]
   (let [inlay-model (.getInlayModel editor)
         offset (.getOffset (.getCaretModel editor))
-        display-limit 100
-        expandable? (> (count text) display-limit)
-        summary-text (if expandable? (str (subs text 0 display-limit) " ...") text)
         renderer (proxy+ EvalInlineInlayHintRenderer []
                    EditorCustomElementRenderer
                    (calcWidthInPixels [_ ^Inlay _inlay]
                      (let [font-metrics (.getFontMetrics (.getComponent editor)
-                                                         (.getFont (.getColorsScheme editor)
-                                                                   EditorFontType/PLAIN))
+                                                         (.getFont (.getColorsScheme editor) EditorFontType/PLAIN))
                            space (.charWidth font-metrics \s)
                            margin (/ space 2)]
-                       (+ margin space (.stringWidth font-metrics summary-text))))
+                       (+ margin space (.stringWidth font-metrics text))))
                    (paint [_ ^Inlay inlay ^Graphics g ^Rectangle r ^TextAttributes text-attributes]
-                     (paint summary-text inlay g r text-attributes)))]
-    (remove-in-cur-line editor)
-    (.addAfterLineEndElement inlay-model offset true renderer)
+                     (paint text inlay g r text-attributes)))]
+    (.addAfterLineEndElement inlay-model offset false renderer)
     renderer))
 
 (defn ^:private pretty-printed-clojure-text [text]
@@ -172,17 +168,18 @@
 (defn ^:private code-component [^String code ^Font font ^Project project]
   (let [document (.createDocument (EditorFactory/getInstance) code)
         clojure-file-type (.getStdFileType (FileTypeManager/getInstance) "clojure")
-        field (EditorTextField. document project clojure-file-type true false)]
+        field (EditorTextField. document project clojure-file-type true false)
+        component (seesaw/scrollable field :maximum-size [800 :by 600])]
     (.setFont field font)
-    field))
+    component))
 
 (defn remove-all [^Editor editor]
   (when-let [renderer-class (renderer-class)]
     (doseq [^Inlay inlay (.getAfterLineEndElementsInRange
-                           (.getInlayModel editor)
-                           0
-                           (.. editor getDocument getTextLength)
-                           renderer-class)]
+                          (.getInlayModel editor)
+                          0
+                          (.. editor getDocument getTextLength)
+                          renderer-class)]
       (remove-inlay inlay))))
 
 (defn mark-inlay-hover-status [^Inlay inlay hovered?]
@@ -202,6 +199,8 @@
                    (doto
                     (.createComponentPopupBuilder (JBPopupFactory/getInstance) component component)
                      (.setResizable false)
+                     (.setRequestFocus true)
+                     (.setCancelOnClickOutside true)
                      (.setMovable false)))]
         (.showInBestPositionFor popup editor)))))
 
@@ -210,7 +209,7 @@
   (let [display-limit 100 ;; Move to customizable config
         expandable? (> (count text) display-limit)
         summary-text (if expandable? (str (subs text 0 display-limit) " ...") text)
-        renderer (create-renderer text editor)]
+        renderer (create-renderer summary-text editor)]
     (swap! inlays* assoc renderer {:hovering? false
                                    :expandable? expandable?
                                    :text (pretty-printed-clojure-text text)
