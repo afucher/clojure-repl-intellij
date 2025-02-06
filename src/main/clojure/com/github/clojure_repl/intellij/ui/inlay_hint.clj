@@ -52,8 +52,9 @@
 
 (defn ^:private clojure-colored-text ^SimpleColoredText
   [^Editor editor ^String text]
-  (let [scheme (.getColorsScheme editor)
-        language (Language/findLanguageByID "clojure")
+  (let [language (or (Language/findLanguageByID "clojure")
+                     (Language/findLanguageByID "textmate"))
+        scheme (.getColorsScheme editor)
         v-file (.getFile (FileDocumentManager/getInstance) (.getDocument editor))
         syntax-highlighter (SyntaxHighlighterFactory/getSyntaxHighlighter language (.getProject editor) v-file)
         highlighter (HighlighterFactory/createHighlighter syntax-highlighter scheme)]
