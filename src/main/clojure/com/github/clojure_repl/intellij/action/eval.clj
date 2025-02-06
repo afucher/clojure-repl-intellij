@@ -31,12 +31,19 @@
          (fn [_indicator]
            (let [{:keys [status err] :as response} (eval-fn editor)]
              (app-manager/invoke-later!
-              {:invoke-fn (fn []
-                            (if (and (contains? status "eval-error") err)
-                              (ui.hint/show-repl-error :message err :editor editor)
-                              (if inlay-hint-feedback?
-                                (ui.inlay-hint/show-code (success-msg-fn response) editor)
-                                (ui.hint/show-repl-info :message (success-msg-fn response) :editor editor))))}))))
+              {:invoke-fn
+               (fn []
+                 (cond
+                   (and (contains? status "eval-error") err)
+                   (ui.hint/show-repl-error :message err :editor editor)
+
+                   (contains? status "namespace-not-found")
+                   (ui.hint/show-error {:message (str "Namespace not found: " (:ns response)) :editor editor})
+
+                   :else
+                   (if inlay-hint-feedback?
+                     (ui.inlay-hint/show-code (success-msg-fn response) editor)
+                     (ui.hint/show-repl-info :message (success-msg-fn response) :editor editor))))}))))
         (ui.hint/show-error :message "No REPL connected" :editor editor)))))
 
 (defn load-file-action [^AnActionEvent event]
