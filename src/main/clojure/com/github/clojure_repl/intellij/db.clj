@@ -43,9 +43,13 @@
 
 (defn init-db-for-project [^Project project]
   (swap! db* update :projects (fn [projects]
-                                (if (clojure.core/get projects (.getBasePath project))
+                                (if (clojure.core/get-in projects [(.getBasePath project) :project])
                                   projects
-                                  (assoc projects (.getBasePath project) (assoc empty-project :project project))))))
+                                  (update projects (.getBasePath project) #(merge (assoc empty-project :project project) %))))))
+
+(defn all-projects []
+  (remove nil?
+          (mapv :project (vals (:projects @db*)))))
 
 (comment
   ;; Useful for db debugging
