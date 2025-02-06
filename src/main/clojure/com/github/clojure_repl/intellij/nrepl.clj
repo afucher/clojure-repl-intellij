@@ -135,12 +135,5 @@
       @(send-msg project {:op "interrupt" :session (db/get-in project [:current-nrepl :session-id])}))
 
 (defn evaluating? [^Project project]
-  (logger/info 'project= project)
-  (def project project)
-      (seq @(db/get-in project [:current-nrepl :client :sent-messages*])))
-
-(comment
-
-  project
-
-  )
+      (when-let [client (db/get-in project [:current-nrepl :client])]
+        (seq @(:sent-messages* client))))

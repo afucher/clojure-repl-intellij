@@ -7,7 +7,8 @@
    [com.github.clojure-repl.intellij.action.eval :as a.eval]
    [com.github.clojure-repl.intellij.action.test :as a.test]
    [com.github.ericdallo.clj4intellij.action :as action]
-   [com.github.clojure-repl.intellij.nrepl :as nrepl])
+   [com.github.clojure-repl.intellij.nrepl :as nrepl]
+   [com.github.clojure-repl.intellij.db :as db])
   (:import
    [com.github.clojure_repl.intellij Icons]
    [com.intellij.icons AllIcons$Actions]
@@ -17,7 +18,8 @@
 
 (do (in-ns 'com.github.ericdallo.clj4intellij.action)
 
-    (require '[com.github.ericdallo.clj4intellij.logger :as logger])
+    (require '[com.github.ericdallo.clj4intellij.logger :as logger]
+             '[com.github.clojure-repl.intellij.db :as db])
     (import [com.intellij.openapi.actionSystem AnActionEvent])
     (defn register-action!
           "Dynamically register an action if not already registered."
@@ -30,7 +32,7 @@
                         [^String title ^String description ^Icon icon]
                         DumbAwareAction
                          (update [_ ^AnActionEvent event]
-                                 (.setEnabled (.getPresentation event) (enabled-fn event)))
+                                 (.setEnabled (.getPresentation event) (boolean (enabled-fn event))))
                          (actionPerformed [_ event] (on-performed event)))]
                (when-not (.getAction manager id)
                          (.registerAction manager id action)
@@ -139,7 +141,7 @@
                            :keyboard-shortcut {:first "shift alt R" :second "shift alt S" :replace-all true}
                            :on-performed #'a.eval/interrupt
                            :enabled-fn (fn [_event]
-                                           (nrepl/evaluating? project)))
+                                           (nrepl/evaluating? (first (db/all-projects)))))
 
 
   (action/register-group! :id "ClojureREPL.ReplActions"
