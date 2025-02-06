@@ -8,8 +8,9 @@
     <extensions defaultExtensionNs="com.intellij">
         <configurationType implementation="com.github.clojure_repl.intellij.configuration.ReplRunConfigurationType"/>
         <postStartupActivity implementation="com.github.ericdallo.clj4intellij.extension.NREPLStartup"/>
-        <postStartupActivity implementation="com.github.clojure_repl.intellij.extension.InitDBStartup"/>
-        <postStartupActivity implementation="com.github.clojure_repl.intellij.extension.RegisterActionsStartup"/>
+        <postStartupActivity id="init-repl-db" implementation="com.github.clojure_repl.intellij.extension.InitDBStartup"/>
+        <postStartupActivity implementation="com.github.clojure_repl.intellij.extension.RegisterActionsStartup" order="after init-repl-db"/>
+        <postStartupActivity implementation="com.github.clojure_repl.intellij.extension.InlayListenerStartup" order="after init-repl-db"/>
         <toolWindow id="Clojure test summary" secondary="true" icon="com.github.clojure_repl.intellij.Icons.CLOJURE_REPL" anchor="right"
                     factoryClass="com.github.clojure_repl.intellij.tool_window.ReplTestToolWindow"/>
         <codeInsight.lineMarkerProvider language="clojure" implementationClass="com.github.clojure_repl.intellij.extension.RunTestLineMarkerProvider"/>
