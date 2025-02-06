@@ -36,7 +36,7 @@
 
 (set! *warn-on-reflection* true)
 
-(defonce inlays* (atom {}))
+(defonce ^:private inlays* (atom {}))
 
 (defn renderer-class [] (try (Class/forName "com.github.clojure_repl.intellij.ui.inlay_hint.EvalInlineInlayHintRenderer") (catch Exception _ nil)))
 
@@ -169,13 +169,20 @@
       (logger/warn "Can't parse clojure code for eval block" e)
       text)))
 
+(defn ^:private code-component [^String code ^Font font ^Project project]
+  (let [document (.createDocument (EditorFactory/getInstance) code)
+        clojure-file-type (.getStdFileType (FileTypeManager/getInstance) "clojure")
+        field (EditorTextField. document project clojure-file-type true false)]
+    (.setFont field font)
+    field))
+
 (defn remove-all [^Editor editor]
   (when-let [renderer-class (renderer-class)]
     (doseq [^Inlay inlay (.getAfterLineEndElementsInRange
-                          (.getInlayModel editor)
-                          0
-                          (.. editor getDocument getTextLength)
-                          renderer-class)]
+                           (.getInlayModel editor)
+                           0
+                           (.. editor getDocument getTextLength)
+                           renderer-class)]
       (remove-inlay inlay))))
 
 (defn mark-inlay-hover-status [^Inlay inlay hovered?]
@@ -184,13 +191,6 @@
       (swap! inlays* assoc-in [(.getRenderer inlay) :hovering?] hovered?)
       (.setCustomCursor ^EditorImpl (.getEditor inlay) (renderer-class) cursor)
       (.update inlay))))
-
-(defn code-component [^String code ^Font font ^Project project]
-  (let [document (.createDocument (EditorFactory/getInstance) code)
-        clojure-file-type (.getStdFileType (FileTypeManager/getInstance) "clojure")
-        field (EditorTextField. document project clojure-file-type true false)]
-    (.setFont field font)
-    field))
 
 (defn toggle-expand-inlay-hint [^Inlay inlay]
   (let [{:keys [expandable? text]} (get @inlays* (.getRenderer inlay))
