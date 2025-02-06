@@ -6,17 +6,60 @@
   (:require
    [com.github.clojure-repl.intellij.action.eval :as a.eval]
    [com.github.clojure-repl.intellij.action.test :as a.test]
-   [com.github.ericdallo.clj4intellij.action :as action])
+   [com.github.ericdallo.clj4intellij.action :as action]
+   [com.github.clojure-repl.intellij.nrepl :as nrepl])
   (:import
    [com.github.clojure_repl.intellij Icons]
-   [com.intellij.openapi.project Project]
-   [com.intellij.icons AllIcons$Actions]))
+   [com.intellij.icons AllIcons$Actions]
+   [com.intellij.openapi.project Project]))
 
 (set! *warn-on-reflection* true)
 
+(do (in-ns 'com.github.ericdallo.clj4intellij.action)
+
+    (require '[com.github.ericdallo.clj4intellij.logger :as logger])
+    (import [com.intellij.openapi.actionSystem AnActionEvent])
+    (defn register-action!
+          "Dynamically register an action if not already registered."
+          [& {:keys [id title description icon use-shortcut-of keyboard-shortcut on-performed enabled-fn]
+              :or {enabled-fn (constantly true)}}]
+          (let [manager (ActionManager/getInstance)
+                keymap-manager (KeymapManager/getInstance)
+                keymap (.getActiveKeymap keymap-manager)
+                action (proxy+
+                        [^String title ^String description ^Icon icon]
+                        DumbAwareAction
+                         (update [_ ^AnActionEvent event]
+                                 (.setEnabled (.getPresentation event) (enabled-fn event)))
+                         (actionPerformed [_ event] (on-performed event)))]
+               (when-not (.getAction manager id)
+                         (.registerAction manager id action)
+                         (when use-shortcut-of
+                               (.addShortcut keymap
+                                             id
+                                             (first (.getShortcuts (.getShortcutSet (.getAction manager use-shortcut-of))))))
+                         (when keyboard-shortcut
+                               (let [k-shortcut (KeyboardShortcut. (KeyStroke/getKeyStroke ^String (:first keyboard-shortcut))
+                                                                   (some-> ^String (:second keyboard-shortcut) KeyStroke/getKeyStroke))]
+                                    (when (empty? (.getShortcuts keymap id))
+                                          (.addShortcut keymap id k-shortcut))
+                                    (when (:replace-all keyboard-shortcut)
+                                          (doseq [[conflict-action-id shortcuts] (.getConflicts keymap id k-shortcut)]
+                                                 (doseq [shortcut shortcuts]
+                                                        (.removeShortcut keymap conflict-action-id shortcut))))))
+                         action)))
+    (in-ns 'com.github.clojure-repl.intellij.extension.register-actions-startup))
+
+(comment
+ (import [com.intellij.openapi.actionSystem ActionManager])
+ (let [manager (ActionManager/getInstance)]
+      (.unregisterAction manager "ClojureREPL.Interrupt"))
+
+ )
+
 (defn -runActivity
   "Shortcuts: https://github.com/JetBrains/intellij-community/blob/master/platform/platform-resources/src/keymaps/%24default.xml"
-  [_this ^Project _project]
+  [_this ^Project project]
   (action/register-action! :id "ClojureREPL.RunCursorTest"
                            :title "Run test at cursor"
                            :description "Run test at cursor"
@@ -94,7 +137,9 @@
                            :description "Interrupts session evaluation"
                            :icon AllIcons$Actions/Cancel
                            :keyboard-shortcut {:first "shift alt R" :second "shift alt S" :replace-all true}
-                           :on-performed #'a.eval/interrupt)
+                           :on-performed #'a.eval/interrupt
+                           :enabled-fn (fn [_event]
+                                           (nrepl/evaluating? project)))
 
 
   (action/register-group! :id "ClojureREPL.ReplActions"
