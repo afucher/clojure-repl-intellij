@@ -26,9 +26,10 @@
                  (:version-string java)
                  (:version-string nrepl)))))
 
+
 (defn ^:private build-console-actions
   []
-  (let [manager (ActionManager/getInstance)
+  (let [manager (ActionManager/getInstance) 
         clear-repl (.getAction manager "ClojureREPL.ClearReplOutput")
         history-up (.getAction manager "ClojureREPL.HistoryUp")
         history-down (.getAction manager "ClojureREPL.HistoryDown")]
@@ -86,8 +87,8 @@
     (when (:out-subscribe (:ops description))
       (nrepl/out-subscribe project))
     (db/assoc-in! project [:current-nrepl :ops] (:ops description))
-    (db/assoc-in! project [:current-nrepl :versions] (:versions description)))
-  (db/assoc-in! project [:current-nrepl :entry-history] '())
-  (db/assoc-in! project [:current-nrepl :entry-index] -1)
-  (ui.repl/set-initial-text project (db/get-in project [:console :ui]) (str (initial-repl-text project) extra-initial-text))
-  (db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated)))
+    (db/assoc-in! project [:current-nrepl :versions] (:versions description))
+    (db/assoc-in! project [:current-nrepl :entry-history] '())
+    (db/assoc-in! project [:current-nrepl :entry-index] -1)
+    (ui.repl/set-initial-text project (db/get-in project [:console :ui]) (str (initial-repl-text project) extra-initial-text))
+    (db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated))))
