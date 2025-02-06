@@ -5,6 +5,7 @@
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.parser :as parser]
    [com.github.clojure-repl.intellij.ui.hint :as ui.hint]
+   [com.github.clojure-repl.intellij.ui.inlay-hint :as ui.inlay-hint]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
    [com.github.ericdallo.clj4intellij.logger :as logger]
@@ -26,8 +27,8 @@
                              (.getProject editor))]
     project))
 
-(defn ^:private eval-action [^AnActionEvent event loading-msg eval-fn success-msg-fn]
-  (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
+(defn ^:private eval-action [^AnActionEvent event loading-msg eval-fn success-msg-fn {:keys [inlay-hint-feedback?]}]
+      (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
 
     (let [project (.getProject editor)]
       (if (db/get-in project [:current-nrepl :session-id])
@@ -37,10 +38,19 @@
          (fn [_indicator]
            (let [{:keys [status err] :as response} (eval-fn editor)]
              (app-manager/invoke-later!
-              {:invoke-fn (fn []
-                            (if (and (contains? status "eval-error") err)
-                              (ui.hint/show-repl-error :message err :editor editor)
-                              (ui.hint/show-repl-info :message (success-msg-fn response) :editor editor)))}))))
+              {:invoke-fn
+               (fn []
+                 (cond
+                   (and (contains? status "eval-error") err)
+                   (ui.hint/show-repl-error :message err :editor editor)
+
+                   (contains? status "namespace-not-found")
+                   (ui.hint/show-error {:message (str "Namespace not found: " (:ns response)) :editor editor})
+
+                   :else
+                   (if inlay-hint-feedback?
+                     (ui.inlay-hint/show-code (success-msg-fn response) editor)
+                     (ui.hint/show-repl-info :message (success-msg-fn response) :editor editor))))}))))
         (ui.hint/show-error :message "No REPL connected" :editor editor)))))
 
 (defn load-file-action [^AnActionEvent event]
@@ -51,7 +61,8 @@
      (fn [^Editor editor]
        (nrepl/load-file (.getProject editor) editor virtual-file))
      (fn [_response]
-       (str "Loaded file " (.getPath ^VirtualFile virtual-file))))))
+       (str "Loaded file " (.getPath ^VirtualFile virtual-file)))
+     {})))
 
 (defn eval-last-sexpr-action [^AnActionEvent event]
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
@@ -67,9 +78,10 @@
                ns (some-> (parser/find-namespace root-zloc) z/string parser/remove-metadata)]
            (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
        (fn [response]
-         (string/join "\n" (:value response)))))))
+         (string/join "\n" (:value response)))
+       {:inlay-hint-feedback? true}))))
 
-(defn ^:private interrupt [^AnActionEvent event]
+(defn interrupt [^AnActionEvent event]
   (-> event
       action-event->project
       nrepl/interrupt))
@@ -88,7 +100,8 @@
            ns (some-> (parser/find-namespace root-zloc) z/string parser/remove-metadata)]
        (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
    (fn [response]
-     (string/join "\n" (:value response)))))
+     (string/join "\n" (:value response)))
+   {:inlay-hint-feedback? true}))
 
 (defn clear-repl-output-action [^AnActionEvent event]
   (let [project (action-event->project event)]
@@ -115,7 +128,8 @@
            namespace (parser/remove-metadata (z/string zloc))]
        (nrepl/eval {:project (.getProject editor) :code (format "(in-ns '%s)" namespace) :ns namespace})))
    (fn [response]
-     (string/join "\n" (:value response)))))
+     (string/join "\n" (:value response)))
+   {}))
 
 (defn refresh-all-action [^AnActionEvent event]
   (eval-action
@@ -126,7 +140,8 @@
    (fn [response]
      (if (contains? (:status response) "ok")
        "Refreshed sucessfully"
-       (str "Refresh failed:\n" (:error response))))))
+       (str "Refresh failed:\n" (:error response))))
+   {}))
 
 (defn refresh-changed-action [^AnActionEvent event]
   (eval-action
@@ -137,4 +152,5 @@
    (fn [response]
      (if (contains? (:status response) "ok")
        "Refreshed sucessfully"
-       (str "Refresh failed:\n" (:error response))))))
+       (str "Refresh failed:\n" (:error response))))
+   {}))
