@@ -51,6 +51,7 @@ configurations.
 - Clear REPL output (`alt/opt + shift + R` `alt/opt + shift + C`)
 - Refresh all ns (`alt/opt + shift + R` `alt/opt + shift + A`)
 - Refresh changed ns (`alt/opt + shift + R` `alt/opt + shift + R`)
+- Stop (interrup) evaluation of REPL session (`alt/opt + shift + R` `alt/opt + shift + S`)
 - Entry history navigation in REPL (`ctrl + PAGE_UP` or `ctrl + PAGE_DOWN`)
 
 ### Soon

@@ -14,4 +14,5 @@
 | `alt/opt +shift + R` `alt/opt + shift + C` | Clear REPL output          |
 | `alt/opt +shift + R` `alt/opt + shift + A` | Refresh all namespaces     |
 | `alt/opt +shift + R` `alt/opt + shift + R` | Refresh changed namespaces |
+| `alt/opt +shift + R` `alt/opt + shift + S` | Interrupt session eval     |
 | `ctrl + PAGE_UP` or `ctrl + PAGE_DOWN`     | REPL history navigation    |
