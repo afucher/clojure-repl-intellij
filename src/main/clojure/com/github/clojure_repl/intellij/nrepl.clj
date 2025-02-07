@@ -9,7 +9,6 @@
      [nrepl.core :as nrepl.core]
      [nrepl.transport :as transport])
     (:import
-     [com.intellij.ide ActivityTracker]
      [com.intellij.openapi.editor Editor]
      [com.intellij.openapi.project Project]
      [com.intellij.openapi.vfs VirtualFile]))
@@ -132,7 +131,6 @@
       @(send-msg project {:op "refresh"}))
 
 (defn interrupt [^Project project]
-      (logger/info 'interrupting_______________________________)
       @(send-msg project {:op "interrupt" :session (db/get-in project [:current-nrepl :session-id])}))
 
 (defn evaluating? [^Project project]

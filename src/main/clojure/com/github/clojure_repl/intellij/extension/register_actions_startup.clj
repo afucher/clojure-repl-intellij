@@ -14,17 +14,9 @@
    [com.github.clojure_repl.intellij Icons]
    [com.intellij.icons AllIcons$Actions]
    [com.intellij.openapi.actionSystem AnActionEvent]
-   [com.intellij.openapi.project DumbAwareAction Project]
-   [javax.swing Icon]))
+   [com.intellij.openapi.project DumbAwareAction Project]))
 
 (set! *warn-on-reflection* true)
-
-(comment
- (import [com.intellij.openapi.actionSystem ActionManager])
- (let [manager (ActionManager/getInstance)]
-      (.unregisterAction manager "ClojureREPL.Interrupt"))
-
- )
 
 (defn -runActivity
   "Shortcuts: https://github.com/JetBrains/intellij-community/blob/master/platform/platform-resources/src/keymaps/%24default.xml"

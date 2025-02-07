@@ -8,7 +8,6 @@
    [com.github.clojure-repl.intellij.ui.inlay-hint :as ui.inlay-hint]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
-   [com.github.ericdallo.clj4intellij.logger :as logger]
    [com.github.ericdallo.clj4intellij.tasks :as tasks]
    [com.github.ericdallo.clj4intellij.util :as util]
    [rewrite-clj.zip :as z])
