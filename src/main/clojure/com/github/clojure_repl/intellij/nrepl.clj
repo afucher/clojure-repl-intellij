@@ -39,7 +39,6 @@
                                                             (let [responses (get @received-messages* id)]
                                                                  (swap! sent-messages* dissoc id)
                                                                  (swap! received-messages* dissoc id)
-                                                                 (.inc (ActivityTracker/getInstance))
                                                                  (deliver sent-request (nrepl.core/combine-responses responses)))))
                                                      (on-receive-async-message resp)))
                                    (recur))
