@@ -9,6 +9,7 @@
      [nrepl.core :as nrepl.core]
      [nrepl.transport :as transport])
     (:import
+     [com.intellij.ide ActivityTracker]
      [com.intellij.openapi.editor Editor]
      [com.intellij.openapi.project Project]
      [com.intellij.openapi.vfs VirtualFile]))
@@ -38,6 +39,7 @@
                                                             (let [responses (get @received-messages* id)]
                                                                  (swap! sent-messages* dissoc id)
                                                                  (swap! received-messages* dissoc id)
+                                                                 (.inc (ActivityTracker/getInstance))
                                                                  (deliver sent-request (nrepl.core/combine-responses responses)))))
                                                      (on-receive-async-message resp)))
                                    (recur))
