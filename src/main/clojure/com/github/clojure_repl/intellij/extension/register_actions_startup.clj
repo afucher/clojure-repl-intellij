@@ -6,51 +6,18 @@
   (:require
    [com.github.clojure-repl.intellij.action.eval :as a.eval]
    [com.github.clojure-repl.intellij.action.test :as a.test]
-   [com.github.ericdallo.clj4intellij.action :as action]
+   [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
-   [com.github.clojure-repl.intellij.db :as db])
+   [com.github.ericdallo.clj4intellij.action :as action]
+   [com.rpl.proxy-plus :refer [proxy+]])
   (:import
    [com.github.clojure_repl.intellij Icons]
    [com.intellij.icons AllIcons$Actions]
-   [com.intellij.openapi.project Project]))
+   [com.intellij.openapi.actionSystem AnActionEvent]
+   [com.intellij.openapi.project DumbAwareAction Project]
+   [javax.swing Icon]))
 
 (set! *warn-on-reflection* true)
-
-(do (in-ns 'com.github.ericdallo.clj4intellij.action)
-
-    (require '[com.github.ericdallo.clj4intellij.logger :as logger]
-             '[com.github.clojure-repl.intellij.db :as db])
-    (import [com.intellij.openapi.actionSystem AnActionEvent])
-    (defn register-action!
-          "Dynamically register an action if not already registered."
-          [& {:keys [id title description icon use-shortcut-of keyboard-shortcut on-performed enabled-fn]
-              :or {enabled-fn (constantly true)}}]
-          (let [manager (ActionManager/getInstance)
-                keymap-manager (KeymapManager/getInstance)
-                keymap (.getActiveKeymap keymap-manager)
-                action (proxy+
-                        [^String title ^String description ^Icon icon]
-                        DumbAwareAction
-                         (update [_ ^AnActionEvent event]
-                                 (.setEnabled (.getPresentation event) (boolean (enabled-fn event))))
-                         (actionPerformed [_ event] (on-performed event)))]
-               (when-not (.getAction manager id)
-                         (.registerAction manager id action)
-                         (when use-shortcut-of
-                               (.addShortcut keymap
-                                             id
-                                             (first (.getShortcuts (.getShortcutSet (.getAction manager use-shortcut-of))))))
-                         (when keyboard-shortcut
-                               (let [k-shortcut (KeyboardShortcut. (KeyStroke/getKeyStroke ^String (:first keyboard-shortcut))
-                                                                   (some-> ^String (:second keyboard-shortcut) KeyStroke/getKeyStroke))]
-                                    (when (empty? (.getShortcuts keymap id))
-                                          (.addShortcut keymap id k-shortcut))
-                                    (when (:replace-all keyboard-shortcut)
-                                          (doseq [[conflict-action-id shortcuts] (.getConflicts keymap id k-shortcut)]
-                                                 (doseq [shortcut shortcuts]
-                                                        (.removeShortcut keymap conflict-action-id shortcut))))))
-                         action)))
-    (in-ns 'com.github.clojure-repl.intellij.extension.register-actions-startup))
 
 (comment
  (import [com.intellij.openapi.actionSystem ActionManager])
@@ -135,13 +102,14 @@
                            :keyboard-shortcut {:first "control PAGE_DOWN" :replace-all true}
                            :on-performed #'a.eval/history-down-action)
   (action/register-action! :id "ClojureREPL.Interrupt"
-                           :title "Interrupts session evaluation"
-                           :description "Interrupts session evaluation"
-                           :icon AllIcons$Actions/Cancel
                            :keyboard-shortcut {:first "shift alt R" :second "shift alt S" :replace-all true}
-                           :on-performed #'a.eval/interrupt
-                           :enabled-fn (fn [_event]
-                                           (nrepl/evaluating? (first (db/all-projects)))))
+                           :action (proxy+
+                                    ["Interrupts session evaluation" "Interrupts session evaluation" AllIcons$Actions/Cancel]
+                                    DumbAwareAction
+                                     (update [_ ^AnActionEvent event]
+                                       (.setEnabled (.getPresentation event) (boolean (nrepl/evaluating? (first (db/all-projects))))))
+                                     (actionPerformed [_ event]
+                                       (a.eval/interrupt event))))
 
 
   (action/register-group! :id "ClojureREPL.ReplActions"
