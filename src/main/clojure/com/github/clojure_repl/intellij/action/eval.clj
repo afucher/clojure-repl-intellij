@@ -1,7 +1,7 @@
 (ns com.github.clojure-repl.intellij.action.eval
   (:require
    [clojure.string :as string]
-   [com.github.clojure-repl.intellij.action.adapters :as action.adapters]
+   [com.github.clojure-repl.intellij.actions :as actions]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.parser :as parser]
@@ -75,7 +75,7 @@
 
 (defn interrupt [^AnActionEvent event]
   (-> event
-      action.adapters/action-event->project
+      actions/action-event->project
       nrepl/interrupt))
 
 (defn eval-defun-action [^AnActionEvent event]
@@ -96,17 +96,17 @@
    {:inlay-hint-feedback? true}))
 
 (defn clear-repl-output-action [^AnActionEvent event]
-  (let [project (action.adapters/action-event->project event)]
+  (let [project (actions/action-event->project event)]
     (ui.repl/clear-repl project (db/get-in project [:console :ui]))))
 
 (defn history-up-action [^AnActionEvent event]
   (-> event
-      action.adapters/action-event->project
+      actions/action-event->project
       ui.repl/history-up))
 
 (defn history-down-action [^AnActionEvent event]
   (-> event
-      action.adapters/action-event->project
+      actions/action-event->project
       ui.repl/history-down))
 
 (defn switch-ns-action [^AnActionEvent event]

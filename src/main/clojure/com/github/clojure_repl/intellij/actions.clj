@@ -1,4 +1,4 @@
-(ns com.github.clojure-repl.intellij.action.adapters 
+(ns com.github.clojure-repl.intellij.actions 
   (:import
    [com.intellij.openapi.actionSystem AnActionEvent CommonDataKeys]
    [com.intellij.openapi.editor Editor]

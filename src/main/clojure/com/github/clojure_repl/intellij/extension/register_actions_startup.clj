@@ -4,7 +4,7 @@
    :implements [com.intellij.openapi.startup.StartupActivity
                 com.intellij.openapi.project.DumbAware])
   (:require
-   [com.github.clojure-repl.intellij.action.adapters :as action.adapters]
+   [com.github.clojure-repl.intellij.actions :as actions]
    [com.github.clojure-repl.intellij.action.eval :as a.eval]
    [com.github.clojure-repl.intellij.action.test :as a.test]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
@@ -100,7 +100,7 @@
                                     DumbAwareAction
                                     (update
                                      [_ ^AnActionEvent event]
-                                     (let [project (action.adapters/action-event->project event)]
+                                     (let [project (actions/action-event->project event)]
                                        (.setEnabled (.getPresentation event) (boolean (nrepl/evaluating? project)))))
                                     (actionPerformed
                                      [_ event]
