@@ -24,7 +24,6 @@
    [com.intellij.openapi.ui.popup JBPopupFactory]
    [com.intellij.ui EditorTextField SimpleColoredText SimpleTextAttributes]
    [com.intellij.util.ui GraphicsUtil JBUI$CurrentTheme$ActionButton UIUtil]
-   [com.intellij.xdebugger.ui DebuggerColors]
    [java.awt
     Cursor
     Font
@@ -44,8 +43,7 @@
 (defn ^:private font+metrics [^Inlay inlay]
   (let [editor (.getEditor inlay)
         colors-scheme (.getColorsScheme editor)
-        attrs (.getAttributes colors-scheme DebuggerColors/INLINED_VALUES_EXECUTION_LINE)
-        font-style (if attrs (.getFontType attrs) 0)
+        font-style (.getFontType (ui.color/eval-inline-hint))
         font (UIUtil/getFontWithFallback (.getFont colors-scheme (EditorFontType/forJavaStyle font-style)))
         metrics (FontInfo/getFontMetrics font (FontInfo/getFontRenderContext (.getContentComponent editor)))]
     [font metrics]))

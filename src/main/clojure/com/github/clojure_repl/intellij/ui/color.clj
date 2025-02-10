@@ -6,21 +6,28 @@
    [com.intellij.openapi.editor.markup TextAttributes]
    [com.intellij.ui JBColor]
    [com.intellij.util.ui UIUtil]
-   [java.awt Color]))
+   [com.intellij.xdebugger.ui DebuggerColors]
+   [java.awt Color Font]))
 
 (set! *warn-on-reflection* true)
 
-(defn ^:private attr ^TextAttributesKey [& {:keys [key foreground background effect effect-type font-type]
-                                            :or {font-type 0}}]
-  (TextAttributesKey/createTextAttributesKey
-   ^String key
-   (TextAttributes. foreground background effect effect-type font-type)))
+(defn ^:private attr ^TextAttributesKey [& {:keys [key foreground background effect effect-type font-type inherit]
+                                            :or {font-type Font/PLAIN}}]
+  (let [inherit-attrs (some-> ^TextAttributesKey inherit (.getDefaultAttributes) (.clone))
+        ^TextAttributes attrs (or inherit-attrs (TextAttributes.))]
+    (when background (.setBackgroundColor attrs ^Color background))
+    (when foreground (.setForegroundColor attrs ^Color foreground))
+    (when effect (.setEffectColor attrs ^Color effect))
+    (when effect-type (.setEffectType attrs effect-type))
+    (when font-type (.setFontType attrs font-type))
+    (TextAttributesKey/createTextAttributesKey ^String key attrs)))
 
 (defn text-attributes []
   {:repl-window (attr :key "REPL_WINDOW"
                       :background (JBColor/background))
    :eval-inline-hint (attr :key "REPL_EVAL_INLINE_INLAY_HINT"
-                           :background (JBColor. (Color/decode "#c7e8fc") (Color/decode "#16598c")))
+                           :background (JBColor. (Color/decode "#c7e8fc") (Color/decode "#16598c"))
+                           :inherit DebuggerColors/INLINED_VALUES_EXECUTION_LINE)
    :test-summary-label (attr :key "REPL_TEST_SUMMARY_LABEL"
                              :foreground JBColor/GRAY)
    :test-result-error (attr :key "REPL_TEST_RESULT_ERROR"
