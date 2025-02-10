@@ -6,6 +6,7 @@
    [com.rpl.proxy-plus :refer [proxy+]])
   (:import
    [com.intellij.execution.ui ConsoleView]
+   [com.intellij.ide ActivityTracker]
    [com.intellij.ide.plugins PluginManagerCore]
    [com.intellij.openapi.actionSystem ActionManager AnAction]
    [com.intellij.openapi.extensions PluginId]
@@ -29,11 +30,12 @@
 
 (defn ^:private build-console-actions
   []
-  (let [manager (ActionManager/getInstance) 
+  (let [manager (ActionManager/getInstance)
         clear-repl (.getAction manager "ClojureREPL.ClearReplOutput")
         history-up (.getAction manager "ClojureREPL.HistoryUp")
-        history-down (.getAction manager "ClojureREPL.HistoryDown")]
-    [clear-repl history-up history-down]))
+        history-down (.getAction manager "ClojureREPL.HistoryDown")
+        interrupt (.getAction manager "ClojureREPL.Interrupt")]
+    [clear-repl history-up history-down interrupt]))
 
 (defn build-console-view [project loading-text]
   (db/assoc-in! project [:console :process-handler] nil)
@@ -68,6 +70,13 @@
   (when out
     (ui.repl/append-result-text project (db/get-in project [:console :ui]) out)))
 
+(defn ^:private trigger-ui-update
+  "IntelliJ actions status (visibility/enable) depend on IntelliJ calls an update of the UI
+   but the call of update is not guaranteed. This function triggers the update of the UI.
+   @see https://github.com/JetBrains/intellij-community/blob/08d00166f92aaf0eedfa6fc9c147ef10ea86da27/platform/editor-ui-api/src/com/intellij/openapi/actionSystem/AnAction.java#L361"
+  [_ _]
+ (.inc (ActivityTracker/getInstance)))
+
 (defn repl-disconnected [^Project project]
   (ui.repl/close-console project (db/get-in project [:console :ui]))
   (db/assoc-in! project [:console :process-handler] nil)
@@ -91,4 +100,4 @@
     (db/assoc-in! project [:current-nrepl :entry-history] '())
     (db/assoc-in! project [:current-nrepl :entry-index] -1)
     (ui.repl/set-initial-text project (db/get-in project [:console :ui]) (str (initial-repl-text project) extra-initial-text))
-    (db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated))))
+    (db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated trigger-ui-update))))

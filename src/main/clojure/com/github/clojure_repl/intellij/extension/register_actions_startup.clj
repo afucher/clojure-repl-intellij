@@ -4,13 +4,17 @@
    :implements [com.intellij.openapi.startup.StartupActivity
                 com.intellij.openapi.project.DumbAware])
   (:require
+   [com.github.clojure-repl.intellij.actions :as actions]
    [com.github.clojure-repl.intellij.action.eval :as a.eval]
    [com.github.clojure-repl.intellij.action.test :as a.test]
-   [com.github.ericdallo.clj4intellij.action :as action])
+   [com.github.clojure-repl.intellij.nrepl :as nrepl]
+   [com.github.ericdallo.clj4intellij.action :as action]
+   [com.rpl.proxy-plus :refer [proxy+]])
   (:import
    [com.github.clojure_repl.intellij Icons]
-   [com.intellij.openapi.project Project]
-   [com.intellij.icons AllIcons$Actions]))
+   [com.intellij.icons AllIcons$Actions]
+   [com.intellij.openapi.actionSystem AnActionEvent]
+   [com.intellij.openapi.project DumbAwareAction Project]))
 
 (set! *warn-on-reflection* true)
 
@@ -89,6 +93,18 @@
                            :icon AllIcons$Actions/NextOccurence
                            :keyboard-shortcut {:first "control PAGE_DOWN" :replace-all true}
                            :on-performed #'a.eval/history-down-action)
+  (action/register-action! :id "ClojureREPL.Interrupt"
+                           :keyboard-shortcut {:first "shift alt R" :second "shift alt S" :replace-all true}
+                           :action (proxy+
+                                    ["Interrupts session evaluation" "Interrupts session evaluation" AllIcons$Actions/Cancel]
+                                    DumbAwareAction
+                                    (update
+                                     [_ ^AnActionEvent event]
+                                     (let [project (actions/action-event->project event)]
+                                       (.setEnabled (.getPresentation event) (boolean (nrepl/evaluating? project)))))
+                                    (actionPerformed
+                                     [_ event]
+                                     (a.eval/interrupt event))))
 
 
   (action/register-group! :id "ClojureREPL.ReplActions"

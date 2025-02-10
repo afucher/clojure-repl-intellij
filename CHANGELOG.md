@@ -6,6 +6,7 @@
  - Drop support of older IntelliJ versions (2021/2022). Now requires minimum IntelliJ 2023.3 (Build 233)
  - Fix namespace-not-found error handling while evaluating
  - Add eval inlay hint support. #106
+ - Add action to interrupt evals on the REPL session (`shift alt R` + `shift alt S`).  #104
 
 ## 1.6.2
 

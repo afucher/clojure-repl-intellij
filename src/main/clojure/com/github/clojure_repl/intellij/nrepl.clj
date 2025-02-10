@@ -129,3 +129,10 @@
 
 (defn refresh [^Project project]
   @(send-msg project {:op "refresh"}))
+
+(defn interrupt [^Project project]
+  @(send-msg project {:op "interrupt" :session (db/get-in project [:current-nrepl :session-id])}))
+
+(defn evaluating? [^Project project]
+  (when-let [client (db/get-in project [:current-nrepl :client])]
+    (seq @(:sent-messages* client))))
