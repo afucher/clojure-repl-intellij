@@ -6,7 +6,7 @@
 
 (set! *warn-on-reflection* true)
 
-(defn action-event->project [^AnActionEvent event]
+(defn action-event->project ^Project [^AnActionEvent event]
   (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
         project ^Project (or (.getData event CommonDataKeys/PROJECT)
                              (.getProject editor))]
