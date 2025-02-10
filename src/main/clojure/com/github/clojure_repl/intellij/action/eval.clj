@@ -27,8 +27,7 @@
     project))
 
 (defn ^:private eval-action [^AnActionEvent event loading-msg eval-fn success-msg-fn {:keys [inlay-hint-feedback?]}]
-      (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
-
+  (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
     (let [project (.getProject editor)]
       (if (db/get-in project [:current-nrepl :session-id])
         (tasks/run-background-task!
@@ -108,8 +107,8 @@
 
 (defn history-up-action [^AnActionEvent event]
   (-> event
-       action-event->project
-       ui.repl/history-up))
+      action-event->project
+      ui.repl/history-up))
 
 (defn history-down-action [^AnActionEvent event]
   (-> event
