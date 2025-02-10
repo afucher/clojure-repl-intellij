@@ -39,7 +39,7 @@
 
 (defonce ^:private inlays* (atom {}))
 
-(defn renderer-class [] (try (Class/forName (str *ns* "com.github.clojure_repl.intellij.ui.inlay_hint.EvalInlineInlayHintRenderer")) (catch Exception _ nil)))
+(defn renderer-class [] (try (Class/forName "com.github.clojure_repl.intellij.ui.inlay_hint.EvalInlineInlayHintRenderer") (catch Exception _ nil)))
 
 (defn ^:private font+metrics [^Inlay inlay]
   (let [editor (.getEditor inlay)
@@ -102,7 +102,7 @@
   [^Graphics2D g {:keys [background-x background-y background-width background-height]}]
   (let [config (GraphicsUtil/setupAAPainting g)]
     (GraphicsUtil/paintWithAlpha g 0.55)
-    (.setColor g ui.color/eval-inline-hint-background)
+    (.setColor g (.getBackgroundColor (ui.color/eval-inline-hint)))
     (.fillRoundRect g
                     background-x
                     background-y

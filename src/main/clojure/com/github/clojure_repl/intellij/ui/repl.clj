@@ -13,8 +13,6 @@
 
 (set! *warn-on-reflection* true)
 
-(def ^:private color-repl-primary ui.color/editor-background-color)
-
 (def ^:private code-to-eval-regexp
   #"(?mx)                    # match multiline and allow comments
     (^[\w-.]+>\s*)        # group1: match the prompt
@@ -43,9 +41,9 @@
       (db/update-in! project [:current-nrepl :entry-history] #(conj % code-to-eval)))
     (let [{:keys [value out err]} (on-eval code-to-eval)
           result-text (str
-                        (when err (str "\n" err))
-                        (when out (str "\n" out))
-                        (when value (str "\n;; => " (last value))))
+                       (when err (str "\n" err))
+                       (when out (str "\n" out))
+                       (when value (str "\n;; => " (last value))))
           ns-text (str "\n" (db/get-in project [:current-nrepl :ns]) "> ")]
       (.append repl-content (str result-text ns-text)))
     (let [new-text (seesaw/text repl-content)]
@@ -53,17 +51,17 @@
       (db/assoc-in! project [:console :state :last-output] new-text))))
 
 (defn history-up
-      [project]
-      (let [entries (db/get-in project [:current-nrepl :entry-history])
-            current-index (db/get-in project [:current-nrepl :entry-index])]
-           (when (and (pos? (count entries))
-                      (< current-index (dec (count entries))))
-                 (let [entry (nth entries (inc current-index))
-                       console (db/get-in project [:console :ui])
-                       repl-content (seesaw/select console [:#repl-content])
-                       last-output (db/get-in project [:console :state :last-output])]
-                      (db/update-in! project [:current-nrepl :entry-index] inc)
-                      (seesaw/config! repl-content :text (str last-output entry))))))
+  [project]
+  (let [entries (db/get-in project [:current-nrepl :entry-history])
+        current-index (db/get-in project [:current-nrepl :entry-index])]
+    (when (and (pos? (count entries))
+               (< current-index (dec (count entries))))
+      (let [entry (nth entries (inc current-index))
+            console (db/get-in project [:console :ui])
+            repl-content (seesaw/select console [:#repl-content])
+            last-output (db/get-in project [:console :state :last-output])]
+        (db/update-in! project [:current-nrepl :entry-index] inc)
+        (seesaw/config! repl-content :text (str last-output entry))))))
 
 (defn history-down
   [project]
@@ -83,10 +81,10 @@
         page-down? (= KeyEvent/VK_PAGE_DOWN (.getKeyCode key-event))
         entries (db/get-in project [:current-nrepl :entry-history])]
     (when (pos? (count entries))
-          (when page-up?
-                (history-up project))
-          (when page-down? 
-            (history-down project)))))
+      (when page-up?
+        (history-up project))
+      (when page-down?
+        (history-down project)))))
 
 (defn ^:private on-repl-new-line [^KeyEvent key-event]
   (.consume key-event)
@@ -115,12 +113,12 @@
    (mig/mig-panel
     :id :repl-input-layout
     :constraints ["fill"]
-    :background color-repl-primary
+    :background (.getBackgroundColor (ui.color/repl-window))
     :items [[(seesaw/text
               :id :repl-content
               :multi-line? true
               :editable? true
-              :background color-repl-primary
+              :background (.getBackgroundColor (ui.color/repl-window))
               :text (db/get-in project [:console :state :last-output])
               :listen [:key-pressed (fn [^KeyEvent event]
                                       (if (identical? :enabled (db/get-in project [:console :state :status]))
