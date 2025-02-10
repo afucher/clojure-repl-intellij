@@ -4,9 +4,9 @@
    :implements [com.intellij.openapi.startup.StartupActivity
                 com.intellij.openapi.project.DumbAware])
   (:require
+   [com.github.clojure-repl.intellij.action.adapters :as action.adapters]
    [com.github.clojure-repl.intellij.action.eval :as a.eval]
    [com.github.clojure-repl.intellij.action.test :as a.test]
-   [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.ericdallo.clj4intellij.action :as action]
    [com.rpl.proxy-plus :refer [proxy+]])
@@ -20,7 +20,7 @@
 
 (defn -runActivity
   "Shortcuts: https://github.com/JetBrains/intellij-community/blob/master/platform/platform-resources/src/keymaps/%24default.xml"
-  [_this ^Project project]
+  [_this ^Project _project]
   (action/register-action! :id "ClojureREPL.RunCursorTest"
                            :title "Run test at cursor"
                            :description "Run test at cursor"
@@ -98,10 +98,13 @@
                            :action (proxy+
                                     ["Interrupts session evaluation" "Interrupts session evaluation" AllIcons$Actions/Cancel]
                                     DumbAwareAction
-                                     (update [_ ^AnActionEvent event]
-                                       (.setEnabled (.getPresentation event) (boolean (nrepl/evaluating? (first (db/all-projects))))))
-                                     (actionPerformed [_ event]
-                                       (a.eval/interrupt event))))
+                                    (update
+                                     [_ ^AnActionEvent event]
+                                     (let [project (action.adapters/action-event->project event)]
+                                       (.setEnabled (.getPresentation event) (boolean (nrepl/evaluating? project)))))
+                                    (actionPerformed
+                                     [_ event]
+                                     (a.eval/interrupt event))))
 
 
   (action/register-group! :id "ClojureREPL.ReplActions"
