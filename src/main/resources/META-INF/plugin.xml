@@ -19,6 +19,10 @@
             implementationClass="com.github.clojure_repl.intellij.extension.InlayEscHandler"
             id="clojure-repl-inlays"
             order="after hide-search"/>
+        <additionalTextAttributes
+            scheme="Default"
+            file="colorSchemes/ClojureREPL.xml"/>
+        <colorSettingsPage implementation="com.github.clojure_repl.intellij.extension.ColorSettingsPage"/>
     </extensions>
 
     <applicationListeners>

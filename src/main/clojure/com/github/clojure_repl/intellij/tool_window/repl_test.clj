@@ -44,9 +44,9 @@
        boolean))
 
 (defn ^:private test-result-type->color [type]
-  (get {:pass (ui.color/normal-foreground)
-        :fail ui.color/fail-foreground
-        :error ui.color/error-foreground}
+  (get {:pass (.getForegroundColor (ui.color/test-result-pass))
+        :fail (.getForegroundColor (ui.color/test-result-fail))
+        :error (.getForegroundColor (ui.color/test-result-error))}
        type))
 
 (defn ^:private label [key value]
@@ -55,7 +55,7 @@
         document (.createDocument (EditorFactory/getInstance) code)
         clojure-file-type (.getStdFileType (FileTypeManager/getInstance) "clojure")
         any-project (first (.getOpenProjects (ProjectManager/getInstance)))]
-    [[(seesaw/label :text key :foreground ui.color/low-light-foreground) "alignx right, aligny top"]
+    [[(seesaw/label :text key :foreground (.getForegroundColor (ui.color/test-summary-label))) "alignx right, aligny top"]
      [(let [field (EditorTextField. document any-project clojure-file-type true false)]
         ;; We remove the border after the editor is built
         (app-manager/invoke-later! {:invoke-fn
