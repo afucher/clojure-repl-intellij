@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 2.0.0
+
  - Add icons of REPL commands to REPL window (clear and entry history navigation). #99
  - Drop support of older IntelliJ versions (2021/2022). Now requires minimum IntelliJ 2023.3 (Build 233)
  - Fix namespace-not-found error handling. Now shows a message to the user. #107
