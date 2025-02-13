@@ -27,7 +27,7 @@ dependencies {
     implementation ("org.clojure:core.async:1.5.648") {
         because("issue https://clojure.atlassian.net/browse/ASYNC-248")
     }
-    implementation ("com.github.ericdallo:clj4intellij:0.6.0")
+    implementation ("com.github.ericdallo:clj4intellij:0.6.3")
     implementation ("babashka:fs:0.5.22")
     implementation ("com.rpl:proxy-plus:0.0.9")
     implementation ("seesaw:seesaw:1.5.0")
