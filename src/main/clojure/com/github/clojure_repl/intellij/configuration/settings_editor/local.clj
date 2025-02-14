@@ -11,6 +11,7 @@
    [seesaw.mig :as mig])
   (:import
    [com.github.clojure_repl.intellij.configuration ReplLocalRunOptions]
+   [com.intellij.execution.configurations RunConfigurationBase]
    [com.intellij.openapi.project Project ProjectManager]
    [com.intellij.ui IdeBorderFactory]
    [java.awt.event ActionEvent]
@@ -46,44 +47,48 @@
   (let [opened-projects (.getOpenProjects (ProjectManager/getInstance))
         project-type (name (or (project/project->project-type (first opened-projects)) :clojure))]
     (mig/mig-panel
-      :border (IdeBorderFactory/createTitledBorder "nREPL connection")
-      :items (remove
-               nil?
-               [[(seesaw/label "Project") ""]
-                [(seesaw/combobox :id    :project
-                                  :model (mapv #(.getName ^Project %) opened-projects)) "wrap"]
-                [(seesaw/label "Type") ""]
-                [(doto
-                     (seesaw/combobox :id    :project-type
-                                      :model (map name project/types))
-                     (seesaw/selection! project-type)) "wrap"]
-                [(seesaw/label (if (= "lein" project-type) "Profiles" "Aliases")) ""]
-                [(mig/mig-panel
-                   :constraints ["gap 0"]
-                   :id :aliases-group
-                   :items []) "gap 0"]
-                [(seesaw/button :id :add-alias
-                                :size [36 :by 36]
-                                :text "+"
-                                :listen [:action (fn [^ActionEvent event]
-                                                   (let [button (.getSource event)
-                                                         parent (.getParent ^JComponent button)]
-                                                     (add-alias-field parent "")))]) "gap 0, wrap"]
-                [(seesaw/label "Env vars") ""]
-                [(mig/mig-panel
-                   :constraints ["gap 0"]
-                   :id :env-vars-group
-                   :items []) "gap 0"]
-                [(seesaw/button :id :add-env-var
-                                :size [36 :by 36]
-                                :text "+"
-                                :listen [:action (fn [^ActionEvent event]
-                                                   (let [button (.getSource event)
-                                                         parent (.getParent ^JComponent button)]
-                                                     (add-env-var-field parent "EXAMPLE_VAR=foo")))]) "gap 0, wrap"]]))))
+     :border (IdeBorderFactory/createTitledBorder "nREPL connection")
+     :items (remove
+             nil?
+             [[(seesaw/label "Project") ""]
+              [(seesaw/combobox :id    :project
+                                :model (mapv #(.getName ^Project %) opened-projects)) "wrap"]
+              [(seesaw/label "Type") ""]
+              [(doto
+                (seesaw/combobox :id    :project-type
+                                 :model (map name project/types))
+                 (seesaw/selection! project-type)) "wrap"]
+              [(seesaw/label (if (= "lein" project-type) "Profiles" "Aliases")) ""]
+              [(mig/mig-panel
+                :constraints ["gap 0"]
+                :id :aliases-group
+                :items []) "gap 0"]
+              [(seesaw/button :id :add-alias
+                              :size [36 :by 36]
+                              :text "+"
+                              :listen [:action (fn [^ActionEvent event]
+                                                 (let [button (.getSource event)
+                                                       parent (.getParent ^JComponent button)]
+                                                   (add-alias-field parent "")))]) "gap 0, wrap"]
+              [(seesaw/label "Env vars") ""]
+              [(mig/mig-panel
+                :constraints ["gap 0"]
+                :id :env-vars-group
+                :items []) "gap 0"]
+              [(seesaw/button :id :add-env-var
+                              :size [36 :by 36]
+                              :text "+"
+                              :listen [:action (fn [^ActionEvent event]
+                                                 (let [button (.getSource event)
+                                                       parent (.getParent ^JComponent button)]
+                                                   (add-env-var-field parent "EXAMPLE_VAR=foo")))]) "gap 0, wrap"]]))))
 
 (defn -init []
   [[] (atom (build-editor-ui))])
+
+(defn ^:private update-configuration-name [^RunConfigurationBase configuration]
+  (when (contains? #{"Unnamed" ""} (.getName configuration))
+    (.setName configuration "Local REPL")))
 
 (set! *warn-on-reflection* false)
 
@@ -91,6 +96,7 @@
   @(.state this))
 
 (defn -applyEditorTo [this configuration]
+  (update-configuration-name configuration)
   (let [ui @(.state this)
         options ^ReplLocalRunOptions (.getOptions configuration)
         project-path (seesaw/text (seesaw/select ui [:#project]))
@@ -105,6 +111,7 @@
     (.setProjectType options type)))
 
 (defn -resetEditorFrom [this configuration]
+  (update-configuration-name configuration)
   (let [ui @(.state this)
         options ^ReplLocalRunOptions (.getOptions configuration)
         project-name (or (not-empty (.getProject options))
