@@ -10,6 +10,7 @@
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.ui.color :as ui.color]
+   [com.github.clojure-repl.intellij.ui.components :as ui.components]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
    [com.github.ericdallo.clj4intellij.util :as util]
    [com.rpl.proxy-plus :refer [proxy+]]
@@ -17,17 +18,14 @@
    [seesaw.mig :as mig])
   (:import
    [com.github.clojure_repl.intellij Icons]
-   [com.intellij.openapi.editor Editor EditorFactory]
+   [com.intellij.openapi.editor Editor]
    [com.intellij.openapi.editor.impl EditorImpl]
    [com.intellij.openapi.fileEditor FileDocumentManager FileEditorManager]
-   [com.intellij.openapi.fileTypes FileTypeManager]
    [com.intellij.openapi.project Project ProjectManager]
    [com.intellij.openapi.util.text StringUtil]
    [com.intellij.openapi.wm ToolWindow ToolWindowAnchor]
-   [com.intellij.ui EditorTextField]
    [com.intellij.ui.components ActionLink]
    [com.intellij.ui.content ContentFactory$SERVICE]
-
    [java.io File]
    [javax.swing JComponent JScrollPane]))
 
@@ -52,11 +50,12 @@
 (defn ^:private label [key value]
   ;; TODO support ANSI colors for libs like matcher-combinators pretty prints.
   (let [code (ui.color/remove-ansi-color value)
-        document (.createDocument (EditorFactory/getInstance) code)
-        clojure-file-type (.getStdFileType (FileTypeManager/getInstance) "clojure")
         any-project (first (.getOpenProjects (ProjectManager/getInstance)))]
     [[(seesaw/label :text key :foreground (.getForegroundColor (ui.color/test-summary-label))) "alignx right, aligny top"]
-     [(let [field (EditorTextField. document any-project clojure-file-type true false)]
+     [(let [field (ui.components/clojure-text-field
+                   :editable? false
+                   :text code
+                   :project any-project)]
         ;; We remove the border after the editor is built
         (app-manager/invoke-later! {:invoke-fn
                                     (fn []

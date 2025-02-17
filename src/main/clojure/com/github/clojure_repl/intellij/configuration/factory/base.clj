@@ -3,7 +3,8 @@
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
-   [com.rpl.proxy-plus :refer [proxy+]])
+   [com.rpl.proxy-plus :refer [proxy+]]
+   [seesaw.core :as seesaw])
   (:import
    [com.intellij.execution.ui ConsoleView]
    [com.intellij.ide ActivityTracker]
@@ -27,7 +28,6 @@
                  (:version-string java)
                  (:version-string nrepl)))))
 
-
 (defn ^:private build-console-actions
   []
   (let [manager (ActionManager/getInstance)
@@ -43,7 +43,7 @@
                                         project
                                         {:on-eval (fn [code]
                                                     (nrepl/eval {:project project :code code}))}))
-  (ui.repl/append-text (db/get-in project [:console :ui]) loading-text)
+  (ui.repl/set-text (seesaw/select (db/get-in project [:console :ui]) [:#repl-content]) loading-text :append)
   (proxy+ [] ConsoleView
     (getComponent [_] (db/get-in project [:console :ui]))
     (getPreferredFocusableComponent [_] (db/get-in project [:console :ui]))
@@ -75,7 +75,7 @@
    but the call of update is not guaranteed. This function triggers the update of the UI.
    @see https://github.com/JetBrains/intellij-community/blob/08d00166f92aaf0eedfa6fc9c147ef10ea86da27/platform/editor-ui-api/src/com/intellij/openapi/actionSystem/AnAction.java#L361"
   [_ _]
- (.inc (ActivityTracker/getInstance)))
+  (.inc (ActivityTracker/getInstance)))
 
 (defn repl-disconnected [^Project project]
   (ui.repl/close-console project (db/get-in project [:console :ui]))

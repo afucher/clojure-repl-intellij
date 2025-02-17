@@ -3,6 +3,7 @@
    [clojure.edn :as edn]
    [clojure.pprint :as pprint]
    [com.github.clojure-repl.intellij.ui.color :as ui.color]
+   [com.github.clojure-repl.intellij.ui.components :as ui.components]
    [com.github.ericdallo.clj4intellij.logger :as logger]
    [com.rpl.proxy-plus :refer [proxy+]]
    [seesaw.core :as seesaw])
@@ -10,23 +11,17 @@
    [com.intellij.ide.highlighter HighlighterFactory]
    [com.intellij.ide.ui.laf.darcula DarculaUIUtil]
    [com.intellij.lang Language]
-   [com.intellij.openapi.editor
-    Editor
-    EditorCustomElementRenderer
-    EditorFactory
-    Inlay]
+   [com.intellij.openapi.editor Editor EditorCustomElementRenderer Inlay]
    [com.intellij.openapi.editor.colors EditorFontType]
    [com.intellij.openapi.editor.impl EditorImpl FontInfo]
    [com.intellij.openapi.editor.markup TextAttributes]
    [com.intellij.openapi.fileEditor FileDocumentManager]
-   [com.intellij.openapi.fileTypes FileTypeManager SyntaxHighlighterFactory]
-   [com.intellij.openapi.project Project]
+   [com.intellij.openapi.fileTypes SyntaxHighlighterFactory]
    [com.intellij.openapi.ui.popup JBPopupFactory]
-   [com.intellij.ui EditorTextField SimpleColoredText SimpleTextAttributes]
+   [com.intellij.ui SimpleColoredText SimpleTextAttributes]
    [com.intellij.util.ui GraphicsUtil JBUI$CurrentTheme$ActionButton UIUtil]
    [java.awt
     Cursor
-    Font
     FontMetrics
     Graphics
     Graphics2D
@@ -164,14 +159,6 @@
       (logger/warn "Can't parse clojure code for eval block" e)
       text)))
 
-(defn ^:private code-component [^String code ^Font font ^Project project]
-  (let [document (.createDocument (EditorFactory/getInstance) code)
-        clojure-file-type (.getStdFileType (FileTypeManager/getInstance) "clojure")
-        field (EditorTextField. document project clojure-file-type true false)
-        component (seesaw/scrollable field :maximum-size [800 :by 600])]
-    (.setFont field font)
-    component))
-
 (defn remove-all [^Editor editor]
   (when-let [renderer-class (renderer-class)]
     (doseq [^Inlay inlay (.getAfterLineEndElementsInRange
@@ -193,7 +180,13 @@
         [font _] (font+metrics inlay)
         editor (.getEditor inlay)]
     (when expandable?
-      (let [component (code-component text font (.. inlay getEditor getProject))
+      (let [component (seesaw/scrollable
+                       (ui.components/clojure-text-field
+                        :project (.. inlay getEditor getProject)
+                        :editable? false
+                        :text text
+                        :font font)
+                       :maximum-size [800 :by 600])
             popup (.createPopup
                    (doto
                     (.createComponentPopupBuilder (JBPopupFactory/getInstance) component component)
