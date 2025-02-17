@@ -8,6 +8,7 @@
    [seesaw.core :as seesaw]
    [seesaw.mig :as mig])
   (:import
+   [com.intellij.execution.configurations RunConfigurationBase]
    [com.intellij.openapi.project Project ProjectManager]
    [com.intellij.ui IdeBorderFactory]
    [javax.swing JRadioButton]))
@@ -60,7 +61,12 @@
 (defn ^:private manual? [editor]
   (.isSelected ^JRadioButton (seesaw/select editor [:#manual])))
 
+(defn ^:private update-configuration-name [^RunConfigurationBase configuration]
+  (when (contains? #{"Unnamed" ""} (.getName configuration))
+    (.setName configuration "Remote REPL")))
+
 (defn -applyEditorTo [this configuration]
+  (update-configuration-name configuration)
   (let [ui @(.state this)
         host (seesaw/text (seesaw/select ui [:#nrepl-host]))
         project-path (seesaw/text (seesaw/select ui [:#project]))
@@ -72,6 +78,7 @@
       (.setProject (.getOptions configuration) project-path))))
 
 (defn -resetEditorFrom [this configuration]
+  (update-configuration-name configuration)
   (let [ui @(.state this)
         options (.getOptions configuration)
         mode (keyword (.getMode options))]
