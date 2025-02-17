@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add default name for RunConfigurations instead of save as Unnamed. 
+
 ## 2.0.0
 
  - Add icons of REPL commands to REPL window (clear and entry history navigation). #99
