@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as string]
    [com.github.clojure-repl.intellij.db :as db]
-   [com.github.clojure-repl.intellij.key-listener :as key-listener]
+   [com.github.clojure-repl.intellij.keyboard-manager :as key-manager]
    [com.github.clojure-repl.intellij.ui.color :as ui.color]
    [com.github.clojure-repl.intellij.ui.components :as ui.components]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
@@ -19,6 +19,12 @@
    [java.time.format DateTimeFormatter]))
 
 (set! *warn-on-reflection* true)
+
+(defn ^:private replace-last [s target replacement]
+  (let [idx (string/last-index-of s target)]
+    (if (nil? idx)
+      s
+      (str (subs s 0 idx) replacement (subs s (+ idx (count target)))))))
 
 (def ^:private code-to-eval-regexp
   #"(?mx)                    # match multiline and allow comments
@@ -37,10 +43,10 @@
 (defn set-text
   ([repl-content text]
    (set-text repl-content text nil))
-  ([^EditorTextField repl-content text {:keys [append? drop-last-char-before-append?]}]
+  ([^EditorTextField repl-content text {:keys [append? drop-last-newline-before-append?]}]
    (let [text (ui.color/remove-ansi-color text)
-         dropped-text (if (and append? drop-last-char-before-append?)
-                        (string/join "" (drop-last (.getText repl-content)))
+         dropped-text (if (and append? drop-last-newline-before-append?)
+                        (replace-last (.getText repl-content) "\n" "")
                         (.getText repl-content))
          text (if append? (str dropped-text text) text)]
      (app-manager/invoke-later! {:invoke-fn (fn []
@@ -70,7 +76,7 @@
                        (when value (str "\n;; => " (last value))))
           ns-text (str "\n" (db/get-in project [:current-nrepl :ns]) "> ")
           new-text (str result-text ns-text)]
-      (set-text repl-content new-text {:append? true :drop-last-char-before-append? true})
+      (set-text repl-content new-text {:append? true :drop-last-newline-before-append? true})
       (move-caret-and-scroll-to-latest repl-content)
       (app-manager/invoke-later!
        {:invoke-fn (fn []
@@ -132,7 +138,10 @@
     (db/assoc-in! project [:console :state :last-output] text)))
 
 (defn ^:private on-repl-clear [project]
-  (clear-repl project (db/get-in project [:console :ui]))
+  (let [console (db/get-in project [:console :ui])]
+    (clear-repl project console)
+    (key-manager/send-key-pressed! (.getEditor ^EditorTextField (seesaw/select console [:#repl-content]))
+                           KeyEvent/VK_ESCAPE))
   true)
 
 (defn build-console [project {:keys [initial-text on-eval]}]
@@ -190,7 +199,7 @@
     (db/assoc-in! project [:console :state :status] :disabled)
     (.setViewer repl-content false)
     (set-text (seesaw/select console [:#repl-content]) (format "\n*** Closed on %s ***" (.format time-formatter (java.time.LocalDateTime/now))) {:append? true})
-    (key-listener/unregister-editor! (.getEditor repl-content))))
+    (key-manager/unregister-listener-for-editor! (.getEditor repl-content))))
 
 (defn append-result-text [project console text]
   (set-text (seesaw/select console [:#repl-content]) (str "\n" text (db/get-in project [:current-nrepl :ns]) "> ") {:append? true}))

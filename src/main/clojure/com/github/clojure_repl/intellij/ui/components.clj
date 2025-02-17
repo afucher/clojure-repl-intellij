@@ -1,6 +1,6 @@
 (ns com.github.clojure-repl.intellij.ui.components
   (:require
-   [com.github.clojure-repl.intellij.key-listener :as key-listener]
+   [com.github.clojure-repl.intellij.keyboard-manager :as key-manager]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
    [seesaw.core :as seesaw])
   (:import
@@ -31,6 +31,6 @@
     (app-manager/invoke-later!
      {:invoke-fn (fn []
                    (.setVerticalScrollbarVisible ^EditorEx (.getEditor editor-text-field) true)
-                   (key-listener/register-for-editor!
+                   (key-manager/register-listener-for-editor!
                     {:editor (.getEditor editor-text-field)
                      :on-key-pressed on-key-pressed}))})))
