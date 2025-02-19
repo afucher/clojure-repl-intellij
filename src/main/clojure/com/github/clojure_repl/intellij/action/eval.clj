@@ -123,6 +123,12 @@
      (string/join "\n" (:value response)))
    {}))
 
+(defn reload-all-action []
+  (println "Reload-all-action event"))
+
+(defn reload-action []
+  (println "Reload action event"))
+
 (defn refresh-all-action [^AnActionEvent event]
   (eval-action
    event

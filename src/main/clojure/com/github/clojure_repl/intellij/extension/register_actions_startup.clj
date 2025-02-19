@@ -93,6 +93,18 @@
                            :icon AllIcons$Actions/NextOccurence
                            :keyboard-shortcut {:first "control PAGE_DOWN" :replace-all true}
                            :on-performed #'a.eval/history-down-action)
+  (action/register-action! :id "ClojureREPL.Reload"
+                         :title "Reloads current ns"
+                         :description "Refresh current ns"
+                         :icon AllIcons$Actions/SwapPanels
+                         :keyboard-shortcut {:first "shift alt R" :second "shift alt C" :replace-all true}
+                         :on-performed #'a.eval/reload-action)
+  (action/register-action! :id "ClojureREPL.ReloadAll"
+                         :title "Refresh all ns"
+                         :description "Refresh all ns"
+                         :icon AllIcons$Actions/ForceRefresh
+                         :keyboard-shortcut {:first "shift alt R" :second "shift alt A" :replace-all true}
+                         :on-performed #'a.eval/reload-all-action) 
   (action/register-action! :id "ClojureREPL.Interrupt"
                            :keyboard-shortcut {:first "shift alt R" :second "shift alt S" :replace-all true}
                            :action (proxy+
@@ -104,9 +116,9 @@
                                        (.setEnabled (.getPresentation event) (boolean (nrepl/evaluating? project)))))
                                     (actionPerformed
                                      [_ event]
-                                     (a.eval/interrupt event))))
+                                     (a.eval/interrupt event)))) 
 
-
+  
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true
                           :text "Clojure REPL"
