@@ -95,13 +95,13 @@
                            :on-performed #'a.eval/history-down-action)
   (action/register-action! :id "ClojureREPL.Reload"
                          :title "Reloads current ns"
-                         :description "Refresh current ns"
-                         :icon AllIcons$Actions/SwapPanels
+                         :description "Reloads current ns"
+                         :icon AllIcons$Actions/Refresh
                          :keyboard-shortcut {:first "shift alt R" :second "shift alt C" :replace-all true}
                          :on-performed #'a.eval/reload-action)
   (action/register-action! :id "ClojureREPL.ReloadAll"
-                         :title "Refresh all ns"
-                         :description "Refresh all ns"
+                         :title "Reloads all ns"
+                         :description "Reloads all ns"
                          :icon AllIcons$Actions/ForceRefresh
                          :keyboard-shortcut {:first "shift alt R" :second "shift alt A" :replace-all true}
                          :on-performed #'a.eval/reload-all-action) 
