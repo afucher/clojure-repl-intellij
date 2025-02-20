@@ -3,6 +3,7 @@
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
    [com.rpl.proxy-plus :refer [proxy+]])
   (:import
+   [com.intellij.find SearchReplaceComponent]
    [com.intellij.ide IdeEventQueue]
    [com.intellij.openapi.editor Editor]
    [java.awt KeyEventDispatcher KeyboardFocusManager]
@@ -12,10 +13,16 @@
 
 (defonce ^:private key-listeners* (atom {}))
 
-(defn register-listener-for-editor! [{:keys [editor on-key-pressed]}]
+(defn register-listener-for-editor! [{:keys [^Editor editor on-key-pressed]}]
   (let [dispatcher (proxy+ [] KeyEventDispatcher
+
                      (dispatchKeyEvent [_ ^KeyEvent event]
-                       (if (= KeyEvent/KEY_PRESSED (.getID event))
+                       (if (and (= KeyEvent/KEY_PRESSED (.getID event))
+                                (or (= (.getContentComponent editor) (.getComponent event))
+                                    ;; Intellij shows the searchReplace ignoring this listener
+                                    ;; so we send the event even if this search window compoennt
+                                    ;; was opened.
+                                    (= SearchReplaceComponent (type (.getComponent event)))))
                          (boolean (on-key-pressed event))
                          false)))]
     (swap! key-listeners* assoc editor dispatcher)
