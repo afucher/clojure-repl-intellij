@@ -43,7 +43,7 @@
                                         project
                                         {:on-eval (fn [code]
                                                     (nrepl/eval {:project project :code code}))}))
-  (ui.repl/set-text (seesaw/select (db/get-in project [:console :ui]) [:#repl-content]) loading-text :append)
+  (ui.repl/set-text (seesaw/select (db/get-in project [:console :ui]) [:#repl-content]) loading-text {:append? true})
   (proxy+ [] ConsoleView
     (getComponent [_] (db/get-in project [:console :ui]))
     (getPreferredFocusableComponent [_] (db/get-in project [:console :ui]))

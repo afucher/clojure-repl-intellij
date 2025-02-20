@@ -141,7 +141,7 @@
   (let [console (db/get-in project [:console :ui])]
     (clear-repl project console)
     (key-manager/send-key-pressed! (.getEditor ^EditorTextField (seesaw/select console [:#repl-content]))
-                           KeyEvent/VK_ESCAPE))
+                                   KeyEvent/VK_ESCAPE))
   true)
 
 (defn build-console [project {:keys [initial-text on-eval]}]
@@ -202,4 +202,6 @@
     (key-manager/unregister-listener-for-editor! (.getEditor repl-content))))
 
 (defn append-result-text [project console text]
-  (set-text (seesaw/select console [:#repl-content]) (str "\n" text (db/get-in project [:current-nrepl :ns]) "> ") {:append? true}))
+  (set-text (seesaw/select console [:#repl-content])
+            (str "\n" text (db/get-in project [:current-nrepl :ns]) "> ")
+            {:append? true}))
