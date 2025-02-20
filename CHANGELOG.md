@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 
-- Add default name for RunConfigurations instead of save as Unnamed. 
+ - Add default name for RunConfigurations instead of save as Unnamed. #123
+ - Add REPL syntax highlight. #18
 
 ## 2.0.0
 
