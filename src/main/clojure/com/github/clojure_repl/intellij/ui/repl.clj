@@ -189,7 +189,7 @@
   (let [ns-text (str "\n\n" (db/get-in project [:current-nrepl :ns]) "> ")
         repl-content (seesaw/select console [:#repl-content])]
     (ui.components/init-clojure-text-field! repl-content)
-    (set-text repl-content (str text ns-text))
+    (set-text repl-content (str text ns-text) {:append? true})
     (move-caret-and-scroll-to-latest repl-content)))
 
 (def ^:private ^DateTimeFormatter time-formatter (DateTimeFormatter/ofPattern "dd/MM/yyyy HH:mm:ss"))
