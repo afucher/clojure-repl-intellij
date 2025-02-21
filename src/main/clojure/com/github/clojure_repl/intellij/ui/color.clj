@@ -1,6 +1,4 @@
 (ns com.github.clojure-repl.intellij.ui.color
-  (:require
-   [clojure.string :as string])
   (:import
    [com.intellij.openapi.editor.colors EditorColorsManager TextAttributesKey]
    [com.intellij.openapi.editor.markup TextAttributes]
@@ -30,6 +28,8 @@
                            :inherit DebuggerColors/INLINED_VALUES_EXECUTION_LINE)
    :test-summary-label (attr :key "REPL_TEST_SUMMARY_LABEL"
                              :foreground JBColor/GRAY)
+   :test-summary-code (attr :key "REPL_TEST_SUMMARY_CODE")
+
    :test-result-error (attr :key "REPL_TEST_RESULT_ERROR"
                             :foreground JBColor/RED)
    :test-result-fail (attr :key "REPL_TEST_RESULT_FAIL"
@@ -46,9 +46,6 @@
 (defn test-result-fail ^TextAttributes [] (global-attribute-for :test-result-fail))
 (defn test-result-error ^TextAttributes [] (global-attribute-for :test-result-error))
 (defn test-summary-label ^TextAttributes [] (global-attribute-for :test-summary-label))
+(defn test-summary-code ^TextAttributes [] (global-attribute-for :test-summary-code))
 (defn repl-window ^TextAttributes [] (global-attribute-for :repl-window))
 (defn eval-inline-hint ^TextAttributes [] (global-attribute-for :eval-inline-hint))
-
-(defn remove-ansi-color ^String [text]
-  ;; TODO support ANSI colors for libs like matcher-combinators pretty prints.
-  (string/replace text #"\u001B\[[;\d]*m" ""))

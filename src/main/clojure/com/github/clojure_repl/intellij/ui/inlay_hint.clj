@@ -1,10 +1,9 @@
 (ns com.github.clojure-repl.intellij.ui.inlay-hint
   (:require
-   [clojure.edn :as edn]
-   [clojure.pprint :as pprint]
    [com.github.clojure-repl.intellij.ui.color :as ui.color]
    [com.github.clojure-repl.intellij.ui.components :as ui.components]
-   [com.github.ericdallo.clj4intellij.logger :as logger]
+   [com.github.clojure-repl.intellij.ui.font :as font]
+   [com.github.clojure-repl.intellij.ui.text :as ui.text]
    [com.rpl.proxy-plus :refer [proxy+]]
    [seesaw.core :as seesaw])
   (:import
@@ -19,7 +18,7 @@
    [com.intellij.openapi.fileTypes SyntaxHighlighterFactory]
    [com.intellij.openapi.ui.popup JBPopupFactory]
    [com.intellij.ui SimpleColoredText SimpleTextAttributes]
-   [com.intellij.util.ui GraphicsUtil JBUI$CurrentTheme$ActionButton UIUtil]
+   [com.intellij.util.ui GraphicsUtil JBUI$CurrentTheme$ActionButton]
    [java.awt
     Cursor
     FontMetrics
@@ -37,9 +36,7 @@
 
 (defn ^:private font+metrics [^Inlay inlay]
   (let [editor (.getEditor inlay)
-        colors-scheme (.getColorsScheme editor)
-        font-style (.getFontType (ui.color/eval-inline-hint))
-        font (UIUtil/getFontWithFallback (.getFont colors-scheme (EditorFontType/forJavaStyle font-style)))
+        font (font/code-font (ui.color/eval-inline-hint) editor)
         metrics (FontInfo/getFontMetrics font (FontInfo/getFontRenderContext (.getContentComponent editor)))]
     [font metrics]))
 
@@ -151,14 +148,6 @@
     (.addAfterLineEndElement inlay-model offset false renderer)
     renderer))
 
-(defn ^:private pretty-printed-clojure-text [text]
-  (try
-    (with-out-str (pprint/pprint (edn/read-string {:default (fn [tag value]
-                                                              (symbol (str "#" tag value)))} text)))
-    (catch Exception e
-      (logger/warn "Can't parse clojure code for eval block" e)
-      text)))
-
 (defn remove-all [^Editor editor]
   (when-let [renderer-class (renderer-class)]
     (doseq [^Inlay inlay (.getAfterLineEndElementsInRange
@@ -204,5 +193,5 @@
         renderer (create-renderer summary-text editor)]
     (swap! inlays* assoc renderer {:hovering? false
                                    :expandable? expandable?
-                                   :text (pretty-printed-clojure-text text)
+                                   :text (ui.text/pretty-printed-clojure-text text)
                                    :summary-text summary-text})))

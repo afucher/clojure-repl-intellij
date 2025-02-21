@@ -124,6 +124,13 @@
         (on-succeeded response)
         (on-failed response)))))
 
+(defn test-stacktrace [^Project project ns var]
+  @(send-msg project {:op "test-stacktrace"
+                      :session (db/get-in project [:current-nrepl :session-id])
+                      :ns ns
+                      :index 0
+                      :var var}))
+
 (defn refresh-all [^Project project]
   @(send-msg project {:op "refresh-all"}))
 
