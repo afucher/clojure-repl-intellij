@@ -144,7 +144,7 @@
                                    KeyEvent/VK_ESCAPE))
   true)
 
-(defn ^:private on-repl-backspace [project]
+(defn ^:private on-repl-backspace [project ^KeyEvent event]
   (let [ns (db/get-in project [:current-nrepl :ns])
         repl-content ^EditorTextField (seesaw/select (db/get-in project [:console :ui]) [:#repl-content])
         repl-lines (string/split-lines (.getText repl-content))
@@ -152,7 +152,8 @@
         repl-input (re-find (re-pattern (str ns "+>\\s")) last-repl-line)]
     (when-not repl-input
       (set-text repl-content (str (string/join "\n" (drop-last repl-lines)) "\n" ns "> "))
-      (move-caret-and-scroll-to-latest repl-content))))
+      (move-caret-and-scroll-to-latest repl-content)
+      (.consume event))))
 
 (defn build-console [project {:keys [initial-text on-eval]}]
   (db/assoc-in! project [:console :state] {:status :disabled
@@ -192,7 +193,7 @@
                                      (on-repl-clear project)
 
                                      backspace?
-                                     (on-repl-backspace project)))
+                                     (on-repl-backspace project event)))
                                  false)))
             "grow"]]))
 
