@@ -4,6 +4,7 @@
 
  - Fix `eval defun at cursor` action error. #121
  - Create view error on test error. #128
+ - Block backspace on repl input.
 
 ## 2.1.0
 

@@ -142,6 +142,17 @@
     (clear-repl project console))
   true)
 
+(defn ^:private on-repl-backspace [project ^KeyEvent event]
+  (let [ns (db/get-in project [:current-nrepl :ns])
+        repl-content ^EditorTextField (seesaw/select (db/get-in project [:console :ui]) [:#repl-content])
+        repl-lines (string/split-lines (.getText repl-content))
+        last-repl-line (last repl-lines)
+        repl-input (re-find (re-pattern (str ns "+>\\s")) last-repl-line)]
+    (when-not repl-input
+      (set-text repl-content (str (string/join "\n" (drop-last repl-lines)) "\n" ns "> "))
+      (move-caret-and-scroll-to-latest repl-content)
+      (.consume event))))
+
 (defn build-console [project {:keys [initial-text on-eval]}]
   (db/assoc-in! project [:console :state] {:status :disabled
                                            :initial-text initial-text
@@ -161,6 +172,7 @@
                                  (let [ctrl? (not= 0 (bit-and (.getModifiers event) InputEvent/CTRL_MASK))
                                        shift? (not= 0 (bit-and (.getModifiers event) InputEvent/SHIFT_MASK))
                                        enter? (= KeyEvent/VK_ENTER (.getKeyCode event))
+                                       backspace? (= KeyEvent/VK_BACK_SPACE (.getKeyCode event))
                                        l? (= KeyEvent/VK_L (.getKeyCode event))
                                        page-up? (= KeyEvent/VK_PAGE_UP (.getKeyCode event))
                                        page-down? (= KeyEvent/VK_PAGE_DOWN (.getKeyCode event))]
@@ -175,7 +187,10 @@
                                      (on-repl-input project on-eval event)
 
                                      (and ctrl? l?)
-                                     (on-repl-clear project)))
+                                     (on-repl-clear project)
+
+                                     backspace?
+                                     (on-repl-backspace project event)))
                                  false)))
             "grow"]]))
 
