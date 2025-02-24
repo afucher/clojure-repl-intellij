@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+ - Fix `eval defun at cursor` action error. #121
+
 ## 2.1.0
 
  - Add default name for RunConfigurations instead of save as Unnamed. #123
