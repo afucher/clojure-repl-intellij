@@ -213,7 +213,8 @@
     (set-text (seesaw/select console [:#repl-content]) (format "\n*** Closed on %s ***" (.format time-formatter (java.time.LocalDateTime/now))) {:append? true})
     (key-manager/unregister-listener-for-editor! (.getEditor repl-content))))
 
-(defn append-result-text [project console text]
-  (set-text (seesaw/select console [:#repl-content])
-            (str "\n" text (db/get-in project [:current-nrepl :ns]) "> ")
-            {:append? true}))
+(defn append-result-text [project text]
+  (let [console (db/get-in project [:console :ui])]
+    (set-text (seesaw/select console [:#repl-content])
+              (str "\n" text (db/get-in project [:current-nrepl :ns]) "> ")
+              {:append? true})))

@@ -20,7 +20,9 @@
 
 (set! *warn-on-reflection* true)
 
-(defn ^:private eval-action [^AnActionEvent event loading-msg eval-fn success-msg-fn {:keys [inlay-hint-feedback?]}]
+(defn ^:private eval-action
+  [& {:keys [^AnActionEvent event loading-msg eval-fn success-msg-fn post-success-fn inlay-hint-feedback?]
+      :or {post-success-fn identity}}]
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
     (let [project (.getProject editor)]
       (if (db/get-in project [:current-nrepl :session-id])
@@ -40,38 +42,39 @@
                    (ui.hint/show-error {:message (str "Namespace not found: " (:ns response)) :editor editor})
 
                    :else
-                   (if inlay-hint-feedback?
-                     (ui.inlay-hint/show-code (success-msg-fn response) editor)
-                     (ui.hint/show-repl-info :message (success-msg-fn response) :editor editor))))}))))
+                   (do
+                     (if inlay-hint-feedback?
+                       (ui.inlay-hint/show-code (success-msg-fn response) editor)
+                       (ui.hint/show-repl-info :message (success-msg-fn response) :editor editor))
+                     (post-success-fn response))))}))))
         (ui.hint/show-error :message "No REPL connected" :editor editor)))))
 
 (defn load-file-action [^AnActionEvent event]
   (when-let [virtual-file ^VirtualFile (.getData event CommonDataKeys/VIRTUAL_FILE)]
     (eval-action
-     event
-     "REPL: Loading file"
-     (fn [^Editor editor]
-       (nrepl/load-file (.getProject editor) editor virtual-file))
-     (fn [_response]
-       (str "Loaded file " (.getPath ^VirtualFile virtual-file)))
-     {})))
+     :event event
+     :loading-msg "REPL: Loading file"
+     :eval-fn (fn [^Editor editor]
+                (nrepl/load-file (.getProject editor) editor virtual-file))
+     :success-msg-fn (fn [_response]
+                       (str "Loaded file " (.getPath ^VirtualFile virtual-file))))))
 
 (defn eval-last-sexpr-action [^AnActionEvent event]
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
     (let [[row col] (util/editor->cursor-position editor)]
       (eval-action
-       event
-       "REPL: Evaluating"
-       (fn [^Editor editor]
-         (let [text (.getText (.getDocument editor))
-               root-zloc (z/of-string text)
-               zloc (parser/find-form-at-pos root-zloc (inc row) col)
-               code (z/string zloc)
-               ns (some-> (parser/find-namespace root-zloc) z/string parser/remove-metadata)]
-           (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
-       (fn [response]
-         (string/join "\n" (:value response)))
-       {:inlay-hint-feedback? true}))))
+       :event event
+       :loading-msg "REPL: Evaluating"
+       :eval-fn (fn [^Editor editor]
+                  (let [text (.getText (.getDocument editor))
+                        root-zloc (z/of-string text)
+                        zloc (parser/find-form-at-pos root-zloc (inc row) col)
+                        code (z/string zloc)
+                        ns (some-> (parser/find-namespace root-zloc) z/string parser/remove-metadata)]
+                    (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
+       :success-msg-fn (fn [response]
+                         (string/join "\n" (:value response)))
+       :inlay-hint-feedback? true))))
 
 (defn interrupt [^AnActionEvent event]
   (-> event
@@ -82,19 +85,19 @@
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
     (let [[row col] (util/editor->cursor-position editor)]
       (eval-action
-       event
-       "REPL: Evaluating"
-       (fn [^Editor editor]
-         (let [text (.getText (.getDocument editor))
-               root-zloc (z/of-string text)
-               zloc (-> (parser/find-form-at-pos root-zloc (inc row) col)
-                        parser/to-top)
-               code (z/string zloc)
-               ns (some-> (parser/find-namespace root-zloc) z/string parser/remove-metadata)]
-           (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
-       (fn [response]
-         (string/join "\n" (:value response)))
-       {:inlay-hint-feedback? true}))))
+       :event event
+       :loading-msg "REPL: Evaluating"
+       :eval-fn (fn [^Editor editor]
+                  (let [text (.getText (.getDocument editor))
+                        root-zloc (z/of-string text)
+                        zloc (-> (parser/find-form-at-pos root-zloc (inc row) col)
+                                 parser/to-top)
+                        code (z/string zloc)
+                        ns (some-> (parser/find-namespace root-zloc) z/string parser/remove-metadata)]
+                    (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
+       :success-msg-fn (fn [response]
+                         (string/join "\n" (:value response)))
+       :inlay-hint-feedback? true))))
 
 (defn clear-repl-output-action [^AnActionEvent event]
   (let [project (actions/action-event->project event)]
@@ -112,38 +115,37 @@
 
 (defn switch-ns-action [^AnActionEvent event]
   (eval-action
-   event
-   "REPL: Switching ns"
-   (fn [^Editor editor]
-     (let [text (.getText (.getDocument editor))
-           root-zloc (z/of-string text)
-           zloc (parser/find-namespace root-zloc)
-           namespace (parser/remove-metadata (z/string zloc))]
-       (nrepl/eval {:project (.getProject editor) :code (format "(in-ns '%s)" namespace) :ns namespace})))
-   (fn [response]
-     (string/join "\n" (:value response)))
-   {}))
+   :event event
+   :loading-msg "REPL: Switching ns"
+   :eval-fn (fn [^Editor editor]
+              (let [text (.getText (.getDocument editor))
+                    root-zloc (z/of-string text)
+                    zloc (parser/find-namespace root-zloc)
+                    namespace (parser/remove-metadata (z/string zloc))]
+                (nrepl/eval {:project (.getProject editor) :code (format "(in-ns '%s)" namespace) :ns namespace})))
+   :success-msg-fn (fn [response]
+                     (string/join "\n" (:value response)))
+   :post-success-fn (fn [_response]
+                      (ui.repl/append-result-text (.getProject ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)) ""))))
 
 (defn refresh-all-action [^AnActionEvent event]
   (eval-action
-   event
-   "REPL: Refreshing all ns"
-   (fn [^Editor editor]
-     (nrepl/refresh-all (.getProject editor)))
-   (fn [response]
-     (if (contains? (:status response) "ok")
-       "Refreshed sucessfully"
-       (str "Refresh failed:\n" (:error response))))
-   {}))
+   :event event
+   :loading-msg "REPL: Refreshing all ns"
+   :eval-fn (fn [^Editor editor]
+              (nrepl/refresh-all (.getProject editor)))
+   :success-msg-fn (fn [response]
+                     (if (contains? (:status response) "ok")
+                       "Refreshed sucessfully"
+                       (str "Refresh failed:\n" (:error response))))))
 
 (defn refresh-changed-action [^AnActionEvent event]
   (eval-action
-   event
-   "REPL: Refreshing changed ns"
-   (fn [^Editor editor]
-     (nrepl/refresh (.getProject editor)))
-   (fn [response]
-     (if (contains? (:status response) "ok")
-       "Refreshed sucessfully"
-       (str "Refresh failed:\n" (:error response))))
-   {}))
+   :event event
+   :loading-msg "REPL: Refreshing changed ns"
+   :eval-fn (fn [^Editor editor]
+              (nrepl/refresh (.getProject editor)))
+   :success-msg-fn (fn [response]
+                     (if (contains? (:status response) "ok")
+                       "Refreshed sucessfully"
+                       (str "Refresh failed:\n" (:error response))))))

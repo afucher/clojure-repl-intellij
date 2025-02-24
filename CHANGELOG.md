@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Update repl window ns after switching ns.
+
 ## 2.2.0
 
  - Fix `eval defun at cursor` action error. #121
