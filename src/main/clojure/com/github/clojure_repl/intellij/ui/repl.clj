@@ -5,16 +5,16 @@
    [com.github.clojure-repl.intellij.keyboard-manager :as key-manager]
    [com.github.clojure-repl.intellij.ui.color :as ui.color]
    [com.github.clojure-repl.intellij.ui.components :as ui.components]
+   [com.github.clojure-repl.intellij.ui.font :as ui.font]
+   [com.github.clojure-repl.intellij.ui.text :as ui.text]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
    [seesaw.core :as seesaw]
    [seesaw.mig :as mig])
   (:import
    [com.intellij.openapi.editor ScrollType]
-   [com.intellij.openapi.editor.colors EditorColorsManager EditorFontType]
    [com.intellij.openapi.editor.ex EditorEx]
    [com.intellij.openapi.project Project]
    [com.intellij.ui EditorTextField]
-   [com.intellij.util.ui UIUtil]
    [java.awt.event InputEvent KeyEvent]
    [java.time.format DateTimeFormatter]))
 
@@ -44,7 +44,7 @@
   ([repl-content text]
    (set-text repl-content text nil))
   ([^EditorTextField repl-content text {:keys [append? drop-last-newline-before-append?]}]
-   (let [text (ui.color/remove-ansi-color text)
+   (let [text (ui.text/remove-ansi-color text)
          dropped-text (if (and append? drop-last-newline-before-append?)
                         (replace-last (.getText repl-content) "\n" "")
                         (.getText repl-content))
@@ -139,9 +139,7 @@
 
 (defn ^:private on-repl-clear [project]
   (let [console (db/get-in project [:console :ui])]
-    (clear-repl project console)
-    (key-manager/send-key-pressed! (.getEditor ^EditorTextField (seesaw/select console [:#repl-content]))
-                                   KeyEvent/VK_ESCAPE))
+    (clear-repl project console))
   true)
 
 (defn build-console [project {:keys [initial-text on-eval]}]
@@ -157,8 +155,7 @@
              :project project
              :text (db/get-in project [:console :state :last-output])
              :background-color (.getBackgroundColor (ui.color/repl-window))
-             :font (UIUtil/getFontWithFallback (.getFont (.getGlobalScheme (EditorColorsManager/getInstance))
-                                                         (EditorFontType/forJavaStyle (.getFontType (ui.color/repl-window)))))
+             :font (ui.font/code-font (ui.color/repl-window))
              :on-key-pressed (fn [^KeyEvent event]
                                (if (identical? :enabled (db/get-in project [:console :state :status]))
                                  (let [ctrl? (not= 0 (bit-and (.getModifiers event) InputEvent/CTRL_MASK))

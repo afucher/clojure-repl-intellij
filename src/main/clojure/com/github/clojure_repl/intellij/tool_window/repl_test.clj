@@ -11,6 +11,8 @@
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.ui.color :as ui.color]
    [com.github.clojure-repl.intellij.ui.components :as ui.components]
+   [com.github.clojure-repl.intellij.ui.font :as ui.font]
+   [com.github.clojure-repl.intellij.ui.text :as ui.text]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
    [com.github.ericdallo.clj4intellij.util :as util]
    [com.rpl.proxy-plus :refer [proxy+]]
@@ -26,6 +28,7 @@
    [com.intellij.openapi.wm ToolWindow ToolWindowAnchor]
    [com.intellij.ui.components ActionLink]
    [com.intellij.ui.content ContentFactory$SERVICE]
+   [com.intellij.util.ui JBFont]
    [java.io File]
    [javax.swing JComponent JScrollPane]))
 
@@ -49,12 +52,14 @@
 
 (defn ^:private label [key value]
   ;; TODO support ANSI colors for libs like matcher-combinators pretty prints.
-  (let [code (ui.color/remove-ansi-color value)
-        any-project (first (.getOpenProjects (ProjectManager/getInstance)))]
-    [[(seesaw/label :text key :foreground (.getForegroundColor (ui.color/test-summary-label))) "alignx right, aligny top"]
+  (let [code (ui.text/remove-ansi-color value)
+        any-project (first (.getOpenProjects (ProjectManager/getInstance)))
+        font (ui.font/code-font (ui.color/test-summary-code))]
+    [[(seesaw/label :text key :font font :foreground (.getForegroundColor (ui.color/test-summary-label))) "alignx right, aligny top"]
      [(let [field (ui.components/clojure-text-field
                    :editable? false
                    :text code
+                   :font font
                    :project any-project)]
         ;; We remove the border after the editor is built
         (app-manager/invoke-later! {:invoke-fn
@@ -73,6 +78,48 @@
     (.openFile file-editor-manager v-file true)
     (.moveToOffset (.getCaretModel editor) offset)))
 
+(defn ^:private view-error [project ns var]
+  (ui.components/collapsible
+   :expanded-title "Hide error"
+   :collapsed-title "View error"
+   :title-font (.asBold (JBFont/h3))
+   :content (fn []
+              (let [{:keys [class stacktrace message data]} (nrepl/test-stacktrace project ns var)
+                    code-font (ui.font/code-font (ui.color/test-summary-code))
+                    [max-file-length
+                     max-line-length] (reduce (fn [[max-f-size max-l-size] {:keys [file line]}]
+                                                (let [c-lines (count (str line))
+                                                      c-file (count file)
+                                                      file-l (if (> c-file max-f-size) c-file max-f-size)
+                                                      line-l (if (> c-lines max-l-size) c-lines max-l-size)]
+                                                  [file-l line-l])) [0 0] stacktrace)
+                    stacktrace-text (reduce (fn [text {:keys [fn ns name file line]}]
+                                              (format (str "%s%" max-file-length "s %" max-line-length "s %s\n")
+                                                      text
+                                                      file
+                                                      line
+                                                      (if fn (str ns "/" fn) name))) "" stacktrace)]
+                (mig/mig-panel
+                 :constraints ["insets 0, gap 8"]
+                 :items [[(seesaw/horizontal-panel
+                           :items [(seesaw/label :text "Exception: " :font (JBFont/regular))
+                                   (seesaw/label :text class
+                                                 :foreground (.getForegroundColor (ui.color/test-result-error))
+                                                 :font code-font)]) "span"]
+                         [(ui.components/clojure-text-field :text (ui.text/remove-ansi-color message)
+                                                            :project project
+                                                            :font code-font
+                                                            :editable? false) "span"]
+                         [(ui.components/clojure-text-field :text (ui.text/pretty-printed-clojure-text data)
+                                                            :project project
+                                                            :font code-font
+                                                            :editable? false) "span"]
+                         ;; TODO improve this component to support clickable links for file-uri
+                         [(ui.components/clojure-text-field :text stacktrace-text
+                                                            :project project
+                                                            :font code-font
+                                                            :editable? false) "span"]])))))
+
 (defn ^:private test-report-content ^JComponent [^Project project vars]
   (seesaw/scrollable
    (mig/mig-panel
@@ -84,7 +131,7 @@
          (when (seq non-passing)
            [(mig/mig-panel
              :items
-             (for [{:keys [var context type message expected actual diffs error gen-input] :as test} non-passing]
+             (for [{:keys [ns var context type message expected actual diffs error gen-input] :as test} non-passing]
                [(mig/mig-panel
                  :items
                  (->> [[(seesaw/flow-panel
@@ -99,25 +146,18 @@
                        (when (seq context) [(seesaw/label :text (str context)) "span"])
                        (when (seq message) [(seesaw/label :text (str message)) "span"])
                        (when (seq expected)
-                         (label "expected: " expected))
+                         (label "expected:" expected))
                        (if (seq diffs)
                          (for [[actual [removed added]] diffs]
-                           [(label "actual: " actual)
-                            (label "diff: " (str "- " removed))
+                           [(label "actual:" actual)
+                            (label "diff:" (str "- " removed))
                             (label "" (str "+ " added))])
 
                          (when (seq actual)
-                           (label "actual: " actual)))
+                           (label "actual:" actual)))
                        (when (seq error)
-                         [(label "error: " error)
-                               ;; TODO implement support to check stacktrace error
-                          #_[(seesaw/button :text "View stacktrace"
-                                            :mnemonic "S"
-                                            :listen [:action (fn [_]
-                                                               (seesaw/alert "fooo"
-                                                                             :title "Test error stacktrace"
-                                                                             :type :error
-                                                                             :icon Icons/CLOJURE_REPL))]) ""]])
+                         [(label "error:" error)
+                          [(view-error project ns var) "span"]])
                        (when (seq gen-input)
                          (label "input: " gen-input))]
                       flatten
