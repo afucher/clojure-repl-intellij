@@ -79,21 +79,22 @@
       nrepl/interrupt))
 
 (defn eval-defun-action [^AnActionEvent event]
-  (eval-action
-   event
-   "REPL: Evaluating"
-   (fn [^Editor editor]
-     (let [[row col] (util/editor->cursor-position editor)
-           text (.getText (.getDocument editor))
-           root-zloc (z/of-string text)
-           zloc (-> (parser/find-form-at-pos root-zloc (inc row) col)
-                    parser/to-top)
-           code (z/string zloc)
-           ns (some-> (parser/find-namespace root-zloc) z/string parser/remove-metadata)]
-       (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
-   (fn [response]
-     (string/join "\n" (:value response)))
-   {:inlay-hint-feedback? true}))
+  (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
+    (let [[row col] (util/editor->cursor-position editor)]
+      (eval-action
+       event
+       "REPL: Evaluating"
+       (fn [^Editor editor]
+         (let [text (.getText (.getDocument editor))
+               root-zloc (z/of-string text)
+               zloc (-> (parser/find-form-at-pos root-zloc (inc row) col)
+                        parser/to-top)
+               code (z/string zloc)
+               ns (some-> (parser/find-namespace root-zloc) z/string parser/remove-metadata)]
+           (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
+       (fn [response]
+         (string/join "\n" (:value response)))
+       {:inlay-hint-feedback? true}))))
 
 (defn clear-repl-output-action [^AnActionEvent event]
   (let [project (actions/action-event->project event)]

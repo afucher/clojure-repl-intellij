@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 
-- Create view error on test error. #128
+ - Fix `eval defun at cursor` action error. #121
+ - Create view error on test error. #128
 
 ## 2.1.0
 
