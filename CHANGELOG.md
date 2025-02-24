@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Create view error on test error. #128
+
 ## 2.1.0
 
  - Add default name for RunConfigurations instead of save as Unnamed. #123

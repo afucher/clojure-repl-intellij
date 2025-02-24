@@ -49,10 +49,12 @@
     (when title-font (.setFont toggle title-font))
     (.setBorder toggle (IdeBorderFactory/createBorder (.getBackground toggle)))
     (seesaw/listen toggle :action (fn [_]
-                                    (let [toggled? (seesaw/config toggle :selected?)]
+                                    (let [toggled? (seesaw/config toggle :selected?)
+                                          icon (if toggled? AllIcons$General/ArrowDown AllIcons$General/ArrowRight)
+                                          text (if toggled? expanded-title collapsed-title)]
                                       (seesaw/config! toggle
-                                                      :icon (if toggled? AllIcons$General/ArrowDown AllIcons$General/ArrowRight)
-                                                      :text (if toggled? expanded-title collapsed-title))
+                                                      :icon icon
+                                                      :text text)
                                       (seesaw/config! content-panel :visible? toggled?)
                                       (when toggled?
                                         (seesaw/config! content-panel :items [(content)])))))
