@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Block backspace on repl input.
+
 ## 2.1.0
 
  - Add default name for RunConfigurations instead of save as Unnamed. #123
