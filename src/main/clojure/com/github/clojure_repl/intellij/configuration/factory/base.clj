@@ -66,9 +66,9 @@
 
 (defn ^:private on-repl-evaluated [project {:keys [out err]}]
   (when err
-    (ui.repl/append-result-text project (db/get-in project [:console :ui]) err))
+    (ui.repl/append-result-text project err))
   (when out
-    (ui.repl/append-result-text project (db/get-in project [:console :ui]) out)))
+    (ui.repl/append-result-text project out)))
 
 (defn ^:private trigger-ui-update
   "IntelliJ actions status (visibility/enable) depend on IntelliJ calls an update of the UI
@@ -89,7 +89,7 @@
    :project project
    :on-receive-async-message (fn [msg]
                                (when (:out msg)
-                                 (ui.repl/append-result-text project (db/get-in project [:console :ui]) (:out msg)))))
+                                 (ui.repl/append-result-text project (:out msg)))))
   (nrepl/clone-session project)
   (nrepl/eval {:project project :code "*ns*"})
   (let [description (nrepl/describe project)]

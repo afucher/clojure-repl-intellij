@@ -34,9 +34,9 @@
                                 (fn []
                                   (ui.hint/show-error :message (format "No namespace '%s' found. Did you load the file?" ns) :editor editor))}))
            :on-out (fn [out]
-                     (ui.repl/append-result-text project (db/get-in project [:console :ui]) out))
+                     (ui.repl/append-result-text project out))
            :on-err (fn [err]
-                     (ui.repl/append-result-text project (db/get-in project [:console :ui]) err))
+                     (ui.repl/append-result-text project err))
            :on-failed (fn [result]
                         ;; TODO highlight errors on editor
                         (doseq [[key fns] (db/get-in project [:on-test-failed-fns-by-key])]
