@@ -2,12 +2,16 @@
   (:require
    [com.github.clojure-repl.intellij.keyboard-manager :as key-manager]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
-   [seesaw.core :as seesaw])
+   [seesaw.core :as seesaw]
+   [seesaw.mig :as mig])
   (:import
+   [com.intellij.icons AllIcons$General]
    [com.intellij.openapi.editor EditorFactory]
    [com.intellij.openapi.editor.ex EditorEx]
    [com.intellij.openapi.fileTypes FileTypeManager]
-   [com.intellij.ui EditorTextField]))
+   [com.intellij.ui EditorTextField IdeBorderFactory]
+   [java.awt Font]
+   [javax.swing JButton JComponent]))
 
 (set! *warn-on-reflection* true)
 
@@ -34,3 +38,26 @@
                    (key-manager/register-listener-for-editor!
                     {:editor (.getEditor editor-text-field)
                      :on-key-pressed on-key-pressed}))})))
+
+(defn collapsible ^JComponent
+  [& {:keys [collapsed-title expanded-title content ^Font title-font]}]
+  (let [content-panel (seesaw/vertical-panel :visible? false :items [])
+        toggle ^JButton (seesaw/toggle
+                         :text collapsed-title
+                         :icon AllIcons$General/ArrowRight
+                         :selected? false)]
+    (when title-font (.setFont toggle title-font))
+    (.setBorder toggle (IdeBorderFactory/createBorder (.getBackground toggle)))
+    (seesaw/listen toggle :action (fn [_]
+                                    (let [toggled? (seesaw/config toggle :selected?)
+                                          icon (if toggled? AllIcons$General/ArrowDown AllIcons$General/ArrowRight)
+                                          text (if toggled? expanded-title collapsed-title)]
+                                      (seesaw/config! toggle
+                                                      :icon icon
+                                                      :text text)
+                                      (seesaw/config! content-panel :visible? toggled?)
+                                      (when toggled?
+                                        (seesaw/config! content-panel :items [(content)])))))
+    (mig/mig-panel :constraints ["insets 0"]
+                   :items [[toggle "span"]
+                           [content-panel "gapx 10"]])))
