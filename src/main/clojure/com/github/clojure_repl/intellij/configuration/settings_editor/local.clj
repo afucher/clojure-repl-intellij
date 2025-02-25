@@ -6,6 +6,7 @@
    :extends com.intellij.openapi.options.SettingsEditor)
   (:require
    [com.github.clojure-repl.intellij.project :as project]
+   [com.github.clojure-repl.intellij.ui.components :as ui.components]
    [seesaw.core :as seesaw]
    [seesaw.layout]
    [seesaw.mig :as mig])
@@ -13,75 +14,48 @@
    [com.github.clojure_repl.intellij.configuration ReplLocalRunOptions]
    [com.intellij.execution.configurations RunConfigurationBase]
    [com.intellij.openapi.project Project ProjectManager]
-   [com.intellij.ui IdeBorderFactory]
-   [java.awt.event ActionEvent]
-   [javax.swing JComponent]))
+   [com.intellij.ui IdeBorderFactory]))
 
 (set! *warn-on-reflection* true)
-
-(defn ^:private alias-ui [alias-id alias-text]
-  (let [text-id (keyword (str "alias-" alias-id))]
-    (seesaw/text :id text-id
-                 :text alias-text
-                 :columns 10)))
-
-(defn ^:private add-alias-field [ui alias]
-  (let [aliases-group ^JComponent (seesaw/select ui [:#aliases-group])
-        new-id (.getComponentCount aliases-group)]
-    (seesaw.layout/add-widget aliases-group (alias-ui new-id alias))
-    (seesaw.layout/handle-structure-change aliases-group)))
-
-(defn ^:private env-var-ui [env-var-id env-var-text]
-  (let [text-id (keyword (str "env-var-" env-var-id))]
-    (seesaw/text :id text-id
-                 :text env-var-text
-                 :columns 15)))
-
-(defn ^:private add-env-var-field [ui env-var]
-  (let [env-var-group ^JComponent (seesaw/select ui [:#env-vars-group])
-        new-id (.getComponentCount env-var-group)]
-    (seesaw.layout/add-widget env-var-group (env-var-ui new-id env-var))
-    (seesaw.layout/handle-structure-change env-var-group)))
 
 (defn ^:private build-editor-ui []
   (let [opened-projects (.getOpenProjects (ProjectManager/getInstance))
         project-type (name (or (project/project->project-type (first opened-projects)) :clojure))]
     (mig/mig-panel
      :border (IdeBorderFactory/createTitledBorder "nREPL connection")
-     :items (remove
-             nil?
-             [[(seesaw/label "Project") ""]
-              [(seesaw/combobox :id    :project
-                                :model (mapv #(.getName ^Project %) opened-projects)) "wrap"]
-              [(seesaw/label "Type") ""]
-              [(doto
-                (seesaw/combobox :id    :project-type
-                                 :model (map name project/types))
-                 (seesaw/selection! project-type)) "wrap"]
-              [(seesaw/label (if (= "lein" project-type) "Profiles" "Aliases")) ""]
-              [(mig/mig-panel
-                :constraints ["gap 0"]
-                :id :aliases-group
-                :items []) "gap 0"]
-              [(seesaw/button :id :add-alias
-                              :size [36 :by 36]
-                              :text "+"
-                              :listen [:action (fn [^ActionEvent event]
-                                                 (let [button (.getSource event)
-                                                       parent (.getParent ^JComponent button)]
-                                                   (add-alias-field parent "")))]) "gap 0, wrap"]
-              [(seesaw/label "Env vars") ""]
-              [(mig/mig-panel
-                :constraints ["gap 0"]
-                :id :env-vars-group
-                :items []) "gap 0"]
-              [(seesaw/button :id :add-env-var
-                              :size [36 :by 36]
-                              :text "+"
-                              :listen [:action (fn [^ActionEvent event]
-                                                 (let [button (.getSource event)
-                                                       parent (.getParent ^JComponent button)]
-                                                   (add-env-var-field parent "EXAMPLE_VAR=foo")))]) "gap 0, wrap"]]))))
+     :items (->> [[(seesaw/label "Project") ""]
+                  [(seesaw/combobox :id :project
+                                    :model (mapv #(.getName ^Project %) opened-projects)) "wrap"]
+                  [(seesaw/label "Type") ""]
+                  [(doto
+                    (seesaw/combobox :id :project-type
+                                     :model (map name project/types))
+                     (seesaw/selection! project-type)) "wrap"]
+                  (ui.components/multi-field
+                   :label (if (= "lein" project-type) "Profiles" "Aliases")
+                   :group-id :aliases-group
+                   :button-id :add-alias
+                   :prefix-id "alias-"
+                   :columns 10
+                   :initial-text "")
+                  (ui.components/multi-field
+                   :label "Env vars"
+                   :group-id :env-vars-group
+                   :button-id :add-env-var
+                   :prefix-id "env-var-"
+                   :columns 15
+                   :initial-text "EXAMPLE_VAR=foo")
+                  (ui.components/multi-field
+                   :label "JVM args"
+                   :group-id :jvm-args-group
+                   :button-id :add-jvm-arg
+                   :prefix-id "jvm-arg-"
+                   :columns 15
+                   :initial-text "-Dexample=foo")]
+                 flatten
+                 (remove nil?)
+                 (partition 2)
+                 vec))))
 
 (defn -init []
   [[] (atom (build-editor-ui))])
@@ -100,15 +74,15 @@
   (let [ui @(.state this)
         options ^ReplLocalRunOptions (.getOptions configuration)
         project-path (seesaw/text (seesaw/select ui [:#project]))
-        aliases (filterv not-empty (mapv seesaw/text (.getComponents (seesaw/select ui [:#aliases-group]))))
-        env-vars (->> (.getComponents (seesaw/select ui [:#env-vars-group]))
-                      (mapv seesaw/text)
-                      (filterv not-empty))
-        type (seesaw/text (seesaw/select ui [:#project-type]))]
+        type (seesaw/text (seesaw/select ui [:#project-type]))
+        aliases (ui.components/field-values-from-multi-field ui :aliases-group)
+        env-vars (ui.components/field-values-from-multi-field ui :env-vars-group)
+        jvm-args (ui.components/field-values-from-multi-field ui :jvm-args-group)]
     (.setProject options project-path)
+    (.setProjectType options type)
     (.setAliases options aliases)
     (.setEnvVars options env-vars)
-    (.setProjectType options type)))
+    (.setJvmArgs options jvm-args)))
 
 (defn -resetEditorFrom [this configuration]
   (update-configuration-name configuration)
@@ -123,10 +97,13 @@
         type (or (some-> options .getProjectType not-empty)
                  (name (project/project->project-type project)))
         aliases (.getAliases options)
-        env-vars (.getEnvVars options)]
+        env-vars (.getEnvVars options)
+        jvm-args (.getJvmArgs options)]
     (seesaw/selection! (seesaw/select ui [:#project-type]) type)
+    (seesaw/text! (seesaw/select ui [:#project]) project-name)
     (doseq [alias aliases]
-      (add-alias-field ui alias))
+      (ui.components/add-field-to-multi-field! ui :aliases-group alias))
     (doseq [env-var env-vars]
-      (add-env-var-field ui env-var))
-    (seesaw/text! (seesaw/select ui [:#project]) project-name)))
+      (ui.components/add-field-to-multi-field! ui :env-vars-group env-var))
+    (doseq [jvm-arg jvm-args]
+      (ui.components/add-field-to-multi-field! ui :jvm-args-group jvm-arg))))
