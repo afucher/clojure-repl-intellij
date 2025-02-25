@@ -52,7 +52,7 @@
                                                      (when (= "powershell" cmd)
                                                        "/full/path/powershell"))
                     repl-command/shell (constantly {:exit 0})]
-        (is (= ["/full/path/powershell" "-NoProfile" "-Command" "lein"
+        (is (= ["/full/path/powershell" "-NoProfile" "-Command" "lein.bat"
                 "update-in" ":dependencies" "conj" "[nrepl/nrepl \"1.0.0\"]"
                 "--" "update-in" ":plugins" "conj" "[cider/cider-nrepl \"0.45.0\"]"
                 "--" "repl" ":headless" ":host" "localhost"]

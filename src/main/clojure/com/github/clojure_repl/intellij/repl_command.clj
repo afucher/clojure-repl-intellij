@@ -6,8 +6,11 @@
 
 (set! *warn-on-reflection* true)
 
+(def ^:private windows-os?
+  (.contains (System/getProperty "os.name") "Windows"))
+
 (def ^:private project-type->command
-  {:lein ["lein"]
+  {:lein (if windows-os? ["lein.bat"] ["lein"])
    :clojure ["clojure"]
    :babashka ["bb"]
    :shadow-cljs ["npx" "shadow-cljs"]
@@ -34,9 +37,6 @@
   [& cmd-and-args]
   (println cmd-and-args)
   (apply shell/sh cmd-and-args))
-
-(def ^:private windows-os?
-  (.contains (System/getProperty "os.name") "Windows"))
 
 (defn ^:private normalize-command
   "Return CLASSPATH-CMD, but with the EXEC expanded to its full path (if found).
@@ -75,7 +75,7 @@
              "--" (when (seq aliases)
                     ["with-profile" (str "+" (string/join ",+" aliases))]) "repl" ":headless" ":host" "localhost"]
       :clojure ["-Sdeps"
-                "{:deps {nrepl/nrepl {:mvn/version \"%nrepl/nrepl%\"} cider/cider-nrepl {:mvn/version \"%cider/cider-nrepl%\"}} :aliases {:cider/nrepl {:main-opts [\"-m\" \"nrepl.cmdline\" \"--middleware\" \"[cider.nrepl/cider-middleware]\"]}}}"
+                "'{:deps {nrepl/nrepl {:mvn/version \"\"\"%nrepl/nrepl%\"\"\"} cider/cider-nrepl {:mvn/version \"\"\"%cider/cider-nrepl%\"\"\"}} :aliases {:cider/nrepl {:main-opts [\"-m\" \"nrepl.cmdline\" \"--middleware\" \"[cider.nrepl/cider-middleware]\"]}}}'"
                 (str "-M:" (string/join ":" (conj aliases "cider/nrepl")))]
       :babashka ["nrepl-server" "localhost:0"]
       :shadow-cljs ["server"]
