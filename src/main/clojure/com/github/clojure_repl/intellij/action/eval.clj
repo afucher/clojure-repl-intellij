@@ -128,6 +128,12 @@
    :post-success-fn (fn [_response]
                       (ui.repl/append-result-text (.getProject ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)) ""))))
 
+(defn reload-all-action []
+  (println "Reload-all-action event"))
+
+(defn reload-action []
+  (println "Reload action event"))
+
 (defn refresh-all-action [^AnActionEvent event]
   (eval-action
    :event event
