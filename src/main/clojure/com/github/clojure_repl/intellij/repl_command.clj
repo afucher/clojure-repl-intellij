@@ -73,8 +73,11 @@
     (get
      {:lein ["update-in" ":dependencies" "conj" "[nrepl/nrepl \"%nrepl/nrepl%\"]"
              "--" "update-in" ":plugins" "conj" "[cider/cider-nrepl \"%cider/cider-nrepl%\"]"
+             (when (seq jvm-args)
+               ["--" "update-in" ":jvm-opts" "concat" (str (mapv #(str (first %) "=" (second %)) jvm-args))])
              "--" (when (seq aliases)
-                    ["with-profile" (str "+" (string/join ",+" aliases))]) "repl" ":headless" ":host" "localhost"]
+                    ["with-profile" (str "+" (string/join ",+" aliases))])
+             "repl" ":headless" ":host" "localhost"]
       :clojure [(when (seq jvm-args)
                   (map #(str "-J" (first %) "=" (second %)) jvm-args))
                 "-Sdeps"
