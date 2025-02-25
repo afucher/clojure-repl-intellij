@@ -69,7 +69,10 @@
                   (let [text (.getText (.getDocument editor))
                         root-zloc (z/of-string text)
                         zloc (parser/find-form-at-pos root-zloc (inc row) col)
-                        code (z/string zloc)
+                        special-form? (contains? #{:quote :syntax-quote :var :reader-macro} (-> zloc z/up z/tag))
+                        code (if special-form?
+                               (-> zloc z/up z/string)
+                               (z/string zloc))
                         ns (some-> (parser/find-namespace root-zloc) z/string parser/remove-metadata)]
                     (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
        :success-msg-fn (fn [response]
