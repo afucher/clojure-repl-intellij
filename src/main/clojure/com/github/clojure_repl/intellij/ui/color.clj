@@ -26,26 +26,26 @@
    :eval-inline-hint (attr :key "REPL_EVAL_INLINE_INLAY_HINT"
                            :background (JBColor. (Color/decode "#c7e8fc") (Color/decode "#16598c"))
                            :inherit DebuggerColors/INLINED_VALUES_EXECUTION_LINE)
-   :test-summary-label (attr :key "REPL_TEST_SUMMARY_LABEL"
-                             :foreground JBColor/GRAY)
-   :test-summary-code (attr :key "REPL_TEST_SUMMARY_CODE")
+   :test-summary--label (attr :key "REPL_TEST_SUMMARY_LABEL"
+                              :foreground JBColor/GRAY)
+   :test-summary--code (attr :key "REPL_TEST_SUMMARY_CODE")
 
-   :test-result-error (attr :key "REPL_TEST_RESULT_ERROR"
+   :test-result--error (attr :key "REPL_TEST_RESULT_ERROR"
+                             :foreground JBColor/RED)
+   :test-result--fail (attr :key "REPL_TEST_RESULT_FAIL"
                             :foreground JBColor/RED)
-   :test-result-fail (attr :key "REPL_TEST_RESULT_FAIL"
-                           :foreground JBColor/RED)
-   :test-result-pass (attr :key "REPL_TEST_RESULT_PASS"
-                           :foreground (UIUtil/getToolTipForeground))})
+   :test-result--pass (attr :key "REPL_TEST_RESULT_PASS"
+                            :foreground (UIUtil/getToolTipForeground))})
 
 (defn ^:private global-attribute-for ^TextAttributes [key]
   (.. (EditorColorsManager/getInstance)
       getGlobalScheme
       (getAttributes (key (text-attributes)))))
 
-(defn test-result-pass ^TextAttributes [] (global-attribute-for :test-result-pass))
-(defn test-result-fail ^TextAttributes [] (global-attribute-for :test-result-fail))
-(defn test-result-error ^TextAttributes [] (global-attribute-for :test-result-error))
-(defn test-summary-label ^TextAttributes [] (global-attribute-for :test-summary-label))
-(defn test-summary-code ^TextAttributes [] (global-attribute-for :test-summary-code))
+(defn test-result-pass ^TextAttributes [] (global-attribute-for :test-result--pass))
+(defn test-result-fail ^TextAttributes [] (global-attribute-for :test-result--fail))
+(defn test-result-error ^TextAttributes [] (global-attribute-for :test-result--error))
+(defn test-summary-label ^TextAttributes [] (global-attribute-for :test-summary--label))
+(defn test-summary-code ^TextAttributes [] (global-attribute-for :test-summary--code))
 (defn repl-window ^TextAttributes [] (global-attribute-for :repl-window))
 (defn eval-inline-hint ^TextAttributes [] (global-attribute-for :eval-inline-hint))

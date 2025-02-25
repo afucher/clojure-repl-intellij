@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Update repl window ns after switching ns.
+- Fix exception on settings page.
 
 ## 2.2.0
 
