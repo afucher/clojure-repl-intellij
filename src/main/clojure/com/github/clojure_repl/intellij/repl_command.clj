@@ -16,6 +16,7 @@
    :gradle ["./gradlew"]})
 
 (def ^:private middleware-versions
+  ;; TODO make version configurable in intellij settings
   {"nrepl/nrepl" "1.0.0"
    "cider/cider-nrepl" "0.45.0"})
 
@@ -65,7 +66,7 @@
       cmd)
     cmd))
 
-(defn ^:private project-type->parameters [project-type aliases]
+(defn ^:private project-type->parameters [project-type aliases jvm-args]
   (flatten
    (remove
     nil?
@@ -74,7 +75,9 @@
              "--" "update-in" ":plugins" "conj" "[cider/cider-nrepl \"%cider/cider-nrepl%\"]"
              "--" (when (seq aliases)
                     ["with-profile" (str "+" (string/join ",+" aliases))]) "repl" ":headless" ":host" "localhost"]
-      :clojure ["-Sdeps"
+      :clojure [(when (seq jvm-args)
+                  (map #(str "-J" (first %) "=" (second %)) jvm-args))
+                "-Sdeps"
                 "{:deps {nrepl/nrepl {:mvn/version \"%nrepl/nrepl%\"} cider/cider-nrepl {:mvn/version \"%cider/cider-nrepl%\"}} :aliases {:cider/nrepl {:main-opts [\"-m\" \"nrepl.cmdline\" \"--middleware\" \"[cider.nrepl/cider-middleware]\"]}}}"
                 (str "-M:" (string/join ":" (conj aliases "cider/nrepl")))]
       :babashka ["nrepl-server" "localhost:0"]
@@ -93,7 +96,7 @@
    parameters
    middleware-versions))
 
-(defn project->repl-start-command [project-type aliases]
+(defn project->repl-start-command [project-type aliases jvm-args]
   (let [command (normalize-command (project-type->command project-type))
-        parameters (replace-versions middleware-versions (project-type->parameters project-type aliases))]
+        parameters (replace-versions middleware-versions (project-type->parameters project-type aliases jvm-args))]
     (flatten (concat command parameters))))

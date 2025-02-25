@@ -32,6 +32,10 @@
   (into {}
         (mapv #(string/split % #"=")
               (seq (.getEnvVars (.getOptions configuration))))))
+(defn ^:private jvm-args [configuration]
+  (into {}
+        (mapv #(string/split % #"=")
+              (seq (.getJvmArgs (.getOptions configuration))))))
 (set! *warn-on-reflection* true)
 
 (def ^:private options-class ReplLocalRunOptions)
@@ -92,7 +96,7 @@
                   project-type (if (contains? project/known-project-types config-project-type)
                                  config-project-type
                                  (project/project->project-type project))
-                  command (repl-command/project->repl-start-command project-type (aliases this))
+                  command (repl-command/project->repl-start-command project-type (aliases this) (jvm-args this))
                   env-vars (env-vars this)]
               (proxy [CommandLineState] [env]
                 (createConsole [_]
