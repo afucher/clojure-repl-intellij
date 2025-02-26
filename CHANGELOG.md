@@ -4,6 +4,7 @@
 
 - Update repl window ns after switching ns.
 - Fix exception on settings page.
+- Fix special form evaluations. #135
 - Add support for JVM args on local REPL configuration. #124
 
 ## 2.2.0
