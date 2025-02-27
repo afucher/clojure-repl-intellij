@@ -20,6 +20,12 @@
 
 (set! *warn-on-reflection* true)
 
+(defn ^:private send-result-to-repl [^AnActionEvent event text prefix?]
+  (ui.repl/append-result-text
+   (.getProject ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE))
+   (str (if prefix? "=> " "") text "\n")
+   :keep-input? true))
+
 (defn ^:private eval-action
   [& {:keys [^AnActionEvent event loading-msg eval-fn success-msg-fn post-success-fn inlay-hint-feedback?]
       :or {post-success-fn identity}}]
@@ -51,13 +57,15 @@
 
 (defn load-file-action [^AnActionEvent event]
   (when-let [virtual-file ^VirtualFile (.getData event CommonDataKeys/VIRTUAL_FILE)]
-    (eval-action
-     :event event
-     :loading-msg "REPL: Loading file"
-     :eval-fn (fn [^Editor editor]
-                (nrepl/load-file (.getProject editor) editor virtual-file))
-     :success-msg-fn (fn [_response]
-                       (str "Loaded file " (.getPath ^VirtualFile virtual-file))))))
+    (let [msg (str "Loaded file " (.getPath ^VirtualFile virtual-file))]
+      (eval-action
+       :event event
+       :loading-msg "REPL: Loading file"
+       :eval-fn (fn [^Editor editor]
+                  (nrepl/load-file (.getProject editor) editor virtual-file))
+       :success-msg-fn (fn [_response] msg)
+       :post-success-fn (fn [_response]
+                          (send-result-to-repl event (str ";; " msg) false))))))
 
 (defn eval-last-sexpr-action [^AnActionEvent event]
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
@@ -77,6 +85,8 @@
                     (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
        :success-msg-fn (fn [response]
                          (string/join "\n" (:value response)))
+       :post-success-fn (fn [response]
+                          (send-result-to-repl event (string/join "\n" (:value response)) true))
        :inlay-hint-feedback? true))))
 
 (defn interrupt [^AnActionEvent event]
@@ -100,6 +110,8 @@
                     (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
        :success-msg-fn (fn [response]
                          (string/join "\n" (:value response)))
+       :post-success-fn (fn [response]
+                          (send-result-to-repl event (string/join "\n" (:value response)) true))
        :inlay-hint-feedback? true))))
 
 (defn clear-repl-output-action [^AnActionEvent event]
@@ -132,23 +144,29 @@
                       (ui.repl/append-result-text (.getProject ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)) ""))))
 
 (defn refresh-all-action [^AnActionEvent event]
-  (eval-action
-   :event event
-   :loading-msg "REPL: Refreshing all ns"
-   :eval-fn (fn [^Editor editor]
-              (nrepl/refresh-all (.getProject editor)))
-   :success-msg-fn (fn [response]
-                     (if (contains? (:status response) "ok")
-                       "Refreshed sucessfully"
-                       (str "Refresh failed:\n" (:error response))))))
+  (let [msg "Refreshed all sucessfully"]
+    (eval-action
+     :event event
+     :loading-msg "REPL: Refreshing all ns"
+     :eval-fn (fn [^Editor editor]
+                (nrepl/refresh-all (.getProject editor)))
+     :success-msg-fn (fn [response]
+                       (if (contains? (:status response) "ok")
+                         msg
+                         (str "Refresh failed:\n" (:error response))))
+     :post-success-fn (fn [_response]
+                        (send-result-to-repl event (str ";; " msg) false)))))
 
 (defn refresh-changed-action [^AnActionEvent event]
-  (eval-action
-   :event event
-   :loading-msg "REPL: Refreshing changed ns"
-   :eval-fn (fn [^Editor editor]
-              (nrepl/refresh (.getProject editor)))
-   :success-msg-fn (fn [response]
-                     (if (contains? (:status response) "ok")
-                       "Refreshed sucessfully"
-                       (str "Refresh failed:\n" (:error response))))))
+  (let [msg "Refreshed sucessfully"]
+    (eval-action
+     :event event
+     :loading-msg "REPL: Refreshing changed ns"
+     :eval-fn (fn [^Editor editor]
+                (nrepl/refresh (.getProject editor)))
+     :success-msg-fn (fn [response]
+                       (if (contains? (:status response) "ok")
+                         msg
+                         (str "Refresh failed:\n" (:error response))))
+     :post-success-fn (fn [_response]
+                        (send-result-to-repl event (str ";; " msg) false)))))
