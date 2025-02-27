@@ -73,7 +73,7 @@
           result-text (str
                        (when err (str "\n" err))
                        (when out (str "\n" out))
-                       (when value (str "\n;; => " (last value))))
+                       (when value (str "\n=> " (last value))))
           ns-text (str "\n" (db/get-in project [:current-nrepl :ns]) "> ")
           new-text (str result-text ns-text)]
       (set-text repl-content new-text {:append? true :drop-last-newline-before-append? true})
@@ -213,8 +213,14 @@
     (set-text (seesaw/select console [:#repl-content]) (format "\n*** Closed on %s ***" (.format time-formatter (java.time.LocalDateTime/now))) {:append? true})
     (key-manager/unregister-listener-for-editor! (.getEditor repl-content))))
 
-(defn append-result-text [project text]
-  (let [console (db/get-in project [:console :ui])]
-    (set-text (seesaw/select console [:#repl-content])
-              (str "\n" text (db/get-in project [:current-nrepl :ns]) "> ")
-              {:append? true})))
+(defn append-result-text [project text & {:keys [keep-input?]}]
+  (let [console (db/get-in project [:console :ui])
+        ui ^EditorTextField (seesaw/select console [:#repl-content])]
+    (if keep-input?
+      (let [repl-lines (clojure.string/split-lines (.getText ui))
+            repl-input (last repl-lines)
+            repl-without-input (clojure.string/join "\n" (butlast repl-lines))]
+        (set-text ui (str repl-without-input "\n" text repl-input)))
+      (set-text ui
+                (str "\n" text (db/get-in project [:current-nrepl :ns]) "> ")
+                {:append? true}))))
