@@ -6,6 +6,7 @@
 - Fix exception on settings page.
 - Fix special form evaluations. #135
 - Add support for JVM args on local REPL configuration. #124
+- Send to REPL eval results. #92
 
 ## 2.2.0
 
