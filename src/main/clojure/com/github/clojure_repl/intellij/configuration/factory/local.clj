@@ -67,7 +67,7 @@
                                  (db/assoc-in! project [:current-nrepl :nrepl-host] host)
                                  (db/assoc-in! project [:current-nrepl :nrepl-port] port)
                                  (config.factory.base/repl-started project (repl-started-initial-text command-str)))
-                               (ui.repl/set-text (seesaw/select (db/get-in project [:console :ui]) [:#repl-content]) (.getText event) {:append? true})))
+                               (ui.repl/set-text project (seesaw/select (db/get-in project [:console :ui]) [:#repl-content]) (.getText event) {:append? true})))
                            (processWillTerminate [_ _ _] (config.factory.base/repl-disconnected project))))
     (logger/info "Starting nREPL process:" command-str)
     handler))

@@ -41,15 +41,18 @@
       ""))
 
 (defn set-text
-  ([repl-content text]
-   (set-text repl-content text nil))
-  ([^EditorTextField repl-content text {:keys [append? drop-last-newline-before-append?]}]
+  ([^Project project repl-content text]
+   (set-text project repl-content text nil))
+  ([^Project project  ^EditorTextField repl-content text {:keys [append? drop-last-newline-before-append? sync-db-last-output?] 
+                                                          :or {sync-db-last-output? true}}]
    (let [text (ui.text/remove-ansi-color text)
          dropped-text (if (and append? drop-last-newline-before-append?)
                         (replace-last (.getText repl-content) "\n" "")
                         (.getText repl-content))
          text (if append? (str dropped-text text) text)]
      (app-manager/invoke-later! {:invoke-fn (fn []
+                                              (when sync-db-last-output?
+                                                (db/assoc-in! project [:console :state :last-output] text))
                                               (.setText repl-content text))}))))
 
 (defn ^:private move-caret-and-scroll-to-latest [^EditorTextField repl-content]
@@ -76,7 +79,7 @@
                        (when value (str "\n=> " (last value))))
           ns-text (str "\n" (db/get-in project [:current-nrepl :ns]) "> ")
           new-text (str result-text ns-text)]
-      (set-text repl-content new-text {:append? true :drop-last-newline-before-append? true})
+      (set-text project repl-content new-text {:append? true :drop-last-newline-before-append? true})
       (move-caret-and-scroll-to-latest repl-content)
       (app-manager/invoke-later!
        {:invoke-fn (fn []
@@ -94,7 +97,7 @@
             repl-content (seesaw/select console [:#repl-content])
             last-output (db/get-in project [:console :state :last-output])]
         (db/update-in! project [:current-nrepl :entry-index] inc)
-        (set-text repl-content (str last-output entry))
+        (set-text project repl-content (str last-output entry) {:sync-db-last-output? false})
         (move-caret-and-scroll-to-latest repl-content)))))
 
 (defn history-down
@@ -108,7 +111,7 @@
             repl-content (seesaw/select console [:#repl-content])
             last-output (db/get-in project [:console :state :last-output])]
         (db/update-in! project [:current-nrepl :entry-index] dec)
-        (set-text repl-content (str last-output entry))
+        (set-text project repl-content (str last-output entry) {:sync-db-last-output? false})
         (move-caret-and-scroll-to-latest repl-content)))))
 
 (defn ^:private on-repl-history-entry [project ^KeyEvent key-event]
@@ -123,7 +126,7 @@
   true)
 
 (defn ^:private on-repl-new-line [project]
-  (set-text (seesaw/select (db/get-in project [:console :ui]) [:#repl-content]) "\n" {:append? true})
+  (set-text project (seesaw/select (db/get-in project [:console :ui]) [:#repl-content]) "\n" {:append? true})
   true)
 
 (defn ^:private ns-text [project]
@@ -134,8 +137,7 @@
 
 (defn clear-repl [^Project project console]
   (let [text (str ";; Output cleared\n" (ns-text project))]
-    (set-text (seesaw/select console [:#repl-content]) text)
-    (db/assoc-in! project [:console :state :last-output] text)))
+    (set-text project (seesaw/select console [:#repl-content]) text)))
 
 (defn ^:private on-repl-clear [project]
   (let [console (db/get-in project [:console :ui])]
@@ -149,7 +151,7 @@
         last-repl-line (last repl-lines)
         repl-input (re-find (re-pattern (str ns "+>\\s")) last-repl-line)]
     (when-not repl-input
-      (set-text repl-content (str (string/join "\n" (drop-last repl-lines)) "\n" ns "> "))
+      (set-text project repl-content (str (string/join "\n" (drop-last repl-lines)) "\n" ns "> "))
       (move-caret-and-scroll-to-latest repl-content)
       (.consume event))))
 
@@ -201,7 +203,7 @@
   (let [ns-text (str "\n\n" (db/get-in project [:current-nrepl :ns]) "> ")
         repl-content (seesaw/select console [:#repl-content])]
     (ui.components/init-clojure-text-field! repl-content)
-    (set-text repl-content (str text ns-text) {:append? true})
+    (set-text project repl-content (str text ns-text) {:append? true})
     (move-caret-and-scroll-to-latest repl-content)))
 
 (def ^:private ^DateTimeFormatter time-formatter (DateTimeFormatter/ofPattern "dd/MM/yyyy HH:mm:ss"))
@@ -210,7 +212,7 @@
   (let [repl-content ^EditorTextField (seesaw/select console [:#repl-content])]
     (db/assoc-in! project [:console :state :status] :disabled)
     (.setViewer repl-content false)
-    (set-text (seesaw/select console [:#repl-content]) (format "\n*** Closed on %s ***" (.format time-formatter (java.time.LocalDateTime/now))) {:append? true})
+    (set-text project (seesaw/select console [:#repl-content]) (format "\n*** Closed on %s ***" (.format time-formatter (java.time.LocalDateTime/now))) {:append? true})
     (key-manager/unregister-listener-for-editor! (.getEditor repl-content))))
 
 (defn append-result-text [project text & {:keys [keep-input?]}]
@@ -220,7 +222,8 @@
       (let [repl-lines (clojure.string/split-lines (.getText ui))
             repl-input (last repl-lines)
             repl-without-input (clojure.string/join "\n" (butlast repl-lines))]
-        (set-text ui (str repl-without-input "\n" text repl-input)))
-      (set-text ui
+        (set-text project ui (str repl-without-input "\n" text repl-input)))
+      (set-text project 
+                ui
                 (str "\n" text (db/get-in project [:current-nrepl :ns]) "> ")
                 {:append? true}))))

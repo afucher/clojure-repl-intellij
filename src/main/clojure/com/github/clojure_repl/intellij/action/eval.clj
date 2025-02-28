@@ -22,7 +22,7 @@
 
 (defn ^:private send-result-to-repl [^AnActionEvent event text prefix?]
   (ui.repl/append-result-text
-   (.getProject ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE))
+   (actions/action-event->project event)
    (str (if prefix? "=> " "") text "\n")
    :keep-input? true))
 
