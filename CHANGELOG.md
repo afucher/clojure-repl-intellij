@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 2.3.0
+
 - Update repl window ns after switching ns.
 - Fix exception on settings page.
 - Fix special form evaluations. #135
