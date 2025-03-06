@@ -21,10 +21,9 @@
 (set! *warn-on-reflection* true)
 
 (defn ^:private send-result-to-repl [^AnActionEvent event text prefix?]
-  (ui.repl/append-result-text
+  (ui.repl/append-output
    (actions/action-event->project event)
-   (str (if prefix? "=> " "") text "\n")
-   :keep-input? true))
+   (str "\n" (if prefix? "=> " "") text)))
 
 (defn ^:private eval-action
   [& {:keys [^AnActionEvent event loading-msg eval-fn success-msg-fn post-success-fn inlay-hint-feedback?]
@@ -116,7 +115,7 @@
 
 (defn clear-repl-output-action [^AnActionEvent event]
   (let [project (actions/action-event->project event)]
-    (ui.repl/clear-repl project (db/get-in project [:console :ui]))))
+    (ui.repl/clear-repl project)))
 
 (defn history-up-action [^AnActionEvent event]
   (-> event
@@ -141,7 +140,7 @@
    :success-msg-fn (fn [response]
                      (string/join "\n" (:value response)))
    :post-success-fn (fn [_response]
-                      (ui.repl/append-result-text (.getProject ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)) ""))))
+                      (ui.repl/clear-input (actions/action-event->project event)))))
 
 (defn refresh-all-action [^AnActionEvent event]
   (let [msg "Refreshed all sucessfully"]

@@ -9,7 +9,8 @@
 
 (def ^:private empty-project
   {:project nil
-   :console {:state {:last-output nil
+   :console {:state {:last-output ""
+                     :last-input nil
                      :initial-text nil
                      :status nil}
              :process-handler nil
@@ -56,6 +57,7 @@
   (require '[clojure.pprint :as pp])
   (defn db-p [] (second (first  (second (first @db*)))))
   (def p (:project (db-p)))
+  (db/assoc-in! p [:on-repl-evaluated-fns] [])
 
   (assoc-in! p [:ops] {})
   (pp/pprint (:ops (db-p))))
