@@ -69,6 +69,9 @@
   (when out
     (ui.repl/append-output project (str "\n" out))))
 
+(defn ^:private on-ns-changed [project _]
+  (ui.repl/clear-input project))
+
 (defn ^:private trigger-ui-update
   "IntelliJ actions status (visibility/enable) depend on IntelliJ calls an update of the UI
    but the call of update is not guaranteed. This function triggers the update of the UI.
@@ -101,4 +104,5 @@
     (ui.repl/set-repl-started-initial-text project
                                            (db/get-in project [:console :ui])
                                            (str (initial-repl-text project) extra-initial-text))
-    (db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated trigger-ui-update))))
+    (db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated trigger-ui-update))
+    (db/update-in! project [:on-ns-changed-fns] #(conj % on-ns-changed trigger-ui-update))))

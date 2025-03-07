@@ -24,6 +24,7 @@
                    :last-test nil}
    :on-repl-file-loaded-fns []
    :on-repl-evaluated-fns []
+   :on-ns-changed-fns []
    :on-test-failed-fns-by-key {}
    :on-test-succeeded-fns-by-key {}
    :ops {}})
@@ -57,7 +58,10 @@
   (require '[clojure.pprint :as pp])
   (defn db-p [] (second (first  (second (first @db*)))))
   (def p (:project (db-p)))
-  (db/assoc-in! p [:on-repl-evaluated-fns] [])
+
+  (:state (:console (db-p)))
+  (:ns (:current-nrepl (db-p)))
 
   (assoc-in! p [:ops] {})
+  (assoc-in! p [:on-ns-changed-fns] [])
   (pp/pprint (:ops (db-p))))
