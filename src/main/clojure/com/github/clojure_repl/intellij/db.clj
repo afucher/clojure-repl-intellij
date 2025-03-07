@@ -9,7 +9,8 @@
 
 (def ^:private empty-project
   {:project nil
-   :console {:state {:last-output nil
+   :console {:state {:last-output ""
+                     :last-input nil
                      :initial-text nil
                      :status nil}
              :process-handler nil
@@ -23,6 +24,7 @@
                    :last-test nil}
    :on-repl-file-loaded-fns []
    :on-repl-evaluated-fns []
+   :on-ns-changed-fns []
    :on-test-failed-fns-by-key {}
    :on-test-succeeded-fns-by-key {}
    :ops {}})
@@ -57,5 +59,9 @@
   (defn db-p [] (second (first  (second (first @db*)))))
   (def p (:project (db-p)))
 
+  (:state (:console (db-p)))
+  (:ns (:current-nrepl (db-p)))
+
   (assoc-in! p [:ops] {})
+  (assoc-in! p [:on-ns-changed-fns] [])
   (pp/pprint (:ops (db-p))))

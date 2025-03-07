@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Send to REPL eval results. #92
+- Fix repl input when evaluated the same input of last eval.
+- Fix history navigation via shortcut not working after 2.0.0.
+
 ## 2.3.0
 
 - Update repl window ns after switching ns.

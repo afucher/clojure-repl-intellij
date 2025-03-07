@@ -3,8 +3,7 @@
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
-   [com.rpl.proxy-plus :refer [proxy+]]
-   [seesaw.core :as seesaw])
+   [com.rpl.proxy-plus :refer [proxy+]])
   (:import
    [com.intellij.execution.ui ConsoleView]
    [com.intellij.ide ActivityTracker]
@@ -43,7 +42,7 @@
                                         project
                                         {:on-eval (fn [code]
                                                     (nrepl/eval {:project project :code code}))}))
-  (ui.repl/set-text (seesaw/select (db/get-in project [:console :ui]) [:#repl-content]) loading-text {:append? true})
+  (ui.repl/append-output project loading-text)
   (proxy+ [] ConsoleView
     (getComponent [_] (db/get-in project [:console :ui]))
     (getPreferredFocusableComponent [_] (db/get-in project [:console :ui]))
@@ -66,9 +65,12 @@
 
 (defn ^:private on-repl-evaluated [project {:keys [out err]}]
   (when err
-    (ui.repl/append-result-text project err))
+    (ui.repl/append-output project (str "\n" err)))
   (when out
-    (ui.repl/append-result-text project out)))
+    (ui.repl/append-output project (str "\n" out))))
+
+(defn ^:private on-ns-changed [project _]
+  (ui.repl/clear-input project))
 
 (defn ^:private trigger-ui-update
   "IntelliJ actions status (visibility/enable) depend on IntelliJ calls an update of the UI
@@ -82,14 +84,14 @@
   (db/assoc-in! project [:console :process-handler] nil)
   (db/assoc-in! project [:console :ui] nil)
   (db/assoc-in! project [:current-nrepl] nil)
-  (db/update-in! project [:on-repl-evaluated-fns] (fn [fns] (remove #(= on-repl-evaluated %) fns))))
+  (db/update-in! project [:on-repl-evaluated-fns] (fn [fns] (remove #(contains? #{on-repl-evaluated trigger-ui-update} %) fns))))
 
 (defn repl-started [project extra-initial-text]
   (nrepl/start-client!
    :project project
    :on-receive-async-message (fn [msg]
                                (when (:out msg)
-                                 (ui.repl/append-result-text project (:out msg)))))
+                                 (ui.repl/append-output project (:out msg)))))
   (nrepl/clone-session project)
   (nrepl/eval {:project project :code "*ns*"})
   (let [description (nrepl/describe project)]
@@ -99,5 +101,8 @@
     (db/assoc-in! project [:current-nrepl :versions] (:versions description))
     (db/assoc-in! project [:current-nrepl :entry-history] '())
     (db/assoc-in! project [:current-nrepl :entry-index] -1)
-    (ui.repl/set-initial-text project (db/get-in project [:console :ui]) (str (initial-repl-text project) extra-initial-text))
-    (db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated trigger-ui-update))))
+    (ui.repl/set-repl-started-initial-text project
+                                           (db/get-in project [:console :ui])
+                                           (str (initial-repl-text project) extra-initial-text))
+    (db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated trigger-ui-update))
+    (db/update-in! project [:on-ns-changed-fns] #(conj % on-ns-changed trigger-ui-update))))

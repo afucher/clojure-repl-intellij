@@ -79,8 +79,11 @@
 (defn eval [& {:keys [^Project project ns code]}]
   (let [ns (or ns (db/get-in project [:current-nrepl :ns]) "user")
         {:keys [ns] :as response} @(send-msg project {:op "eval" :code code :ns ns :session (db/get-in project [:current-nrepl :session-id])})]
-    (when ns
-      (db/assoc-in! project [:current-nrepl :ns] ns))
+    (when (and ns
+               (not= ns (db/get-in project [:current-nrepl :ns])))
+      (db/assoc-in! project [:current-nrepl :ns] ns)
+      (doseq [fn (db/get-in project [:on-ns-changed-fns])]
+        (fn project response)))
     (doseq [fn (db/get-in project [:on-repl-evaluated-fns])]
       (fn project response))
     response))

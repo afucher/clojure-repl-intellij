@@ -8,8 +8,7 @@
    [com.github.clojure-repl.intellij.repl-command :as repl-command]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
    [com.github.ericdallo.clj4intellij.logger :as logger]
-   [com.rpl.proxy-plus :refer [proxy+]]
-   [seesaw.core :as seesaw])
+   [com.rpl.proxy-plus :refer [proxy+]])
   (:import
    [com.github.clojure_repl.intellij.configuration ReplLocalRunOptions]
    [com.intellij.execution.configurations
@@ -67,7 +66,7 @@
                                  (db/assoc-in! project [:current-nrepl :nrepl-host] host)
                                  (db/assoc-in! project [:current-nrepl :nrepl-port] port)
                                  (config.factory.base/repl-started project (repl-started-initial-text command-str)))
-                               (ui.repl/set-text (seesaw/select (db/get-in project [:console :ui]) [:#repl-content]) (.getText event) {:append? true})))
+                               (ui.repl/append-output project (.getText event))))
                            (processWillTerminate [_ _ _] (config.factory.base/repl-disconnected project))))
     (logger/info "Starting nREPL process:" command-str)
     handler))
