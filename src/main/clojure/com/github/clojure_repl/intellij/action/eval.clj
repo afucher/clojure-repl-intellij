@@ -136,7 +136,7 @@
                     root-zloc (z/of-string text)
                     zloc (parser/find-namespace root-zloc)
                     namespace (parser/remove-metadata (z/string zloc))]
-                (nrepl/eval {:project (.getProject editor) :code (format "(in-ns '%s)" namespace) :ns namespace})))
+                (nrepl/switch-ns {:project (.getProject editor) :ns namespace})))
    :success-msg-fn (fn [response]
                      (string/join "\n" (:value response)))
    :post-success-fn (fn [_response]

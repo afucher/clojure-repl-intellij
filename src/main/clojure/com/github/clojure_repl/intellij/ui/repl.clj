@@ -82,12 +82,16 @@
     (when-not (or (string/blank? code-to-eval)
                   (= code-to-eval (first entries)))
       (db/update-in! project [:current-nrepl :entry-history] #(conj % code-to-eval)))
-    (let [{:keys [value]} (on-eval code-to-eval)
+    (let [{:keys [value ns] :as response}  (on-eval code-to-eval)
           result-text (str
                        "\n" input code-to-eval (when value "\n")
                        (when value (str "=> " (last value))))]
       (append-output project result-text)
-      (move-caret-and-scroll-to-latest repl-content)))
+      (move-caret-and-scroll-to-latest repl-content)
+      (when (and ns (not= ns cur-ns))
+        (db/assoc-in! project [:current-nrepl :ns] ns)
+        (doseq [fn (db/get-in project [:on-ns-changed-fns])]
+          (fn project response)))))
   true)
 
 (defn history-up
