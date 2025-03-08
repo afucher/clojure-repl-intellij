@@ -142,6 +142,12 @@
    :post-success-fn (fn [_response]
                       (ui.repl/clear-input (actions/action-event->project event)))))
 
+(defn reload-all-action []
+  (println "Reload-all-action event"))
+
+(defn reload-action []
+  (println "Reload action event"))
+
 (defn refresh-all-action [^AnActionEvent event]
   (let [msg "Refreshed all sucessfully"]
     (eval-action
