@@ -13,6 +13,12 @@
         <postStartupActivity implementation="com.github.clojure_repl.intellij.extension.InlayListenerStartup" order="after init-repl-db"/>
         <toolWindow id="Clojure test summary" secondary="true" icon="com.github.clojure_repl.intellij.Icons.CLOJURE_REPL" anchor="right"
                     factoryClass="com.github.clojure_repl.intellij.tool_window.ReplTestToolWindow"/>
+         <toolWindow
+                id="REPL messages"
+                anchor="bottom"
+                factoryClass="com.github.clojure_repl.intellij.tool_window.ReplMessagesToolWindow"
+                canCloseContents="false"
+                icon="AllIcons.Webreferences.Server"/>
         <codeInsight.lineMarkerProvider language="clojure" implementationClass="com.github.clojure_repl.intellij.extension.RunTestLineMarkerProvider"/>
         <editorActionHandler
             action="EditorEscape"
