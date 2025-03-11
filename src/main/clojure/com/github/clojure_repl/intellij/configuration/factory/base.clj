@@ -41,7 +41,10 @@
   (db/assoc-in! project [:console :ui] (ui.repl/build-console
                                         project
                                         {:on-eval (fn [code]
-                                                    (nrepl/eval {:project project :code code}))}))
+                                                    (nrepl/eval
+                                                     {:project project
+                                                      :code code
+                                                      :ns (db/get-in project [:current-nrepl :ns])}))}))
   (ui.repl/append-output project loading-text)
   (proxy+ [] ConsoleView
           (getComponent [_] (db/get-in project [:console :ui]))
@@ -93,7 +96,7 @@
                                (when (:out msg)
                                  (ui.repl/append-output project (:out msg)))))
   (nrepl/clone-session project)
-  (nrepl/eval {:project project :code "*ns*"})
+  #_(nrepl/eval {:project project :code "*ns*"})
   (let [description (nrepl/describe project)]
     (when (:out-subscribe (:ops description))
       (nrepl/out-subscribe project))
