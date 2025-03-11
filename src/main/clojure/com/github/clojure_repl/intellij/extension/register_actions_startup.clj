@@ -1,12 +1,12 @@
 (ns com.github.clojure-repl.intellij.extension.register-actions-startup
   (:gen-class
    :name com.github.clojure_repl.intellij.extension.RegisterActionsStartup
-   :implements [com.intellij.openapi.startup.StartupActivity
+   :implements [com.intellij.openapi.startup.ProjectActivity
                 com.intellij.openapi.project.DumbAware])
   (:require
-   [com.github.clojure-repl.intellij.actions :as actions]
    [com.github.clojure-repl.intellij.action.eval :as a.eval]
    [com.github.clojure-repl.intellij.action.test :as a.test]
+   [com.github.clojure-repl.intellij.actions :as actions]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.ericdallo.clj4intellij.action :as action]
    [com.rpl.proxy-plus :refer [proxy+]])
@@ -14,13 +14,14 @@
    [com.github.clojure_repl.intellij Icons]
    [com.intellij.icons AllIcons$Actions]
    [com.intellij.openapi.actionSystem AnActionEvent]
-   [com.intellij.openapi.project DumbAwareAction Project]))
+   [com.intellij.openapi.project DumbAwareAction Project]
+   [kotlinx.coroutines CoroutineScope]))
 
 (set! *warn-on-reflection* true)
 
-(defn -runActivity
+(defn -execute
   "Shortcuts: https://github.com/JetBrains/intellij-community/blob/master/platform/platform-resources/src/keymaps/%24default.xml"
-  [_this ^Project _project]
+  [_this ^Project _project ^CoroutineScope _]
   (action/register-action! :id "ClojureREPL.RunCursorTest"
                            :title "Run test at cursor"
                            :description "Run test at cursor"
