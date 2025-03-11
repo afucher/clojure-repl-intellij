@@ -16,6 +16,7 @@
    [com.intellij.openapi.actionSystem CommonDataKeys]
    [com.intellij.openapi.actionSystem AnActionEvent]
    [com.intellij.openapi.editor Editor]
+   [com.intellij.openapi.fileEditor FileDocumentManager]
    [com.intellij.openapi.vfs VirtualFile]))
 
 (set! *warn-on-reflection* true)
@@ -66,6 +67,33 @@
        :post-success-fn (fn [_response]
                           (send-result-to-repl event (str ";; " msg) false))))))
 
+(defn editor->uri [^Editor editor]
+  ;; TODO sanitize URL, encode, etc
+  (.getUrl (.getFile (FileDocumentManager/getInstance) (.getDocument editor))))
+
+(defn cur-ns-form [^Editor editor]
+  (-> editor
+      .getDocument
+      .getText
+      z/of-string
+      parser/find-namespace
+      z/up
+      z/string))
+
+(defn ^:private ns-form-changed [project url ns-form]
+  (not (= ns-form
+          (db/get-in project [:file->ns url]))))
+(defn ^:private is-ns-form [form]
+  (parser/find-namespace (z/of-string form)))
+
+(defn prep-env-for-eval [^Editor editor form]
+  (when-let [current-ns-form (cur-ns-form editor)]
+    (logger/info "Current ns form: " current-ns-form)
+    (when (and (not (is-ns-form form))
+               (ns-form-changed (.getProject editor) (editor->uri editor) current-ns-form))
+      (nrepl/eval {:project (.getProject editor) :code current-ns-form :ns "user"}))
+    (db/assoc-in! (.getProject editor) [:file->ns (editor->uri editor)] current-ns-form)))
+
 (defn eval-last-sexpr-action [^AnActionEvent event]
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
     (let [[row col] (util/editor->cursor-position editor)]
@@ -80,8 +108,10 @@
                         code (if special-form?
                                (-> zloc z/up z/string)
                                (z/string zloc))
-                        ns (some-> (parser/find-namespace root-zloc) z/string parser/remove-metadata)]
-                    (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
+                        url (editor->uri editor)]
+                    (prep-env-for-eval editor code)
+                    (let [ns (some-> (db/get-in (.getProject editor) [:file->ns url]) z/of-string parser/find-namespace z/string parser/remove-metadata)]
+                      (nrepl/eval {:project (.getProject editor) :code code :ns ns}))))
        :success-msg-fn (fn [response]
                          (string/join "\n" (:value response)))
        :post-success-fn (fn [response]
