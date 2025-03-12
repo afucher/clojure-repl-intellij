@@ -1,10 +1,11 @@
 (ns com.github.clojure-repl.intellij.foo-test
   (:require
-   [clojure.test :refer [deftest is]]
-   [com.github.ericdallo.clj4intellij.app-manager :as app-manager])
+   [clojure.test :refer [deftest is]])
   (:import
+   [com.intellij.openapi.command WriteCommandAction]
    [com.intellij.testFramework LightProjectDescriptor]
-   [com.intellij.testFramework.fixtures IdeaTestFixtureFactory]))
+   [com.intellij.testFramework.fixtures IdeaTestFixtureFactory]
+   [com.intellij.util ThrowableRunnable]))
 
 (set! *warn-on-reflection* true)
 
@@ -16,9 +17,10 @@
         fixture-2 (.createCodeInsightFixture factory fixture)
         _ (.setUp fixture-2)
         virtual-file (.createFile fixture-2 "deps.edn" "{}")]
-       (is (.getProject fixture-2))
-       (is virtual-file)
-       (app-manager/write-action! {:run-fn (fn [] (.openFileInEditor fixture-2 virtual-file))}))
-  (println "-------------------------------------------->")
-
-  (is true))
+    (is (.getProject fixture-2))
+    (is virtual-file)
+    (.run (WriteCommandAction/writeCommandAction (.getProject fixture-2))
+          (reify ThrowableRunnable
+            (run [_]
+              (.openFileInEditor fixture-2 virtual-file)))))
+  (println "-------------------------------------------->"))
