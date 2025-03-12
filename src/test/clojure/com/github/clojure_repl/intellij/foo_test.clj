@@ -4,7 +4,7 @@
   (:import
    [com.intellij.openapi.command WriteCommandAction]
    [com.intellij.testFramework LightProjectDescriptor]
-   [com.intellij.testFramework.fixtures IdeaTestFixtureFactory]
+   [com.intellij.testFramework.fixtures CodeInsightTestFixture IdeaTestFixtureFactory]
    [com.intellij.util ThrowableRunnable]))
 
 (set! *warn-on-reflection* true)
@@ -16,7 +16,7 @@
           (run [_]
             (run-fn)))))
 
-(defn setup []
+(defn setup ^CodeInsightTestFixture []
   (let [factory (IdeaTestFixtureFactory/getFixtureFactory)
         raw-fixture (-> factory
                         (.createLightFixtureBuilder LightProjectDescriptor/EMPTY_PROJECT_DESCRIPTOR (str *ns*))
