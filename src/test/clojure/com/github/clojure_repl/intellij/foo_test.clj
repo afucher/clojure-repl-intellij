@@ -22,5 +22,4 @@
     (.run (WriteCommandAction/writeCommandAction (.getProject fixture-2))
           (reify ThrowableRunnable
             (run [_]
-              (.openFileInEditor fixture-2 virtual-file)))))
-  (println "-------------------------------------------->"))
+              (.openFileInEditor fixture-2 virtual-file))))))
