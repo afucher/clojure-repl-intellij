@@ -29,7 +29,7 @@
    :on-test-succeeded-fns-by-key {}
    :ops {}})
 
-(defonce ^:private db* (atom {:projects {}}))
+(defonce db* (atom {:projects {}}))
 
 (defn get-in
   ([project fields]
