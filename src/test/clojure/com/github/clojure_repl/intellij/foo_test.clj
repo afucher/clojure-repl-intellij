@@ -9,17 +9,27 @@
 
 (set! *warn-on-reflection* true)
 
-(deftest foo-test
+;; TODO migrate these functions to clj4intellij app-manager
+(defn write-command-action [project run-fn]
+  (.run (WriteCommandAction/writeCommandAction project)
+        (reify ThrowableRunnable
+          (run [_]
+            (run-fn)))))
+
+(defn setup []
   (let [factory (IdeaTestFixtureFactory/getFixtureFactory)
-        fixture (-> factory
-                    (.createLightFixtureBuilder LightProjectDescriptor/EMPTY_PROJECT_DESCRIPTOR "fooo")
-                    (.getFixture))
-        fixture-2 (.createCodeInsightFixture factory fixture)
-        _ (.setUp fixture-2)
-        virtual-file (.createFile fixture-2 "deps.edn" "{}")]
-    (is (.getProject fixture-2))
-    (is virtual-file)
-    (.run (WriteCommandAction/writeCommandAction (.getProject fixture-2))
-          (reify ThrowableRunnable
-            (run [_]
-              (.openFileInEditor fixture-2 virtual-file))))))
+        raw-fixture (-> factory
+                        (.createLightFixtureBuilder LightProjectDescriptor/EMPTY_PROJECT_DESCRIPTOR (str *ns*))
+                        (.getFixture))
+        fixture (.createCodeInsightFixture factory raw-fixture)]
+    (.setUp fixture)
+    (is (.getProject fixture))
+    fixture))
+
+(deftest foo-test
+  (let [fixture (setup)
+        deps-file (.createFile fixture "deps.edn" "{}")]
+    (is deps-file)
+    (write-command-action
+     (.getProject fixture)
+     (fn [] (.openFileInEditor fixture deps-file)))))
