@@ -32,4 +32,5 @@
     (is deps-file)
     (write-command-action
      (.getProject fixture)
-     (fn [] (.openFileInEditor fixture deps-file)))))
+     (fn [] (.openFileInEditor fixture deps-file)))
+    (is (.getEditor fixture))))
