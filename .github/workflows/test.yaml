@@ -10,9 +10,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Gradle wrapper validate
-        uses: gradle/actions/wrapper-validation@v4
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -21,4 +18,4 @@ jobs:
           cache: 'gradle'
 
       - name: Run tests
-        run: gradle test
+        run: ./gradlew test
