@@ -104,6 +104,7 @@
     (db/assoc-in! project [:current-nrepl :versions] (:versions description))
     (db/assoc-in! project [:current-nrepl :entry-history] '())
     (db/assoc-in! project [:current-nrepl :entry-index] -1)
+    (db/assoc-in! project [:current-nrepl :ns] "user")
     (db/assoc-in! project [:file->ns] {})
     (ui.repl/set-repl-started-initial-text project
                                            (db/get-in project [:console :ui])

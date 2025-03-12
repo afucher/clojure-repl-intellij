@@ -79,7 +79,7 @@
   (let [client (db/get-in project [:current-nrepl :client])]
     (send-message! client message)))
 
-(defn editor->uri [^Editor editor]
+(defn editor->url [^Editor editor]
   ;; TODO sanitize URL, encode, etc
   (.getUrl (.getFile (FileDocumentManager/getInstance) (.getDocument editor))))
 
@@ -93,7 +93,7 @@
 
 (defn ^:private ns-form-changed [project url ns-form]
   (not (= ns-form
-          (db/get-in project [:file->ns url]))))
+          (db/get-in project [:file->ns url :form]))))
 (defn ^:private is-ns-form [form]
   (parser/find-namespace (z/of-string form)))
 
@@ -105,26 +105,34 @@
    Also evaluate the ns form when it has changed to keep the environment up-to-date."
   [^Editor editor form]
   (when-let [current-ns-form (cur-ns-form editor)]
-    (let [str-current-ns-form (z/string current-ns-form)
+    (let [url (editor->url editor)
+          project (.getProject editor)
+          str-current-ns-form (z/string current-ns-form)
           ns (-> current-ns-form parser/find-namespace z/string parser/remove-metadata)]
       (when (and (not (is-ns-form form))
-                 (ns-form-changed (.getProject editor) (editor->uri editor) str-current-ns-form))
-        (eval {:project (.getProject editor)
+                 (ns-form-changed project url str-current-ns-form))
+        (eval {:project project
                :code str-current-ns-form :ns "user"})
         (when ns
-          (db/assoc-in! (.getProject editor) [:file->ns (editor->uri editor)]
+          (db/assoc-in! project [:file->ns url]
                         {:form str-current-ns-form
                          :ns ns}))))))
 
 (defn eval [& {:keys [^Editor editor ^Project project ns code]}]
+  ;;TODO: split behavior when have editor and not
   (when editor
     (prep-env-for-eval editor code))
   (let [ns (or ns
-               (and editor (some-> (db/get-in (.getProject editor) [:file->ns (editor->uri editor) :ns])))
+               (and editor (some-> (db/get-in (.getProject editor) [:file->ns (editor->url editor) :ns])))
                (and (not editor) (db/get-in project [:current-nrepl :ns])))
-        response @(send-msg project {:op "eval" :code code :ns ns :session (db/get-in project [:current-nrepl :session-id])})]
+        {:keys [ns] :as response} @(send-msg project {:op "eval" :code code :ns ns :session (db/get-in project [:current-nrepl :session-id])})]
     (doseq [fn (db/get-in project [:on-repl-evaluated-fns])]
       (fn project response))
+    (when (and editor
+               (db/get-in (.getProject editor) [:file->ns (editor->url editor)])
+               ns
+               (not= ns (db/get-in (.getProject editor) [:file->ns (editor->url editor) :ns])))
+      (db/assoc-in! (.getProject editor) [:file->ns (editor->url editor) :ns] ns))
     response))
 
 (defn switch-ns [{:keys [project ns]}]
