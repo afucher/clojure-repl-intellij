@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 2.4.0
+
 - Send to REPL eval results. #92
 - Fix repl input when evaluated the same input of last eval.
 - Fix history navigation via shortcut not working after 2.0.0.
