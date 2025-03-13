@@ -53,10 +53,8 @@ configurations.
 - Refresh changed ns (`alt/opt + shift + R` `alt/opt + shift + R`)
 - Stop (interrupt) evaluation of REPL session (`alt/opt + shift + R` `alt/opt + shift + S`)
 - Entry history navigation in REPL (`ctrl + PAGE_UP` or `ctrl + PAGE_DOWN`)
+- Isolate REPL window and file editors namespace. [Read more about evaluation and namespace](https://github.com/afucher/clojure-repl-intellij/blob/master/doc/eval-and-ns.md)
 
-### Soon
-
-- Customize REPL UI
 
 ## Contributing
 
