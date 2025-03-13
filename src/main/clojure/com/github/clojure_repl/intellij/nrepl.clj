@@ -5,6 +5,7 @@
    [clojure.string :as string]
    [com.github.clojure-repl.intellij.config :as config]
    [com.github.clojure-repl.intellij.db :as db]
+   [com.github.clojure-repl.intellij.editor :as editor]
    [com.github.clojure-repl.intellij.parser :as parser]
    [com.github.ericdallo.clj4intellij.logger :as logger]
    [nrepl.core :as nrepl.core]
@@ -12,7 +13,6 @@
    [rewrite-clj.zip :as z])
   (:import
    [com.intellij.openapi.editor Editor]
-   [com.intellij.openapi.fileEditor FileDocumentManager]
    [com.intellij.openapi.project Project]
    [com.intellij.openapi.vfs VirtualFile]))
 
@@ -79,61 +79,62 @@
   (let [client (db/get-in project [:current-nrepl :client])]
     (send-message! client message)))
 
-(defn editor->url [^Editor editor]
-  ;; TODO sanitize URL, encode, etc
-  (.getUrl (.getFile (FileDocumentManager/getInstance) (.getDocument editor))))
-
-(defn cur-ns-form [^Editor editor]
-  (-> editor
-      .getDocument
-      .getText
-      z/of-string
-      parser/find-namespace
-      z/up))
-
 (defn ^:private ns-form-changed [project url ns-form]
   (not (= ns-form
           (db/get-in project [:file->ns url :form]))))
 (defn ^:private is-ns-form [form]
   (parser/find-namespace (z/of-string form)))
 
-(declare eval)
+(defn ^:private eval [^Project project ns code]
+  (let [session (db/get-in project [:current-nrepl :session-id])
+        response @(send-msg project {:op "eval" :code code :ns ns :session session})]
+    (doseq [fn (db/get-in project [:on-repl-evaluated-fns])]
+      (fn project response))
+    response))
 
 (defn prep-env-for-eval
   "When evaluating a form for the first time, 
    need to evaluate the ns form first to avoid namespace-not-found error.
    Also evaluate the ns form when it has changed to keep the environment up-to-date."
   [^Editor editor form]
-  (when-let [current-ns-form (cur-ns-form editor)]
-    (let [url (editor->url editor)
+  (when-let [current-ns-form (editor/cur-ns-form editor)]
+    (let [url (editor/url editor)
           project (.getProject editor)
           str-current-ns-form (z/string current-ns-form)
           ns (-> current-ns-form parser/find-namespace z/string parser/remove-metadata)]
       (when (and (not (is-ns-form form))
                  (ns-form-changed project url str-current-ns-form))
-        (eval {:project project
-               :code str-current-ns-form :ns "user"})
+        (eval project "user" str-current-ns-form)
         (when ns
           (db/assoc-in! project [:file->ns url]
                         {:form str-current-ns-form
                          :ns ns}))))))
 
-(defn eval [& {:keys [^Editor editor ^Project project ns code]}]
-  ;;TODO: split behavior when have editor and not
-  (when editor
-    (prep-env-for-eval editor code))
-  (let [ns (or ns
-               (and editor (some-> (db/get-in (.getProject editor) [:file->ns (editor->url editor) :ns])))
-               (and (not editor) (db/get-in project [:current-nrepl :ns])))
-        {:keys [ns] :as response} @(send-msg project {:op "eval" :code code :ns ns :session (db/get-in project [:current-nrepl :session-id])})]
-    (doseq [fn (db/get-in project [:on-repl-evaluated-fns])]
-      (fn project response))
-    (when (and editor
-               (db/get-in (.getProject editor) [:file->ns (editor->url editor)])
-               ns
-               (not= ns (db/get-in (.getProject editor) [:file->ns (editor->url editor) :ns])))
-      (db/assoc-in! (.getProject editor) [:file->ns (editor->url editor) :ns] ns))
+(defn eval-from-editor
+  "When evaluating code related to a file (editor) we need to:
+   - prepare the environment by evaluating the ns form
+   - evaluate the code
+   - update the current ns in the project if it has changed"
+  [& {:keys [^Editor editor ns code]}]
+  (prep-env-for-eval editor code)
+  (let [project (.getProject editor)
+        url (editor/url editor)
+        ns (or ns
+               (db/get-in project [:file->ns url :ns]))
+        {:keys [ns] :as response} (eval project ns code)]
+    (logger/info "eval-from-editor" ns response)
+    (when (and ns
+               (db/get-in project [:file->ns url])
+               (not= ns (db/get-in project [:file->ns url :ns])))
+      (db/assoc-in! project [:file->ns url :ns] ns))
     response))
+
+(defn eval-from-repl
+  "When evaluating from repl window we do not have editor associate"
+  [& {:keys [^Project project ns code]}]
+  (let [ns (or ns
+               (db/get-in project [:current-nrepl :ns]))]
+    (eval project ns code)))
 
 (defn switch-ns [{:keys [project ns]}]
   (let [code (format "(in-ns '%s)" ns)

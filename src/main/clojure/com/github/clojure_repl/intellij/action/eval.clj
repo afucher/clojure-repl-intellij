@@ -67,34 +67,6 @@
        :post-success-fn (fn [_response]
                           (send-result-to-repl event (str ";; " msg) false))))))
 
-(defn editor->uri [^Editor editor]
-  ;; TODO sanitize URL, encode, etc
-  (.getUrl (.getFile (FileDocumentManager/getInstance) (.getDocument editor))))
-
-(defn cur-ns-form [^Editor editor]
-  (-> editor
-      .getDocument
-      .getText
-      z/of-string
-      parser/find-namespace
-      z/up
-      z/string))
-
-(defn ^:private ns-form-changed [project url ns-form]
-  (not (= ns-form
-          (db/get-in project [:file->ns url]))))
-(defn ^:private is-ns-form [form]
-  (parser/find-namespace (z/of-string form)))
-
-(defn prep-env-for-eval [^Editor editor form]
-  (when-let [current-ns-form (cur-ns-form editor)]
-    (when (and (not (is-ns-form form))
-               (ns-form-changed (.getProject editor) (editor->uri editor) current-ns-form))
-      (let [{:keys [ns status]} (nrepl/eval {:project (.getProject editor) :code current-ns-form :ns "user"})]
-        (when-not (contains? status "eval-errror")
-          (db/assoc-in! (.getProject editor) [:file->ns (editor->uri editor)] {:form current-ns-form
-                                                                               :ns ns}))))))
-
 (defn eval-last-sexpr-action [^AnActionEvent event]
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
     (let [[row col] (util/editor->cursor-position editor)]
@@ -109,7 +81,7 @@
                         code (if special-form?
                                (-> zloc z/up z/string)
                                (z/string zloc))]
-                    (nrepl/eval {:project (.getProject editor) :editor editor :code code})))
+                    (nrepl/eval-from-editor {:editor editor :code code})))
        :success-msg-fn (fn [response]
                          (string/join "\n" (:value response)))
        :post-success-fn (fn [response]
@@ -133,7 +105,7 @@
                         zloc (-> (parser/find-form-at-pos root-zloc (inc row) col)
                                  parser/to-top)
                         code (z/string zloc)]
-                    (nrepl/eval {:project (.getProject editor) :editor editor :code code})))
+                    (nrepl/eval-from-editor {:editor editor :code code})))
        :success-msg-fn (fn [response]
                          (string/join "\n" (:value response)))
        :post-success-fn (fn [response]

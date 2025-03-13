@@ -41,7 +41,7 @@
   (db/assoc-in! project [:console :ui] (ui.repl/build-console
                                         project
                                         {:on-eval (fn [code]
-                                                    (nrepl/eval
+                                                    (nrepl/eval-from-repl
                                                      {:project project
                                                       :code code
                                                       :ns (db/get-in project [:current-nrepl :ns])}))}))
