@@ -96,7 +96,6 @@
                                (when (:out msg)
                                  (ui.repl/append-output project (:out msg)))))
   (nrepl/clone-session project)
-  #_(nrepl/eval {:project project :code "*ns*"})
   (let [description (nrepl/describe project)]
     (when (:out-subscribe (:ops description))
       (nrepl/out-subscribe project))

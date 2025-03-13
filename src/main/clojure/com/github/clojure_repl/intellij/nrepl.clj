@@ -122,7 +122,6 @@
         ns (or ns
                (db/get-in project [:file->ns url :ns]))
         {:keys [ns] :as response} (eval project ns code)]
-    (logger/info "eval-from-editor" ns response)
     (when (and ns
                (db/get-in project [:file->ns url])
                (not= ns (db/get-in project [:file->ns url :ns])))
