@@ -13,6 +13,7 @@ user>
 ```
 
 ## Files
-Each file uses by default its own namespace for evaluation. The only exception is the `ns` form, that uses the `user` namespace to avoid `namespace-not-found` error.  
+Each file uses by default its own namespace for evaluation, if they do not have a ns form, in this case the default is `user`. 
+The only exception is the `ns` form, that uses the `user` namespace to avoid `namespace-not-found` error.  
 When evaluating a code for the first time in a namespace, the `ns` form is evaluated first to also avoid `namespace-not-found` error.  
 If you want to change the namespace from it you can use the `in-ns` function, after that all evaluations from this file will start to use the new namespace.
