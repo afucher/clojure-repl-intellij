@@ -22,6 +22,7 @@
                    :entry-history '()
                    :entry-index -1
                    :last-test nil}
+   :file->ns {}
    :on-repl-file-loaded-fns []
    :on-repl-evaluated-fns []
    :on-ns-changed-fns []

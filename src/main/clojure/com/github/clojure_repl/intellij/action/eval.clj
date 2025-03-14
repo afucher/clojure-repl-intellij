@@ -79,9 +79,8 @@
                         special-form? (contains? #{:quote :syntax-quote :var :reader-macro} (-> zloc z/up z/tag))
                         code (if special-form?
                                (-> zloc z/up z/string)
-                               (z/string zloc))
-                        ns (some-> (parser/find-namespace root-zloc) z/string parser/remove-metadata)]
-                    (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
+                               (z/string zloc))]
+                    (nrepl/eval-from-editor {:editor editor :code code})))
        :success-msg-fn (fn [response]
                          (string/join "\n" (:value response)))
        :post-success-fn (fn [response]
@@ -104,9 +103,8 @@
                         root-zloc (z/of-string text)
                         zloc (-> (parser/find-form-at-pos root-zloc (inc row) col)
                                  parser/to-top)
-                        code (z/string zloc)
-                        ns (some-> (parser/find-namespace root-zloc) z/string parser/remove-metadata)]
-                    (nrepl/eval {:project (.getProject editor) :code code :ns ns})))
+                        code (z/string zloc)]
+                    (nrepl/eval-from-editor {:editor editor :code code})))
        :success-msg-fn (fn [response]
                          (string/join "\n" (:value response)))
        :post-success-fn (fn [response]
@@ -136,7 +134,7 @@
                     root-zloc (z/of-string text)
                     zloc (parser/find-namespace root-zloc)
                     namespace (parser/remove-metadata (z/string zloc))]
-                (nrepl/eval {:project (.getProject editor) :code (format "(in-ns '%s)" namespace) :ns namespace})))
+                (nrepl/switch-ns {:project (.getProject editor) :ns namespace})))
    :success-msg-fn (fn [response]
                      (string/join "\n" (:value response)))
    :post-success-fn (fn [_response]

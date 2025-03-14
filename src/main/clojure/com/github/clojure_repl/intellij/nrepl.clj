@@ -5,9 +5,12 @@
    [clojure.string :as string]
    [com.github.clojure-repl.intellij.config :as config]
    [com.github.clojure-repl.intellij.db :as db]
+   [com.github.clojure-repl.intellij.editor :as editor]
+   [com.github.clojure-repl.intellij.parser :as parser]
    [com.github.ericdallo.clj4intellij.logger :as logger]
    [nrepl.core :as nrepl.core]
-   [nrepl.transport :as transport])
+   [nrepl.transport :as transport]
+   [rewrite-clj.zip :as z])
   (:import
    [com.intellij.openapi.editor Editor]
    [com.intellij.openapi.project Project]
@@ -76,16 +79,80 @@
   (let [client (db/get-in project [:current-nrepl :client])]
     (send-message! client message)))
 
-(defn eval [& {:keys [^Project project ns code]}]
-  (let [ns (or ns (db/get-in project [:current-nrepl :ns]) "user")
-        {:keys [ns] :as response} @(send-msg project {:op "eval" :code code :ns ns :session (db/get-in project [:current-nrepl :session-id])})]
+(defn ^:private ns-form-changed [project url ns-form]
+  (not (= ns-form
+          (db/get-in project [:file->ns url :form]))))
+(defn ^:private is-ns-form [form]
+  (parser/find-namespace (z/of-string form)))
+
+(defn ^:private eval [^Project project ns code]
+  (let [session (db/get-in project [:current-nrepl :session-id])
+        response @(send-msg project {:op "eval" :code code :ns ns :session session})]
+    (doseq [fn (db/get-in project [:on-repl-evaluated-fns])]
+      (fn project response))
+    response))
+
+(defn prep-env-for-eval
+  "When evaluating a form for the first time, 
+   need to evaluate the ns form first to avoid namespace-not-found error.
+   Also evaluate the ns form when it has changed to keep the environment up-to-date."
+  [^Editor editor form]
+  (when-let [current-ns-form (editor/ns-form editor)]
+    (let [url (editor/editor->url editor)
+          project (.getProject editor)
+          str-current-ns-form (z/string current-ns-form)
+          ns (-> current-ns-form parser/find-namespace z/string parser/remove-metadata)]
+      (when (and (not (is-ns-form form))
+                 (ns-form-changed project url str-current-ns-form))
+        (eval project "user" str-current-ns-form)
+        (when ns
+          (db/assoc-in! project [:file->ns url]
+                        {:form str-current-ns-form
+                         :ns ns}))))))
+
+(defn ^:private cur-ns
+  "Returns current ns to evaluate code in.
+   If there is no ns in cache, it returns the ns from the file.
+   If the ns form is not found in the editor, it default to 'user'."
+  [^Editor editor]
+  (let [project (.getProject editor)
+        url (editor/editor->url editor)
+        cur-ns (some-> (editor/ns-form editor) parser/find-namespace z/string parser/remove-metadata)]
+    (or (db/get-in project [:file->ns url :ns])
+        cur-ns
+        "user")))
+
+(defn eval-from-editor
+  "When evaluating code related to a file (editor) we need to:
+   - prepare the environment by evaluating the ns form
+   - evaluate the code
+   - update the current ns in the project if it has changed"
+  [& {:keys [^Editor editor ns code]}]
+  (prep-env-for-eval editor code)
+  (let [project (.getProject editor)
+        url (editor/editor->url editor)
+        ns (or ns
+               (cur-ns editor))
+        {:keys [ns] :as response} (eval project ns code)]
+    (when ns
+      (db/assoc-in! project [:file->ns url :ns] ns))
+    response))
+
+(defn eval-from-repl
+  "When evaluating from repl window we do not have editor associate"
+  [& {:keys [^Project project ns code]}]
+  (let [ns (or ns
+               (db/get-in project [:current-nrepl :ns]))]
+    (eval project ns code)))
+
+(defn switch-ns [{:keys [project ns]}]
+  (let [code (format "(in-ns '%s)" ns)
+        response @(send-msg project {:op "eval" :code code :ns ns :session (db/get-in project [:current-nrepl :session-id])})]
     (when (and ns
                (not= ns (db/get-in project [:current-nrepl :ns])))
       (db/assoc-in! project [:current-nrepl :ns] ns)
       (doseq [fn (db/get-in project [:on-ns-changed-fns])]
         (fn project response)))
-    (doseq [fn (db/get-in project [:on-repl-evaluated-fns])]
-      (fn project response))
     response))
 
 (defn clone-session [^Project project]

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Enhance REPL evaluations. #108
+  - Isolate ns from REPL windows and file editors
+  - Evaluate ns form from file automatically to avoid namespace-not-found errors. 
+
 ## 2.4.0
 
 - Send to REPL eval results. #92
