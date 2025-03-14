@@ -98,7 +98,7 @@
    Also evaluate the ns form when it has changed to keep the environment up-to-date."
   [^Editor editor form]
   (when-let [current-ns-form (editor/ns-form editor)]
-    (let [url (editor/url editor)
+    (let [url (editor/editor->url editor)
           project (.getProject editor)
           str-current-ns-form (z/string current-ns-form)
           ns (-> current-ns-form parser/find-namespace z/string parser/remove-metadata)]
@@ -116,7 +116,7 @@
    If the ns form is not found in the editor, it default to 'user'."
   [^Editor editor]
   (let [project (.getProject editor)
-        url (editor/url editor)
+        url (editor/editor->url editor)
         cur-ns (some-> (editor/ns-form editor) parser/find-namespace z/string parser/remove-metadata)]
     (or (db/get-in project [:file->ns url :ns])
         cur-ns
@@ -130,7 +130,7 @@
   [& {:keys [^Editor editor ns code]}]
   (prep-env-for-eval editor code)
   (let [project (.getProject editor)
-        url (editor/url editor)
+        url (editor/editor->url editor)
         ns (or ns
                (cur-ns editor))
         {:keys [ns] :as response} (eval project ns code)]
