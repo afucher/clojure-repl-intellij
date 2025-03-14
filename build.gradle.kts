@@ -23,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    implementation ("org.clojure:clojure:1.11.1")
+    implementation ("org.clojure:clojure:1.12.0")
     implementation ("org.clojure:core.async:1.5.648") {
         because("issue https://clojure.atlassian.net/browse/ASYNC-248")
     }
@@ -32,6 +32,10 @@ dependencies {
     implementation ("com.rpl:proxy-plus:0.0.9")
     implementation ("seesaw:seesaw:1.5.0")
     implementation ("rewrite-clj:rewrite-clj:1.1.47")
+
+    testImplementation("junit:junit:latest.release")
+    testImplementation("org.junit.platform:junit-platform-launcher:latest.release")
+    testRuntimeOnly ("dev.clojurephant:jovial:0.4.2")
 }
 
 sourceSets {
@@ -127,6 +131,10 @@ tasks {
         systemProperty("jb.consents.confirmation.enabled", "false")
     }
 
+    test {
+        systemProperty("idea.mimic.jar.url.connection", "true")
+    }
+
     signPlugin {
         certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
         privateKey.set(System.getenv("PRIVATE_KEY"))
@@ -145,6 +153,22 @@ tasks {
     buildSearchableOptions {
         enabled = false
     }
+
+    clojureRepl {
+        forkOptions.jvmArgs = listOf("--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+                                     "--add-opens=java.desktop/java.awt.event=ALL-UNNAMED",
+                                     "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+                                     "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
+                                     "--add-opens=java.base/java.lang=ALL-UNNAMED",
+                                     "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
+                                     "-Didea.mimic.jar.url.connection=true",
+                                     "-Didea.force.use.core.classloader=true"
+        )
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
 grammarKit {
