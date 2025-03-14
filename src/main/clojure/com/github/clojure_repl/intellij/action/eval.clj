@@ -16,7 +16,6 @@
    [com.intellij.openapi.actionSystem CommonDataKeys]
    [com.intellij.openapi.actionSystem AnActionEvent]
    [com.intellij.openapi.editor Editor]
-   [com.intellij.openapi.fileEditor FileDocumentManager]
    [com.intellij.openapi.vfs VirtualFile]))
 
 (set! *warn-on-reflection* true)

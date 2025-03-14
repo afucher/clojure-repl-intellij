@@ -97,7 +97,7 @@
    need to evaluate the ns form first to avoid namespace-not-found error.
    Also evaluate the ns form when it has changed to keep the environment up-to-date."
   [^Editor editor form]
-  (when-let [current-ns-form (editor/cur-ns-form editor)]
+  (when-let [current-ns-form (editor/ns-form editor)]
     (let [url (editor/url editor)
           project (.getProject editor)
           str-current-ns-form (z/string current-ns-form)
@@ -110,6 +110,18 @@
                         {:form str-current-ns-form
                          :ns ns}))))))
 
+(defn ^:private cur-ns
+  "Returns current ns to evaluate code in.
+   If there is no ns in cache, it returns the ns from the file.
+   If the ns form is not found in the editor, it default to 'user'."
+  [^Editor editor]
+  (let [project (.getProject editor)
+        url (editor/url editor)
+        cur-ns (some-> (editor/ns-form editor) parser/find-namespace z/string parser/remove-metadata)]
+    (or (db/get-in project [:file->ns url :ns])
+        cur-ns
+        "user")))
+
 (defn eval-from-editor
   "When evaluating code related to a file (editor) we need to:
    - prepare the environment by evaluating the ns form
@@ -120,11 +132,9 @@
   (let [project (.getProject editor)
         url (editor/url editor)
         ns (or ns
-               (db/get-in project [:file->ns url :ns]))
+               (cur-ns editor))
         {:keys [ns] :as response} (eval project ns code)]
-    (when (and ns
-               (db/get-in project [:file->ns url])
-               (not= ns (db/get-in project [:file->ns url :ns])))
+    (when ns
       (db/assoc-in! project [:file->ns url :ns] ns))
     response))
 

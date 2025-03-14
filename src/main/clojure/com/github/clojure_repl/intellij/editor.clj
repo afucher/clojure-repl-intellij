@@ -12,7 +12,7 @@
   ;; TODO sanitize URL, encode, etc
   (.getUrl (.getFile (FileDocumentManager/getInstance) (.getDocument editor))))
 
-(defn cur-ns-form [^Editor editor]
+(defn ns-form [^Editor editor]
   (-> editor
       .getDocument
       .getText
