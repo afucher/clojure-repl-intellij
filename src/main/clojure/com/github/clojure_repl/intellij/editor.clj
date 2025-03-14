@@ -8,7 +8,7 @@
 
 (set! *warn-on-reflection* true)
 
-(defn url [^Editor editor]
+(defn editor->url [^Editor editor]
   ;; TODO sanitize URL, encode, etc
   (.getUrl (.getFile (FileDocumentManager/getInstance) (.getDocument editor))))
 
