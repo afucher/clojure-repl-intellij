@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 2.5.0
+
 - Enhance REPL evaluations. #108
   - Isolate ns from REPL windows and file editors
   - Evaluate ns form from file automatically to avoid namespace-not-found errors. 
