@@ -32,6 +32,7 @@ dependencies {
     implementation ("com.rpl:proxy-plus:0.0.9")
     implementation ("seesaw:seesaw:1.5.0")
     implementation ("rewrite-clj:rewrite-clj:1.1.47")
+    implementation ("nrepl:nrepl:1.3.1")
 
     testImplementation("junit:junit:latest.release")
     testImplementation("org.junit.platform:junit-platform-launcher:latest.release")
@@ -42,6 +43,7 @@ sourceSets {
     main {
         java.srcDirs("src/main", "src/gen")
         if (project.gradle.startParameter.taskNames.contains("buildPlugin") ||
+            project.gradle.startParameter.taskNames.contains("clojureRepl") ||
             project.gradle.startParameter.taskNames.contains("runIde")) {
             resources.srcDirs("src/main/dev-resources")
         }
@@ -155,6 +157,14 @@ tasks {
     }
 
     clojureRepl {
+        dependsOn("compileClojure")
+        classpath.from(sourceSets.main.get().runtimeClasspath
+                       + file("build/classes/kotlin/main")
+                       + file("build/clojure/main")
+        )
+        // doFirst {
+        //     println(classpath.asPath)
+        // }
         forkOptions.jvmArgs = listOf("--add-opens=java.desktop/java.awt=ALL-UNNAMED",
                                      "--add-opens=java.desktop/java.awt.event=ALL-UNNAMED",
                                      "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
@@ -178,7 +188,7 @@ grammarKit {
 }
 
 clojure.builds.named("main") {
-    classpath.from(sourceSets.main.get().runtimeClasspath.asPath)
+    classpath.from(sourceSets.main.get().runtimeClasspath.asPath + "build/classes/kotlin/main")
     checkAll()
     aotAll()
     reflection.set("fail")
