@@ -185,7 +185,6 @@
         repl-content (seesaw/select console [:#repl-content])]
     (db/assoc-in! project [:console :state :status] :enabled)
     (db/assoc-in! project [:console :state :initial-text] text)
-    (ui.components/init-clojure-text-field! repl-content)
     (append-output project output)
     (clear-input project)
     (refresh-repl-text project)
