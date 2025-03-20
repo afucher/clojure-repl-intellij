@@ -1,7 +1,7 @@
 (ns com.github.clojure-repl.intellij.ui.components
   (:require
    [com.github.clojure-repl.intellij.keyboard-manager :as key-manager]
-   [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
+   [com.rpl.proxy-plus :refer [proxy+]]
    [seesaw.core :as seesaw]
    [seesaw.layout :as s.layout]
    [seesaw.mig :as mig])
@@ -10,7 +10,7 @@
    [com.intellij.openapi.editor EditorFactory]
    [com.intellij.openapi.editor.ex EditorEx]
    [com.intellij.openapi.fileTypes FileTypeManager]
-   [com.intellij.ui EditorTextField IdeBorderFactory]
+   [com.intellij.ui EditorSettingsProvider EditorTextField IdeBorderFactory]
    [java.awt Font]
    [java.awt.event ActionEvent]
    [javax.swing JButton JComponent]))
@@ -23,23 +23,20 @@
   (let [document (.createDocument (EditorFactory/getInstance) ^String text)
         clojure-file-type (.getStdFileType (FileTypeManager/getInstance) "clojure")
         editor-text-field (EditorTextField. document project clojure-file-type (not editable?) false)]
+    (.addSettingsProvider
+     editor-text-field
+     (proxy+ [] EditorSettingsProvider
+       (customizeSettings [_ ^EditorEx editor]
+         (.setVerticalScrollbarVisible editor true)
+         (.setHorizontalScrollbarVisible editor true)
+         (key-manager/register-listener-for-editor!
+          {:editor editor
+           :on-key-pressed on-key-pressed}))))
     (when id (seesaw/config! editor-text-field :id id))
     (when background-color (.setBackground editor-text-field background-color))
     (when font (.setFont editor-text-field font))
     (when on-key-pressed (.putClientProperty editor-text-field :on-key-pressed on-key-pressed))
     editor-text-field))
-
-(defn init-clojure-text-field!
-  "Some fields like .getEditor are initialized async,
-   so we call this only when we know the Editor is available"
-  [^EditorTextField editor-text-field]
-  (when-let [on-key-pressed (.getClientProperty editor-text-field :on-key-pressed)]
-    (app-manager/invoke-later!
-     {:invoke-fn (fn []
-                   (.setVerticalScrollbarVisible ^EditorEx (.getEditor editor-text-field) true)
-                   (key-manager/register-listener-for-editor!
-                    {:editor (.getEditor editor-text-field)
-                     :on-key-pressed on-key-pressed}))})))
 
 (defn collapsible ^JComponent
   [& {:keys [collapsed-title expanded-title content ^Font title-font]}]
