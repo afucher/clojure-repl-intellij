@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Fix REPL window horizontal scrollbar not working.
+- Fix REPL window broken after making any change to its layout. #144
+
 ## 2.5.0
 
 - Enhance REPL evaluations. #108
