@@ -59,7 +59,7 @@
                                                (code ";; some text here"
                                                      "user-bar.baz> "
                                                      "user-bar.baz> (+ 2 3)"))))
-  (is (= ["user> " "(+ 2 3)"]
+  (is (= ["user> " "1"]
          (#'ui.repl/extract-input+code-to-eval "user"
                                                (code ";; some text here"
                                                      "user> 1"
