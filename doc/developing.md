@@ -1,31 +1,6 @@
-# Developing
+# Developing  
 
-This docs covers the basic concepts to start working on this plugin.
-
-
-## Overview about IntelliJ
-
-In this doc we will cover some common terms and short descriptions about key concepts. IntelliJ has a official documentation about [plugin development](https://plugins.jetbrains.com/docs/intellij/welcome.html), so to get more information we recommend check it.
-
-When the doc is not enough, you can relay on the [IntelliJ community source code](https://github.com/JetBrains/intellij-community), to check the implementation of some classes, and also find some useful examples of usage.
-
-#### Project
-#### Editor
-#### Actions
-#### Configurations
-
-
-## Clojure and Java/Kotlin
-
-IntelliJ is written in Java and Kotlin, so to develop a plugin we need to work with it. 
-Since Clojure has interop with Java, the plugin development relays a lot in the interoperability:
- - working with IntelliJ Java/Kotlin classes;
- - generating classes using `:gen-class`;
- - making use of `reify`, `proxy` and `proxy+` to extend/instantiate classes;
-
- To abstract some of those needs, [clj4intellij](https://github.com/ericdallo/clj4intellij) was created.
- > Library for create IntelliJ plugins with Clojure.
-
+⚠️ Before start developing, if you are not familiar with developing IntelliJ plugins, we create a dedicated doc to onboard you: [IntelliJ Plugin Development](./intellij-plugin-development.md)
 
 ### Running locally
 
