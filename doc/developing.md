@@ -1,7 +1,6 @@
 # Developing  
 
-⚠️ Before start developing, if you are not familiar with developing IntelliJ plugins, we created a dedicated doc to onboard you: [IntelliJ Plugin Development](./intellij-plugin-development.md)
-
+⚠️ Before start developing, if you are not familiar with developing IntelliJ plugins, is recommended to read the [IntelliJ Plugin Development](https://github.com/ericdallo/clj4intellij/blob/master/doc/intellij-plugin-development.md) doc to onboard you.
 
 The flow to develop the plugin is usually: 
  1. build locally;
