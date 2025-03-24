@@ -1,6 +1,6 @@
 # Developing  
 
-⚠️ Before start developing, if you are not familiar with developing IntelliJ plugins, we create a dedicated doc to onboard you: [IntelliJ Plugin Development](./intellij-plugin-development.md)
+⚠️ Before start developing, if you are not familiar with developing IntelliJ plugins, we created a dedicated doc to onboard you: [IntelliJ Plugin Development](./intellij-plugin-development.md)
 
 
 The flow to develop the plugin is usually: 
@@ -17,7 +17,7 @@ The flow to develop the plugin is usually:
 
 There is some ways to build and run this plugin inside the InteliJ locally, they are listed below in the order that we consider that is more efficient when developing:
 
-`bb install-plugin` to build the plugin, and install it from disk in IntelliJ automatically, then restart your IntelliJ. You need to pass the IntelliJ plugins path:  
+`bb install-plugin` to builds the plugin, and install it from disk in IntelliJ automatically, then restart your IntelliJ. You need to pass the IntelliJ plugins path:  
 e.g: ```bb install-plugin /home/youruser/.local/share/JetBrains/IdeaIC2024.3```
 
 or
