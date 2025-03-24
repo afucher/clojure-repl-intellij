@@ -9,6 +9,7 @@ The flow to develop the plugin is usually:
 
 ## Prerequisites
 
+Java JDK 17 or above  
 [Babashka](https://github.com/babashka/babashka#installation): Used to make run required tasks easier during development.
 
 
