@@ -2,7 +2,8 @@
   (:require
    [clojure.test :refer [deftest is]]
    [com.github.clojure-repl.intellij.configuration.factory.local :as config.factory.local]
-   [com.github.clojure-repl.intellij.db :as db])
+   [com.github.clojure-repl.intellij.db :as db]
+   [clojure.pprint :as pprint])
   (:import
    [com.github.clojure_repl.intellij.configuration ReplRunConfigurationType]
    [com.intellij.execution ProgramRunnerUtil RunManager]
@@ -43,10 +44,18 @@
     (let [project (.getProject fixture)
           run-manager (RunManager/getInstance project)
           configuration (config.factory.local/configuration-factory (ReplRunConfigurationType.))
-          configuration-instance (.createConfiguration run-manager "Local REPL" configuration)]
+          configuration-instance (.createConfiguration run-manager "Local REPL" configuration)
+          config-base (.getConfiguration configuration-instance)
+          options (.getOptions config-base)
+          #_#__ (clojure.pprint/pprint (.getOptions configuration))]
+      (doto options
+        (.setProject "clojure.core")
+        (.setProjectType "clojure"))
+
+
       (ProgramRunnerUtil/executeConfiguration configuration-instance
                                               (DefaultRunExecutor/getRunExecutorInstance))
-      ;; (Thread/sleep 2000)
+      (Thread/sleep 4000)
       ;; (println '_______________ (.getExitCode (.getProcessHandler (.getSelectedContent (RunContentManager/getInstance project)))))
       (clojure.pprint/pprint @db/db*)
 
