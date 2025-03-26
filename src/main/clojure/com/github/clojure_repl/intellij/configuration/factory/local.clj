@@ -54,6 +54,7 @@
                         (.setCharset (Charset/forName "UTF-8"))
                         (.setWorkDirectory (.getBasePath project))
                         (.withEnvironment env-vars))
+        _ (println "command-line>> " command-line)
         handler (proxy [ColoredProcessHandler] [command-line]
                   (readerOptions []
                     (BaseOutputReader$Options/forMostlySilentProcess)))]
