@@ -17,5 +17,8 @@ jobs:
           java-version: 17
           cache: 'gradle'
 
+      - name: Install Clojure
+        uses: DeLaGuardo/setup-clojure@master
+
       - name: Run tests
         run: ./gradlew test
