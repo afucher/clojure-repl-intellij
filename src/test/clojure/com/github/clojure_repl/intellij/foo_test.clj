@@ -68,7 +68,7 @@
       (clj4intellij/dispatchAll)
 
       (let [content (.getText repl-content)]
-        (is (str/ends-with? content "user> (+ 1 1)\n=> 2\nuser> "))))
+        (is (str/ends-with? content "user> (+ 1 1)\n=> 3\nuser> "))))
 
 
 
