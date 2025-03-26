@@ -1,6 +1,6 @@
 name: Tests
 on:
-  push:
+  pull_request:
 
 permissions:
     contents: read
@@ -38,4 +38,3 @@ jobs:
           report_paths: '**/build/test-results/test/TEST-*.xml'
           simplified_summary: true
           comment: true
-          pull_request: ${{ github.event.pull_request.number }}
