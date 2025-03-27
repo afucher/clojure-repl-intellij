@@ -22,14 +22,18 @@
       (db/get-in [:console :ui])
       (seesaw/select [:#repl-content])))
 
-(defn ensure-editor [project]
+(defn ensure-editor
+  "Ensure the editor was created in the UI thread"
+  [project]
   (let [repl-content (repl-content project)]
     @(app-manager/invoke-later!
       {:invoke-fn (fn []
                     (.addNotify repl-content)
                     (.getEditor repl-content true))})))
 
-(defn wait-console-ui-creation [project]
+(defn wait-console-ui-creation
+  "Waits until the console UI is set in the db*, then ensures the editor is created"
+  [project]
   @(clj4intellij/dispatch-all-until
     (fn [] (-> project
                (db/get-in [:console :ui]))))

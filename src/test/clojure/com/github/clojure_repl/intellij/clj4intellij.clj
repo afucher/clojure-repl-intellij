@@ -19,7 +19,9 @@
           (run [_]
             (run-fn)))))
 
-(defn setup ^CodeInsightTestFixture []
+(defn setup
+  "Setup fixture factory, and return an instance of CodeInsightTestFixture"
+  ^CodeInsightTestFixture []
   (let [factory (IdeaTestFixtureFactory/getFixtureFactory)
         raw-fixture (-> factory
                         (.createLightFixtureBuilder LightProjectDescriptor/EMPTY_PROJECT_DESCRIPTOR (str *ns*))
@@ -29,13 +31,18 @@
     (is (.getProject fixture))
     fixture))
 
-(defn dispatch-all []
+(defn dispatch-all
+  "Dispatch all events in the EDT. See UIUtil/dispatchAllInvocationEvents"
+  []
   (EdtTestUtil/runInEdtAndWait
    (reify ThrowableRunnable
      (run [_]
        (UIUtil/dispatchAllInvocationEvents)))))
 
-(defn dispatch-all-until [condition]
+(defn dispatch-all-until
+  "Dispatch all events in the EDT until condition is met.
+   Returns a promise that will be delivered with true when condition is met."
+  [condition]
   (let [p (promise)]
     (future
       (loop []
@@ -47,7 +54,8 @@
             (recur)))))
     p))
 
-(defn execute-configuration [configuration-instance]
+(defn execute-configuration
+  [configuration-instance]
   (ProgramRunnerUtil/executeConfiguration
    configuration-instance
    (DefaultRunExecutor/getRunExecutorInstance)))
