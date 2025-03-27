@@ -1,4 +1,4 @@
-(ns com.github.clojure-repl.intellij.foo-test
+(ns com.github.clojure-repl.intellij.repl-eval-test
   (:require
    [clojure.string :as str]
    [clojure.test :refer [deftest is]]
