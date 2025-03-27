@@ -33,8 +33,9 @@
         clear-repl (.getAction manager "ClojureREPL.ClearReplOutput")
         history-up (.getAction manager "ClojureREPL.HistoryUp")
         history-down (.getAction manager "ClojureREPL.HistoryDown")
-        interrupt (.getAction manager "ClojureREPL.Interrupt")]
-    [clear-repl history-up history-down interrupt]))
+        interrupt (.getAction manager "ClojureREPL.Interrupt")
+        refresh-all (.getAction manager "ClojureREPL.RefreshAll")]
+    [clear-repl history-up history-down interrupt refresh-all]))
 
 (defn build-console-view [project loading-text]
   (db/assoc-in! project [:console :process-handler] nil)
