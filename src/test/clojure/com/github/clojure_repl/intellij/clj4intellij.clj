@@ -2,11 +2,15 @@
   (:require
    [clojure.test :refer [is]])
   (:import
+   [com.intellij.execution ProgramRunnerUtil]
+   [com.intellij.execution.executors DefaultRunExecutor]
    [com.intellij.openapi.command WriteCommandAction]
    [com.intellij.testFramework EdtTestUtil LightProjectDescriptor]
    [com.intellij.testFramework.fixtures CodeInsightTestFixture IdeaTestFixtureFactory]
    [com.intellij.util ThrowableRunnable]
    [com.intellij.util.ui UIUtil]))
+
+(set! *warn-on-reflection* true)
 
 ;; TODO migrate these functions to clj4intellij app-manager
 (defn write-command-action [project run-fn]
@@ -25,7 +29,7 @@
     (is (.getProject fixture))
     fixture))
 
-(defn dispatchAll []
+(defn dispatch-all []
   (EdtTestUtil/runInEdtAndWait
    (reify ThrowableRunnable
      (run [_]
@@ -38,7 +42,12 @@
         (if (condition)
           (deliver p true)
           (do
-            (dispatchAll)
+            (dispatch-all)
             (Thread/sleep 100)
             (recur)))))
     p))
+
+(defn execute-configuration [configuration-instance]
+  (ProgramRunnerUtil/executeConfiguration
+   configuration-instance
+   (DefaultRunExecutor/getRunExecutorInstance)))
