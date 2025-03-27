@@ -73,13 +73,13 @@
   (action/register-action! :id "ClojureREPL.RefreshAll"
                            :title "Refresh all namespaces"
                            :description "Refresh all namespaces"
-                           :icon Icons/CLOJURE_REPL
+                           :icon AllIcons$Actions/Refresh
                            :keyboard-shortcut {:first "shift alt R" :second "shift alt A" :replace-all true}
                            :on-performed #'a.eval/refresh-all-action)
   (action/register-action! :id "ClojureREPL.RefreshChanged"
                            :title "Refresh changed namespaces"
                            :description "Refresh changed namespaces"
-                           :icon Icons/CLOJURE_REPL
+                           :icon AllIcons$Actions/Refresh
                            :keyboard-shortcut {:first "shift alt R" :second "shift alt R" :replace-all true}
                            :on-performed #'a.eval/refresh-changed-action)
   (action/register-action! :id "ClojureREPL.HistoryUp"
