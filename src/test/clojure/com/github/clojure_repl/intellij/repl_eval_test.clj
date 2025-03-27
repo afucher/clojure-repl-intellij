@@ -1,7 +1,7 @@
 (ns com.github.clojure-repl.intellij.repl-eval-test
   (:require
    [clojure.string :as str]
-   [clojure.test :refer [deftest is]]
+   [clojure.test :refer [deftest is testing]]
    [com.github.clojure-repl.intellij.clj4intellij :as clj4intellij]
    [com.github.clojure-repl.intellij.configuration.factory.local :as config.factory.local]
    [com.github.clojure-repl.intellij.db :as db]
@@ -49,7 +49,7 @@
          (.dispatchEvent component key-enter-event)
          nil)))))
 
-(deftest foo-test
+(deftest repl-eval-test
   (let [fixture (clj4intellij/setup)
         deps-file (.createFile fixture "deps.edn" "{}")
         project (.getProject fixture)
@@ -70,14 +70,15 @@
 
     (wait-console-ui-creation project)
 
-    (let [repl-content (repl-content project)]
+    (testing "user input evaluation"
+      (let [repl-content (repl-content project)]
 
-      @(clj4intellij/dispatch-all-until
-        (fn [] (str/ends-with? (.getText repl-content) "user> ")))
+        @(clj4intellij/dispatch-all-until
+          (fn [] (str/ends-with? (.getText repl-content) "user> ")))
 
-      (eval-code-on-repl repl-content "(+ 1 1)\n")
-      (clj4intellij/dispatch-all)
+        (eval-code-on-repl repl-content "(+ 1 1)\n")
+        (clj4intellij/dispatch-all)
 
-      (let [content (.getText repl-content)]
-        (is (str/ends-with? content "user> (+ 1 1)\n=> 2\nuser> "))))))
+        (let [content (.getText repl-content)]
+          (is (str/ends-with? content "user> (+ 1 1)\n=> 2\nuser> ")))))))
 
