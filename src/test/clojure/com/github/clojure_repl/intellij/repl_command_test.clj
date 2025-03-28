@@ -9,12 +9,12 @@
             "-Sdeps"
             "{:deps {nrepl/nrepl {:mvn/version \"1.0.0\"} cider/cider-nrepl {:mvn/version \"0.45.0\"}} :aliases {:cider/nrepl {:main-opts [\"-m\" \"nrepl.cmdline\" \"--middleware\" \"[cider.nrepl/cider-middleware]\"]}}}"
             "-M:cider/nrepl"]
-           (repl-command/project->repl-start-command :clojure [])))
+           (repl-command/project->repl-start-command :clojure [] [])))
     (is (= ["clojure"
             "-Sdeps"
             "{:deps {nrepl/nrepl {:mvn/version \"1.0.0\"} cider/cider-nrepl {:mvn/version \"0.45.0\"}} :aliases {:cider/nrepl {:main-opts [\"-m\" \"nrepl.cmdline\" \"--middleware\" \"[cider.nrepl/cider-middleware]\"]}}}"
             "-M:foo-b:bar:cider/nrepl"]
-           (repl-command/project->repl-start-command :clojure ["foo-b" "bar"])))
+           (repl-command/project->repl-start-command :clojure ["foo-b" "bar"] [])))
     (testing "windows powershell"
       (with-redefs [repl-command/windows-os? (constantly true)
                     repl-command/locate-executable (fn [cmd]
@@ -25,7 +25,7 @@
                 "-Sdeps"
                 "{:deps {nrepl/nrepl {:mvn/version \"1.0.0\"} cider/cider-nrepl {:mvn/version \"0.45.0\"}} :aliases {:cider/nrepl {:main-opts [\"-m\" \"nrepl.cmdline\" \"--middleware\" \"[cider.nrepl/cider-middleware]\"]}}}"
                 "-M:cider/nrepl"]
-               (repl-command/project->repl-start-command :clojure [])))))
+               (repl-command/project->repl-start-command :clojure [] [])))))
     (testing "windows pwsh"
       (with-redefs [repl-command/windows-os? (constantly true)
                     repl-command/locate-executable (fn [cmd]
@@ -36,16 +36,16 @@
                 "-Sdeps"
                 "{:deps {nrepl/nrepl {:mvn/version \"1.0.0\"} cider/cider-nrepl {:mvn/version \"0.45.0\"}} :aliases {:cider/nrepl {:main-opts [\"-m\" \"nrepl.cmdline\" \"--middleware\" \"[cider.nrepl/cider-middleware]\"]}}}"
                 "-M:cider/nrepl"]
-               (repl-command/project->repl-start-command :clojure []))))))
+               (repl-command/project->repl-start-command :clojure [] []))))))
   (testing "lein"
     (is (= ["lein" "update-in" ":dependencies" "conj" "[nrepl/nrepl \"1.0.0\"]"
             "--" "update-in" ":plugins" "conj" "[cider/cider-nrepl \"0.45.0\"]"
             "--" "repl" ":headless" ":host" "localhost"]
-           (repl-command/project->repl-start-command :lein [])))
+           (repl-command/project->repl-start-command :lein [] [])))
     (is (= ["lein" "update-in" ":dependencies" "conj" "[nrepl/nrepl \"1.0.0\"]"
             "--" "update-in" ":plugins" "conj" "[cider/cider-nrepl \"0.45.0\"]"
             "--" "with-profile" "+foo-b,+bar" "repl" ":headless" ":host" "localhost"]
-           (repl-command/project->repl-start-command :lein ["foo-b" "bar"])))
+           (repl-command/project->repl-start-command :lein ["foo-b" "bar"] [])))
     (testing "windows powershell"
       (with-redefs [repl-command/windows-os? (constantly true)
                     repl-command/locate-executable (fn [cmd]
@@ -56,7 +56,7 @@
                 "update-in" ":dependencies" "conj" "[nrepl/nrepl \"1.0.0\"]"
                 "--" "update-in" ":plugins" "conj" "[cider/cider-nrepl \"0.45.0\"]"
                 "--" "repl" ":headless" ":host" "localhost"]
-               (repl-command/project->repl-start-command :lein [])))))
+               (repl-command/project->repl-start-command :lein [] [])))))
     (testing "windows pwsh"
       (with-redefs [repl-command/windows-os? (constantly true)
                     repl-command/locate-executable (fn [cmd]
@@ -67,22 +67,22 @@
                 "update-in" ":dependencies" "conj" "[nrepl/nrepl \"1.0.0\"]"
                 "--" "update-in" ":plugins" "conj" "[cider/cider-nrepl \"0.45.0\"]"
                 "--" "repl" ":headless" ":host" "localhost"]
-               (repl-command/project->repl-start-command :lein []))))))
+               (repl-command/project->repl-start-command :lein [] []))))))
   (testing "babashka"
     (is (= ["bb" "nrepl-server" "localhost:0"]
-           (repl-command/project->repl-start-command :babashka []))))
+           (repl-command/project->repl-start-command :babashka [] []))))
   (testing "shadow-cljs"
     (is (= ["npx" "shadow-cljs" "server"]
-           (repl-command/project->repl-start-command :shadow-cljs []))))
+           (repl-command/project->repl-start-command :shadow-cljs [] []))))
   (testing "boot"
     (is (= ["boot" "repl" "-s" "-b" "localhost" "wait"]
-           (repl-command/project->repl-start-command :boot []))))
+           (repl-command/project->repl-start-command :boot [] []))))
   (testing "nbb"
     (is (= ["nbb" "nrepl-server"]
-           (repl-command/project->repl-start-command :nbb []))))
+           (repl-command/project->repl-start-command :nbb [] []))))
   (testing "gradle"
     (is (= ["./gradlew"
             "-Pdev.clojurephant.jack-in.nrepl=nrepl:nrepl:1.0.0,cider:cider-nrepl:0.45.0"
             "clojureRepl"
             "--middleware=cider.nrepl/cider-middleware"]
-           (repl-command/project->repl-start-command :gradle [])))))
+           (repl-command/project->repl-start-command :gradle [] [])))))
