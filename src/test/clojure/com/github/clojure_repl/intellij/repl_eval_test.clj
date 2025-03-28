@@ -2,14 +2,15 @@
   (:require
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
-   [com.github.clojure-repl.intellij.clj4intellij :as clj4intellij]
    [com.github.clojure-repl.intellij.configuration.factory.local :as config.factory.local]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
+   [com.github.ericdallo.clj4intellij.test :as clj4intellij.test]
    [seesaw.core :as seesaw])
   (:import
    [com.github.clojure_repl.intellij.configuration ReplRunConfigurationType]
-   [com.intellij.execution RunManager]
+   [com.intellij.execution ProgramRunnerUtil RunManager]
+   [com.intellij.execution.executors DefaultRunExecutor]
    [com.intellij.openapi.util ThrowableComputable]
    [com.intellij.testFramework EditorTestUtil EdtTestUtil]
    [java.awt.event KeyEvent]))
@@ -34,12 +35,19 @@
 (defn wait-console-ui-creation
   "Waits until the console UI is set in the db*, then ensures the editor is created"
   [project]
-  @(clj4intellij/dispatch-all-until
-    (fn [] (-> project
-               (db/get-in [:console :ui]))))
+  @(clj4intellij.test/dispatch-all-until
+    {:cond-fn (fn [] (-> project
+                         (db/get-in [:console :ui])))})
   (ensure-editor project))
 
-
+(defn execute-configuration
+  "API for ProgramRunnerUtil/executeConfiguration
+   
+   ref: https://github.com/JetBrains/intellij-community/blob/2766d0bf1cec76c0478244f6ad5309af527c245e/platform/execution-impl/src/com/intellij/execution/ProgramRunnerUtil.java#L46"
+  [configuration-instance]
+  (ProgramRunnerUtil/executeConfiguration
+   configuration-instance
+   (DefaultRunExecutor/getRunExecutorInstance)))
 
 (defn eval-code-on-repl [repl-content text]
   (let [editor (.getEditor repl-content)
@@ -54,13 +62,14 @@
          nil)))))
 
 (deftest repl-eval-test
-  (let [fixture (clj4intellij/setup)
+  (let [project-name "clojure.core"
+        fixture (clj4intellij.test/setup project-name)
         deps-file (.createFile fixture "deps.edn" "{}")
-        project (.getProject fixture)
-        project-name (.getName project)]
+        project (.getProject fixture)]
+    (is (= project-name (.getName project)))
     (is deps-file)
 
-    (clj4intellij/write-command-action
+    (app-manager/write-command-action
      project
      (fn [] (.openFileInEditor fixture deps-file)))
 
@@ -70,18 +79,18 @@
       (doto (-> configuration-instance .getConfiguration .getOptions)
         (.setProject project-name)
         (.setProjectType "clojure"))
-      (clj4intellij/execute-configuration configuration-instance))
+      (execute-configuration configuration-instance))
 
     (wait-console-ui-creation project)
 
     (testing "user input evaluation"
       (let [repl-content (repl-content project)]
 
-        @(clj4intellij/dispatch-all-until
-          (fn [] (str/ends-with? (.getText repl-content) "user> ")))
+        @(clj4intellij.test/dispatch-all-until
+          {:cond-fn (fn [] (str/ends-with? (.getText repl-content) "user> "))})
 
         (eval-code-on-repl repl-content "(+ 1 1)\n")
-        (clj4intellij/dispatch-all)
+        (clj4intellij.test/dispatch-all)
 
         (let [content (.getText repl-content)]
           (is (str/ends-with? content "user> (+ 1 1)\n=> 2\nuser> ")))))))
