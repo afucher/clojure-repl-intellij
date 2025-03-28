@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Bump clj4intellij to 0.8.0
+- Configure project with IntelliJ integration tests (headless)
+
 ## 2.5.1
 
 - Fix REPL window horizontal scrollbar not working.
