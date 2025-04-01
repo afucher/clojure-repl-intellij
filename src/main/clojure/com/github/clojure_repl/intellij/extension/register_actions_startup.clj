@@ -59,11 +59,18 @@
                            :keyboard-shortcut {:first "shift alt D" :replace-all true}
                            :on-performed #'a.eval/eval-defun-action)
   (action/register-action! :id "ClojureREPL.ClearReplOutput"
-                           :title "Clear REPL output"
-                           :description "Clear REPL output"
-                           :icon AllIcons$Actions/GC
                            :keyboard-shortcut {:first "shift alt R" :second "shift alt C"  :replace-all true}
-                           :on-performed #'a.eval/clear-repl-output-action)
+                           :action (proxy+
+                                    ["Clear REPL output" "Clear REPL output" AllIcons$Actions/GC]
+                                    DumbAwareAction
+                                     (update
+                                       [_ ^AnActionEvent event]
+                                       (let [project (actions/action-event->project event)]
+                                         (.setEnabled (.getPresentation event) (boolean (nrepl/active-client? project)))))
+                                     (actionPerformed
+                                       [_ event]
+                                       (a.eval/clear-repl-output-action event))))
+
   (action/register-action! :id "ClojureREPL.SwitchNs"
                            :title "Switch REPL namespace"
                            :description "Switch REPL namespace to current opened file namespace"
@@ -99,14 +106,13 @@
                            :action (proxy+
                                     ["Interrupts session evaluation" "Interrupts session evaluation" AllIcons$Actions/Cancel]
                                     DumbAwareAction
-                                    (update
-                                     [_ ^AnActionEvent event]
-                                     (let [project (actions/action-event->project event)]
-                                       (.setEnabled (.getPresentation event) (boolean (nrepl/evaluating? project)))))
-                                    (actionPerformed
-                                     [_ event]
-                                     (a.eval/interrupt event))))
-
+                                     (update
+                                       [_ ^AnActionEvent event]
+                                       (let [project (actions/action-event->project event)]
+                                         (.setEnabled (.getPresentation event) (boolean (nrepl/evaluating? project)))))
+                                     (actionPerformed
+                                       [_ event]
+                                       (a.eval/interrupt event))))
 
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true

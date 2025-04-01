@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Disable "clear REPL" action when REPL is not connected. #126
+
 ## 2.5.1
 
 - Fix REPL window horizontal scrollbar not working.
