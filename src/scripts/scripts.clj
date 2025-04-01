@@ -36,6 +36,10 @@
   (shell "git push origin --tags"))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
+(defn tests []
+  (shell "./gradlew test"))
+
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn build-plugin []
   (shell "./gradlew buildPlugin"))
 

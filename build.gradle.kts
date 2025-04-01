@@ -23,21 +23,27 @@ repositories {
 }
 
 dependencies {
-    implementation ("org.clojure:clojure:1.11.1")
+    implementation ("org.clojure:clojure:1.12.0")
     implementation ("org.clojure:core.async:1.5.648") {
         because("issue https://clojure.atlassian.net/browse/ASYNC-248")
     }
-    implementation ("com.github.ericdallo:clj4intellij:0.6.3")
+    implementation ("com.github.ericdallo:clj4intellij:0.8.0")
     implementation ("babashka:fs:0.5.22")
     implementation ("com.rpl:proxy-plus:0.0.9")
     implementation ("seesaw:seesaw:1.5.0")
     implementation ("rewrite-clj:rewrite-clj:1.1.47")
+    implementation ("nrepl:nrepl:1.3.1")
+
+    testImplementation("junit:junit:latest.release")
+    testImplementation("org.junit.platform:junit-platform-launcher:latest.release")
+    testRuntimeOnly ("dev.clojurephant:jovial:0.4.2")
 }
 
 sourceSets {
     main {
         java.srcDirs("src/main", "src/gen")
         if (project.gradle.startParameter.taskNames.contains("buildPlugin") ||
+            project.gradle.startParameter.taskNames.contains("clojureRepl") ||
             project.gradle.startParameter.taskNames.contains("runIde")) {
             resources.srcDirs("src/main/dev-resources")
         }
@@ -127,6 +133,10 @@ tasks {
         systemProperty("jb.consents.confirmation.enabled", "false")
     }
 
+    test {
+        systemProperty("idea.mimic.jar.url.connection", "true")
+    }
+
     signPlugin {
         certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
         privateKey.set(System.getenv("PRIVATE_KEY"))
@@ -145,6 +155,30 @@ tasks {
     buildSearchableOptions {
         enabled = false
     }
+
+    clojureRepl {
+        dependsOn("compileClojure")
+        classpath.from(sourceSets.main.get().runtimeClasspath
+                       + file("build/classes/kotlin/main")
+                       + file("build/clojure/main")
+        )
+        // doFirst {
+        //     println(classpath.asPath)
+        // }
+        forkOptions.jvmArgs = listOf("--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+                                     "--add-opens=java.desktop/java.awt.event=ALL-UNNAMED",
+                                     "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+                                     "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
+                                     "--add-opens=java.base/java.lang=ALL-UNNAMED",
+                                     "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
+                                     "-Didea.mimic.jar.url.connection=true",
+                                     "-Didea.force.use.core.classloader=true"
+        )
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
 grammarKit {
@@ -154,7 +188,7 @@ grammarKit {
 }
 
 clojure.builds.named("main") {
-    classpath.from(sourceSets.main.get().runtimeClasspath.asPath)
+    classpath.from(sourceSets.main.get().runtimeClasspath.asPath + "build/classes/kotlin/main")
     checkAll()
     aotAll()
     reflection.set("fail")

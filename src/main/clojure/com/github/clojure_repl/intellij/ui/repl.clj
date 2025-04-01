@@ -67,7 +67,7 @@
 (defn ^:private move-caret-and-scroll-to-latest [^EditorTextField repl-content]
   (app-manager/invoke-later!
    {:invoke-fn (fn []
-                 (let [editor ^EditorEx (.getEditor repl-content)]
+                 (when-let [editor ^EditorEx (.getEditor repl-content)]
                    (.moveToOffset (.getCaretModel editor) (.getTextLength (.getDocument repl-content)))
                    (.scrollToCaret (.getScrollingModel editor) ScrollType/MAKE_VISIBLE)))}))
 
