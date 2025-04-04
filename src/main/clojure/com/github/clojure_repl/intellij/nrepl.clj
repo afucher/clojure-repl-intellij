@@ -213,3 +213,6 @@
 (defn evaluating? [^Project project]
   (when-let [client (db/get-in project [:current-nrepl :client])]
     (seq @(:sent-messages* client))))
+
+(defn active-client? [^Project project]
+  (db/get-in project [:current-nrepl :client]))

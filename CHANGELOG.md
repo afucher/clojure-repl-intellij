@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Disable "clear REPL" action when REPL is not connected. #126
 - Bump clj4intellij to 0.8.0
 - Configure project with IntelliJ integration tests (headless)
 
