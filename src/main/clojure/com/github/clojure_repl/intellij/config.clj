@@ -1,7 +1,12 @@
 (ns com.github.clojure-repl.intellij.config
   (:require
    [clojure.edn :as edn]
-   [clojure.java.io :as io]))
+   [clojure.java.io :as io])
+  (:import
+   [com.intellij.ide.plugins PluginManagerCore]
+   [com.intellij.openapi.extensions PluginId]))
+
+(set! *warn-on-reflection* true)
 
 (defonce ^:private cache* (atom {}))
 
@@ -23,3 +28,8 @@
 
 (defn nrepl-debug? []
   (-> (config) :nrepl-debug))
+
+(defn plugin-version* []
+  (.getVersion (PluginManagerCore/getPlugin (PluginId/getId "com.github.clojure-repl"))))
+
+(def plugin-version (memoize plugin-version*))
