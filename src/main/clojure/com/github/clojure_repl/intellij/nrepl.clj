@@ -156,7 +156,10 @@
     response))
 
 (defn clone-session [^Project project]
-  (db/assoc-in! project [:current-nrepl :session-id] (:new-session @(send-msg project {:op "clone"}))))
+  (let [msg {:op "clone"
+             :client-name "clojure-repl-intellij"
+             :client-version (config/plugin-version)}]
+    (db/assoc-in! project [:current-nrepl :session-id] (:new-session @(send-msg project msg)))))
 
 (defn load-file [project ^Editor editor ^VirtualFile virtual-file]
   (let [response @(send-msg project {:op "load-file"

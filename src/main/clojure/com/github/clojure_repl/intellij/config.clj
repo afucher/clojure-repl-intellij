@@ -23,3 +23,10 @@
 
 (defn nrepl-debug? []
   (-> (config) :nrepl-debug))
+
+(defn plugin-version* []
+  (try
+    (edn/read-string (slurp (io/resource "CLOJURE_REPL_INTELLIJ_VERSION")))
+    (catch Exception _ "Unknown")))
+
+(def plugin-version (memoize plugin-version*))

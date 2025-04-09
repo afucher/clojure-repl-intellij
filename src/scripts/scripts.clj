@@ -21,7 +21,8 @@
 (defn ^:private replace-tag [tag]
   (replace-in-file "gradle.properties"
                    version-regex
-                   (format "pluginVersion = %s" tag)))
+                   (format "pluginVersion = %s" tag))
+  (spit "resources/CLOJURE_REPL_INTELLIJ_VERSION" tag))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn tag [& [tag]]
@@ -29,7 +30,7 @@
   (shell "git pull origin HEAD")
   (replace-tag tag)
   (add-changelog-entry tag nil)
-  (shell "git add gradle.properties CHANGELOG.md")
+  (shell "git add gradle.properties CHANGELOG.md resources/CLOJURE_REPL_INTELLIJ_VERSION")
   (shell (format "git commit -m \"Release: %s\"" tag))
   (shell (str "git tag " tag))
   (shell "git push origin HEAD")

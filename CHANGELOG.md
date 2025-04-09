@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add client info to clone op for metrics.
+
 ## 2.5.2
 
 - Disable "clear REPL" action when REPL is not connected. #126
