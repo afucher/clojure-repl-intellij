@@ -59,7 +59,7 @@
   {})
 
 (defn ^:private config-from-classpath* []
-  (io/resource "metrepl.exports/config.edn"))
+  (io/resource "clj-repl-intellij.exports/config.edn"))
 
 (def ^:private config-from-classpath (memoize config-from-classpath*))
 
