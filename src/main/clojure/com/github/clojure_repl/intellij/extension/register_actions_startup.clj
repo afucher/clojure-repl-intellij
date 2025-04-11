@@ -7,6 +7,7 @@
    [com.github.clojure-repl.intellij.action.eval :as a.eval]
    [com.github.clojure-repl.intellij.action.test :as a.test]
    [com.github.clojure-repl.intellij.actions :as actions]
+   [com.github.clojure-repl.intellij.config :as config]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.ericdallo.clj4intellij.action :as action]
    [com.rpl.proxy-plus :refer [proxy+]])
@@ -22,6 +23,7 @@
 (defn -execute
   "Shortcuts: https://github.com/JetBrains/intellij-community/blob/master/platform/platform-resources/src/keymaps/%24default.xml"
   [_this ^Project _project ^CoroutineScope _]
+  (a.eval/register-custom-code-actions (config/eval-code-actions-from-user))
   (action/register-action! :id "ClojureREPL.RunCursorTest"
                            :title "Run test at cursor"
                            :description "Run test at cursor"
@@ -63,13 +65,13 @@
                            :action (proxy+
                                     ["Clear REPL output" "Clear REPL output" AllIcons$Actions/GC]
                                     DumbAwareAction
-                                     (update
-                                       [_ ^AnActionEvent event]
-                                       (let [project (actions/action-event->project event)]
-                                         (.setEnabled (.getPresentation event) (boolean (nrepl/active-client? project)))))
-                                     (actionPerformed
-                                       [_ event]
-                                       (a.eval/clear-repl-output-action event))))
+                                    (update
+                                     [_ ^AnActionEvent event]
+                                     (let [project (actions/action-event->project event)]
+                                       (.setEnabled (.getPresentation event) (boolean (nrepl/active-client? project)))))
+                                    (actionPerformed
+                                     [_ event]
+                                     (a.eval/clear-repl-output-action event))))
 
   (action/register-action! :id "ClojureREPL.SwitchNs"
                            :title "Switch REPL namespace"
@@ -106,13 +108,21 @@
                            :action (proxy+
                                     ["Interrupts session evaluation" "Interrupts session evaluation" AllIcons$Actions/Cancel]
                                     DumbAwareAction
-                                     (update
-                                       [_ ^AnActionEvent event]
-                                       (let [project (actions/action-event->project event)]
-                                         (.setEnabled (.getPresentation event) (boolean (nrepl/evaluating? project)))))
-                                     (actionPerformed
-                                       [_ event]
-                                       (a.eval/interrupt event))))
+                                    (update
+                                     [_ ^AnActionEvent event]
+                                     (let [project (actions/action-event->project event)]
+                                       (.setEnabled (.getPresentation event) (boolean (nrepl/evaluating? project)))))
+                                    (actionPerformed
+                                     [_ event]
+                                     (a.eval/interrupt event))))
+
+  (action/register-action! :id "ClojureREPL.Custom.Bla"
+                           :action (proxy+
+                                    ["Custom action" "Custom action" Icons/CLOJURE_REPL]
+                                    DumbAwareAction
+                                    (actionPerformed
+                                     [_ event]
+                                     (a.eval/custom-action event nil))))
 
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true
@@ -133,4 +143,6 @@
                                      {:type :reference :ref "ClojureREPL.RefreshAll"}
                                      {:type :reference :ref "ClojureREPL.RefreshChanged"}
                                      {:type :reference :ref "ClojureREPL.SwitchNs"}
+                                     {:type :separator}
+                                     {:type :reference :ref "ClojureREPL.Custom.Bla"}
                                      {:type :separator}]))

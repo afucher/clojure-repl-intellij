@@ -1,5 +1,7 @@
 (ns com.github.clojure-repl.intellij.configuration.factory.base
   (:require
+   [com.github.clojure-repl.intellij.action.eval :as a.eval]
+   [com.github.clojure-repl.intellij.config :as config]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
@@ -47,24 +49,24 @@
                                                       :ns (db/get-in project [:current-nrepl :ns])}))}))
   (ui.repl/append-output project loading-text)
   (proxy+ [] ConsoleView
-    (getComponent [_] (db/get-in project [:console :ui]))
-    (getPreferredFocusableComponent [_] (db/get-in project [:console :ui]))
-    (dispose [_])
-    (print [_ _ _])
-    (clear [_])
-    (scrollTo [_ _])
-    (attachToProcess [_ _])
-    (setOutputPaused [_ _])
-    (isOutputPaused [_] false)
-    (hasDeferredOutput [_] false)
-    (performWhenNoDeferredOutput [_ _])
-    (setHelpId [_ _])
-    (addMessageFilter [_ _])
-    (printHyperlink [_ _ _])
-    (getContentSize [_] 0)
-    (canPause [_] false)
-    (createConsoleActions [_] (into-array AnAction (build-console-actions)))
-    (allowHeavyFilters [_])))
+          (getComponent [_] (db/get-in project [:console :ui]))
+          (getPreferredFocusableComponent [_] (db/get-in project [:console :ui]))
+          (dispose [_])
+          (print [_ _ _])
+          (clear [_])
+          (scrollTo [_ _])
+          (attachToProcess [_ _])
+          (setOutputPaused [_ _])
+          (isOutputPaused [_] false)
+          (hasDeferredOutput [_] false)
+          (performWhenNoDeferredOutput [_ _])
+          (setHelpId [_ _])
+          (addMessageFilter [_ _])
+          (printHyperlink [_ _ _])
+          (getContentSize [_] 0)
+          (canPause [_] false)
+          (createConsoleActions [_] (into-array AnAction (build-console-actions)))
+          (allowHeavyFilters [_])))
 
 (defn ^:private on-repl-evaluated [project {:keys [out err]}]
   (when err
@@ -96,7 +98,8 @@
                                (when (:out msg)
                                  (ui.repl/append-output project (:out msg)))))
   (nrepl/clone-session project)
-  (let [description (nrepl/describe project)]
+  (let [description (nrepl/describe project)
+        classpath (nrepl/classpath project)]
     (when (:out-subscribe (:ops description))
       (nrepl/out-subscribe project))
     (db/assoc-in! project [:current-nrepl :ops] (:ops description))
@@ -105,6 +108,9 @@
     (db/assoc-in! project [:current-nrepl :entry-index] -1)
     (db/assoc-in! project [:current-nrepl :ns] "user")
     (db/assoc-in! project [:file->ns] {})
+    (db/assoc-in! project [:classpath] (:classpath classpath))
+
+    (a.eval/register-custom-code-actions (:eval-code-actions (config/from-project project)) project)
     (ui.repl/set-repl-started-initial-text project
                                            (db/get-in project [:console :ui])
                                            (str (initial-repl-text project) extra-initial-text))
