@@ -14,7 +14,7 @@
   (:import
    [com.github.clojure_repl.intellij Icons]
    [com.intellij.icons AllIcons$Actions]
-   [com.intellij.openapi.actionSystem AnActionEvent]
+   [com.intellij.openapi.actionSystem ActionManager AnActionEvent]
    [com.intellij.openapi.project DumbAwareAction Project]
    [kotlinx.coroutines CoroutineScope]))
 
@@ -115,14 +115,20 @@
                                     (actionPerformed
                                      [_ event]
                                      (a.eval/interrupt event))))
-
-  (action/register-action! :id "ClojureREPL.Custom.Bla"
+  ;; TODO: remove or review this action before merge
+  (action/register-action! :id "ClojureREPL.ReloadCustomActions"
                            :action (proxy+
-                                    ["Custom action" "Custom action" Icons/CLOJURE_REPL]
+                                    ["Reload custom actions" "Reload custom actions" AllIcons$Actions/Cancel]
                                     DumbAwareAction
                                     (actionPerformed
                                      [_ event]
-                                     (a.eval/custom-action event nil))))
+                                     (let [action-manager (ActionManager/getInstance)
+                                           custom-actions (.getActionIdList action-manager "ClojureREPL.Custom")
+                                           project (actions/action-event->project event)]
+                                       (doseq [id custom-actions]
+                                         (.unregisterAction action-manager id))
+                                       (a.eval/register-custom-code-actions (config/eval-code-actions-from-user))
+                                       (a.eval/register-custom-code-actions (:eval-code-actions (config/from-project project)) project)))))
 
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true
