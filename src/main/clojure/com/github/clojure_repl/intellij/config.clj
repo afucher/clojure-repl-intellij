@@ -2,7 +2,8 @@
   (:require
    [clojure.edn :as edn]
    [clojure.java.io :as io]
-   [com.github.ericdallo.clj4intellij.logger :as logger])
+   [com.github.ericdallo.clj4intellij.logger :as logger]
+   [clojure.string :as str])
   (:import
    [com.intellij.ide.plugins PluginManagerCore]
    [com.intellij.openapi.extensions PluginId]
@@ -46,28 +47,12 @@
         io-file (some-> file VfsUtilCore/virtualToIoFile)]
     io-file))
 
-
 (defn safe-read-edn-string [raw-string]
   (try
     (->> raw-string
          (edn/read-string {:readers {'re re-pattern}}))
     (catch Exception e
       (logger/error e "Error reading edn string" raw-string))))
-
-(def ^:dynamic *config*
-  "Change this dynamic var to use custom config"
-  {})
-
-(defn ^:private config-from-classpath* []
-  (io/resource "clj-repl-intellij.exports/config.edn"))
-
-(def ^:private config-from-classpath (memoize config-from-classpath*))
-
-(defn ^:private config-from-envvar* []
-  (some-> (System/getenv "CLJ_REPL_INTELLIJ_CONFIG")
-          (safe-read-edn-string)))
-
-(def ^:private config-from-envvar (memoize config-from-envvar*))
 
 (defn ^:private config-from-project* [^Project project]
   (let [config-file (read-file-from-project-root ".clj-repl-intellij/config.edn" project)]
@@ -79,25 +64,12 @@
     (when config-file
       (safe-read-edn-string (slurp config-file)))))
 
-(def ^:private config-from-user (memoize config-from-user*))
-
-(defn all [^Project project]
-  (merge-with into
-              (config-from-user)
-              (config-from-project* project)
-              *config*))
-
+;;global config
 (defn from-user []
-  (merge-with into
-              (config-from-user*)
-              #_(config-from-envvar)
-              *config*))
+  (config-from-user*))
 
 (defn eval-code-actions-from-user []
   (:eval-code-actions (from-user)))
 
 (defn from-project [^Project project]
-  (merge-with into
-              (config-from-project* project)
-              #_(config-from-classpath)
-              *config*))
+  (config-from-project* project))

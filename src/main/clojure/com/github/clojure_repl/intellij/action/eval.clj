@@ -1,5 +1,6 @@
 (ns com.github.clojure-repl.intellij.action.eval
   (:require
+   [camel-snake-kebab.core :as csk]
    [clojure.string :as string]
    [com.github.clojure-repl.intellij.actions :as actions]
    [com.github.clojure-repl.intellij.db :as db]
@@ -83,20 +84,21 @@
 (defn custom-action [^AnActionEvent event code-snippet]
   (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
         selection-model ^SelectionModel (.getSelectionModel editor)
-        selection (or (.getSelectedText selection-model)
-                      "")
+        selection (some-> (.getSelectedText selection-model) (string/replace "\"" "\\\""))
         current-file-ns (some-> (editor/ns-form editor) parser/find-namespace z/string parser/remove-metadata)
         current-var (current-var editor)
-        fqn-current-var (str current-file-ns "/" current-var)]
-    (logger/info "Custom action triggered")
-    (logger/info selection " " current-file-ns " " fqn-current-var)
+        fqn-current-var (if current-var
+                          (str "" current-file-ns "/" current-var)
+                          "nil")]
     (eval-action
      :event event
      :loading-msg "REPL: Evaluating"
      :eval-fn (fn [^Editor editor]
-                (let [code (-> code-snippet
-                               (string/replace "~current-var" fqn-current-var)
-                               (string/replace "~selection" selection))]
+                (let [code (str "(let [ctx {:current-var (var " fqn-current-var ") :selection \"" selection "\" }]"
+                                code-snippet ")")]
+                  (app-manager/invoke-later!
+                   {:invoke-fn
+                    (fn [] (send-result-to-repl event (str code " " selection " " current-file-ns " " fqn-current-var) true))})
                   (nrepl/eval-from-editor {:editor editor :code code})))
      :success-msg-fn (fn [response]
                        (string/join "\n" (:value response)))
@@ -104,33 +106,31 @@
                         (send-result-to-repl event (string/join "\n" (:value response)) true))
      :inlay-hint-feedback? true)))
 
-
 (defn register-custom-code-actions
   ([eval-code-actions]
    (register-custom-code-actions eval-code-actions nil))
   ([eval-code-actions ^Project project]
    (logger/info "Registering custom actions..." eval-code-actions project)
-   (->> eval-code-actions
-        (mapv (fn [action]
-                (logger/info "Registering custom action..." action)
-                (let [id (str "ClojureREPL.Custom." (:name action))
-                      title ^String (:name action)
-                      description ^String (:name action)
-                      icon ^Icon Icons/CLOJURE_REPL]
-                  (action/register-action!
-                   :id id
-                   :action
-                   (proxy+
-                    [title description icon]
-                    DumbAwareAction
-                    (update
-                     [_ ^AnActionEvent event]
-                     (when project
-                       (let [action-project (actions/action-event->project event)]
-                         (.setEnabled (.getPresentation event) (boolean (= project action-project))))))
-                    (actionPerformed
-                     [_ event]
-                     (custom-action event (:code action)))))))))))
+   (doseq [action eval-code-actions]
+     (logger/info "Registering custom action..." action)
+     (let [id (str "ClojureREPL.Custom." (some-> project .getName csk/->PascalCase (str ".")) (csk/->PascalCase (:name action)))
+           title ^String (:name action)
+           description ^String (:name action)
+           icon ^Icon Icons/CLOJURE_REPL]
+       (action/register-action!
+        :id id
+        :action
+        (proxy+
+         [title description icon]
+         DumbAwareAction
+         (update
+          [_ ^AnActionEvent event]
+          (when project
+            (let [action-project (actions/action-event->project event)]
+              (.setEnabled (.getPresentation event) (boolean (= project action-project))))))
+         (actionPerformed
+          [_ event]
+          (custom-action event (:code action)))))))))
 
 
 (defn eval-last-sexpr-action [^AnActionEvent event]

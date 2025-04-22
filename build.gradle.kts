@@ -33,6 +33,7 @@ dependencies {
     implementation ("seesaw:seesaw:1.5.0")
     implementation ("rewrite-clj:rewrite-clj:1.1.47")
     implementation ("nrepl:nrepl:1.3.1")
+    implementation ("camel-snake-kebab:camel-snake-kebab:0.4.3")
 
     testImplementation("junit:junit:latest.release")
     testImplementation("org.junit.platform:junit-platform-launcher:latest.release")
