@@ -94,11 +94,13 @@
      :event event
      :loading-msg "REPL: Evaluating"
      :eval-fn (fn [^Editor editor]
-                (let [code (str "(let [ctx {:current-var (var " fqn-current-var ") :selection \"" selection "\" }]"
+                (let [code (str "(let [ctx {:current-var (var " fqn-current-var ") 
+                                            :selection " selection "
+                                            :current-file-ns \"" current-file-ns "\"}]"
                                 code-snippet ")")]
                   (app-manager/invoke-later!
                    {:invoke-fn
-                    (fn [] (send-result-to-repl event (str code " " selection " " current-file-ns " " fqn-current-var) true))})
+                    (fn [] (send-result-to-repl event (str "Custom action code: " code) true))})
                   (nrepl/eval-from-editor {:editor editor :code code})))
      :success-msg-fn (fn [response]
                        (string/join "\n" (:value response)))

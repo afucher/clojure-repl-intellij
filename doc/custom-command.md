@@ -10,7 +10,7 @@ You can write custom actions to evaluate code with some context variables direct
 The configuration can be defined in some levels/places:
  - `{USER_HOME}/.config/clj-repl-intellij/config.edn`
  - `{PROJECT_ROOT}/.clj-repl-intellij/config.edn`
- - `CLJ_REPL_INTELLIJ_CONFIG` (env var - coming soon)
+
 
 `(comming soon)`
 For libraries you can export some default commands defining a `clj-repl-intellij.exports/config.edn`
@@ -20,5 +20,5 @@ For libraries you can export some default commands defining a `clj-repl-intellij
 ```
 {:eval-code-actions
  [{:name "Test vars"
-   :code "(clojure.test/test-vars [#'~current-var])" }]}
+   :code (clojure.test/run-test-var (:current-var ctx))}
 ```
