@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Add client info to clone op for metrics.
+- Add the toggle soft wrap action on the REPL window.
 
 ## 2.5.2
 
