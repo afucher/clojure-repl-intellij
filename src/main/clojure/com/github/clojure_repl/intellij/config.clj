@@ -56,12 +56,12 @@
 
 (defn ^:private config-from-project* [^Project project]
   (let [config-file (read-file-from-project-root ".clj-repl-intellij/config.edn" project)]
-    (when config-file
+    (when (.exists config-file)
       (safe-read-edn-string (slurp config-file)))))
 
 (defn ^:private config-from-user* []
   (let [config-file (io/file (str (System/getProperty "user.home") "/.config/clj-repl-intellij/config.edn"))]
-    (when config-file
+    (when (.exists config-file)
       (safe-read-edn-string (slurp config-file)))))
 
 ;;global config
