@@ -7,13 +7,14 @@
    [com.github.clojure-repl.intellij.action.eval :as a.eval]
    [com.github.clojure-repl.intellij.action.test :as a.test]
    [com.github.clojure-repl.intellij.actions :as actions]
+   [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.ericdallo.clj4intellij.action :as action]
    [com.rpl.proxy-plus :refer [proxy+]])
   (:import
    [com.github.clojure_repl.intellij Icons]
    [com.intellij.icons AllIcons$Actions]
-   [com.intellij.openapi.actionSystem AnActionEvent]
+   [com.intellij.openapi.actionSystem AnActionEvent Toggleable]
    [com.intellij.openapi.project DumbAwareAction Project]
    [kotlinx.coroutines CoroutineScope]))
 
@@ -113,6 +114,20 @@
                                      (actionPerformed
                                        [_ event]
                                        (a.eval/interrupt event))))
+  (action/register-action! :id "ClojureREPL.WrapContent"
+                           :action (proxy+
+                                    ["Toggle soft wrap" "Toggle soft wrap in REPL" AllIcons$Actions/ToggleSoftWrap]
+                                    DumbAwareAction
+                                     (update
+                                       [_ ^AnActionEvent event]
+                                       (let [project (actions/action-event->project event)
+                                             presentation (.getPresentation event)
+                                             wrap-enabled (db/get-in project [:console :state :wrap-content] false)]
+                                         (.setEnabled presentation (boolean (nrepl/active-client? project)))
+                                         (Toggleable/setSelected presentation wrap-enabled)))
+                                     (actionPerformed
+                                       [_ event]
+                                       (a.eval/wrap-content-action event))))
 
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true

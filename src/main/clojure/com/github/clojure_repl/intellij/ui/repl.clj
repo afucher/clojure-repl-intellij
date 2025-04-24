@@ -131,6 +131,15 @@
   (clear-repl project)
   true)
 
+(defn wrap-content [project]
+  (let [console (db/get-in project [:console :ui])
+        repl-content ^EditorTextField (seesaw/select console [:#repl-content])
+        current-wrap-state (db/get-in project [:console :state :wrap-content] false)
+        new-wrap-state (not current-wrap-state)]
+    (when-let [editor ^EditorEx (.getEditor repl-content)]
+      (-> editor .getSettings (.setUseSoftWraps new-wrap-state))
+      (db/update-in! project [:console :state :wrap-content] not))))
+
 (defn ^:private on-repl-backspace [project ^KeyEvent event]
   (let [ns (db/get-in project [:current-nrepl :ns])
         repl-content ^EditorTextField (seesaw/select (db/get-in project [:console :ui]) [:#repl-content])

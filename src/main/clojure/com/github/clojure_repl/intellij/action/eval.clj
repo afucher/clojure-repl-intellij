@@ -125,6 +125,11 @@
       actions/action-event->project
       ui.repl/history-down))
 
+(defn wrap-content-action [^AnActionEvent event]
+  (-> event
+      actions/action-event->project
+      ui.repl/wrap-content))
+
 (defn switch-ns-action [^AnActionEvent event]
   (eval-action
    :event event
