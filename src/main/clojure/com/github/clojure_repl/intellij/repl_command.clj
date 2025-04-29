@@ -17,8 +17,8 @@
 
 (def ^:private middleware-versions
   ;; TODO make version configurable in intellij settings
-  {"nrepl/nrepl" "1.0.0"
-   "cider/cider-nrepl" "0.45.0"})
+  {"nrepl/nrepl" "1.3.1"
+   "cider/cider-nrepl" "0.55.7"})
 
 (defn ^:private psh-cmd
   "Return the command vector that uses the PowerShell executable PSH to
