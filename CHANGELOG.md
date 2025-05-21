@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 2.5.3
+
 - Add client info to clone op for metrics.
 - Bump nrepl + cider-nrepl version on local repl.
 
