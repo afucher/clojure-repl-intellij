@@ -1,6 +1,7 @@
 (ns com.github.clojure-repl.intellij.action.eval
   (:require
    [camel-snake-kebab.core :as csk]
+   [clojure.set :as set]
    [clojure.string :as string]
    [com.github.clojure-repl.intellij.actions :as actions]
    [com.github.clojure-repl.intellij.db :as db]
@@ -81,22 +82,30 @@
         current-var (some-> (parser/find-var-at-pos root-zloc (inc row) col) z/string)]
     current-var))
 
+(def available-vars #{:current-var :current-file-ns :selection})
+
 (defn custom-action [^AnActionEvent event code-snippet]
   (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
+        required-vars (set/select (fn [v] (string/includes? code-snippet (str v))) available-vars)
         selection-model ^SelectionModel (.getSelectionModel editor)
-        selection (some-> (.getSelectedText selection-model) (string/replace "\"" "\\\""))
+        selection (.getSelectedText selection-model) #_(some->  (string/replace "\"" "\\\""))
         current-file-ns (some-> (editor/ns-form editor) parser/find-namespace z/string parser/remove-metadata)
         current-var (current-var editor)
         fqn-current-var (if current-var
-                          (str "" current-file-ns "/" current-var)
+                          (str "" (or current-file-ns "user") "/" current-var)
                           "nil")]
     (eval-action
      :event event
      :loading-msg "REPL: Evaluating"
      :eval-fn (fn [^Editor editor]
-                (let [code (str "(let [ctx {:current-var (var " fqn-current-var ") 
-                                            :selection " selection "
-                                            :current-file-ns \"" current-file-ns "\"}]"
+                (let [code (str "(let [ctx {"
+                                (when (:current-var required-vars)
+                                  (str ":current-var (var " fqn-current-var ") "))
+                                (when (:selection required-vars)
+                                  (str ":selection " selection " "))
+                                (when (:current-file-ns required-vars)
+                                  (str ":current-file-ns \"" current-file-ns "\""))
+                                "}]"
                                 code-snippet ")")]
                   (app-manager/invoke-later!
                    {:invoke-fn
