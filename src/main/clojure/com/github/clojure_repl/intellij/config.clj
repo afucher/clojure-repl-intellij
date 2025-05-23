@@ -2,13 +2,13 @@
   (:require
    [clojure.edn :as edn]
    [clojure.java.io :as io]
-   [com.github.ericdallo.clj4intellij.logger :as logger]
-   [clojure.string :as str])
+   [com.github.ericdallo.clj4intellij.logger :as logger])
   (:import
    [com.intellij.ide.plugins PluginManagerCore]
    [com.intellij.openapi.extensions PluginId]
    [com.intellij.openapi.project Project]
-   [com.intellij.openapi.vfs VfsUtilCore VirtualFile]))
+   [com.intellij.openapi.vfs VfsUtilCore VirtualFile]
+   [java.io File]))
 
 (set! *warn-on-reflection* true)
 
@@ -55,7 +55,7 @@
       (logger/error e "Error reading edn string" raw-string))))
 
 (defn ^:private config-from-project* [^Project project]
-  (let [config-file (read-file-from-project-root ".clj-repl-intellij/config.edn" project)]
+  (let [config-file ^File (read-file-from-project-root ".clj-repl-intellij/config.edn" project)]
     (when (.exists config-file)
       (safe-read-edn-string (slurp config-file)))))
 

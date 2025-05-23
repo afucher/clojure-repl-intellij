@@ -88,7 +88,7 @@
   (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
         required-vars (set/select (fn [v] (string/includes? code-snippet (str v))) available-vars)
         selection-model ^SelectionModel (.getSelectionModel editor)
-        selection (.getSelectedText selection-model) #_(some->  (string/replace "\"" "\\\""))
+        selection (.getSelectedText selection-model)
         current-file-ns (some-> (editor/ns-form editor) parser/find-namespace z/string parser/remove-metadata)
         current-var (current-var editor)
         fqn-current-var (if current-var
