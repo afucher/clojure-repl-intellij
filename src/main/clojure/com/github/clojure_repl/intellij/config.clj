@@ -2,7 +2,7 @@
   (:require
    [clojure.edn :as edn]
    [clojure.java.io :as io]
-   [com.github.ericdallo.clj4intellij.logger :as logger])
+   [rewrite-clj.zip :as z])
   (:import
    [com.intellij.ide.plugins PluginManagerCore]
    [com.intellij.openapi.extensions PluginId]
@@ -48,14 +48,19 @@
     io-file))
 
 (defn safe-read-edn-string [raw-string]
-  (try
-    (->> raw-string
-         (edn/read-string {:readers {'re re-pattern}}))
-    (catch Exception e
-      (logger/error e "Error reading edn string" raw-string))))
+  (-> raw-string
+      z/of-string
+      (z/get :eval-code-actions)
+      z/down
+      (->> (iterate z/right)
+           (take-while (complement z/end?))
+           (map (fn [a] {:name (-> a (z/get :name) z/sexpr)
+                         :code (-> a (z/get :code) z/string)}))
+           doall)))
+
 
 (defn ^:private config-from-project* [^Project project]
-  (let [config-file ^File (read-file-from-project-root ".clj-repl-intellij/config.edn" project)]
+  (when-let [config-file ^File (read-file-from-project-root ".clj-repl-intellij/config.edn" project)]
     (when (.exists config-file)
       (safe-read-edn-string (slurp config-file)))))
 
@@ -69,7 +74,7 @@
   (config-from-user*))
 
 (defn eval-code-actions-from-user []
-  (:eval-code-actions (from-user)))
+  (from-user))
 
 (defn from-project [^Project project]
   (config-from-project* project))
