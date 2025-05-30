@@ -47,7 +47,12 @@
         io-file (some-> file VfsUtilCore/virtualToIoFile)]
     io-file))
 
-(defn safe-read-edn-string [raw-string]
+(defn safe-read-edn-string
+  "Uses rewrite-clj to read the EDN from a raw string. This function is necessary because the EDN contains source code
+   with reader macros and variables prefixed with $, which are intended for code replacement and evaluation. These elements
+   make the EDN invalid for standard reading. By using rewrite-clj, we can parse the user's EDN, extract the code snippets,
+   and transform them into strings for further processing."
+  [raw-string]
   (-> raw-string
       z/of-string
       (z/get :eval-code-actions)

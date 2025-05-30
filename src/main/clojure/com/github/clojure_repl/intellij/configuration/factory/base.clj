@@ -1,6 +1,6 @@
 (ns com.github.clojure-repl.intellij.configuration.factory.base
   (:require
-   [com.github.clojure-repl.intellij.action.eval :as a.eval]
+   [com.github.clojure-repl.intellij.action.custom-code-actions :as custom-code-actions]
    [com.github.clojure-repl.intellij.config :as config]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
@@ -110,7 +110,7 @@
     (db/assoc-in! project [:file->ns] {})
     (db/assoc-in! project [:classpath] (:classpath classpath))
 
-    (a.eval/register-custom-code-actions (:eval-code-actions (config/from-project project)) project)
+    (custom-code-actions/register-custom-code-actions (:eval-code-actions (config/from-project project)) project)
     (ui.repl/set-repl-started-initial-text project
                                            (db/get-in project [:console :ui])
                                            (str (initial-repl-text project) extra-initial-text))

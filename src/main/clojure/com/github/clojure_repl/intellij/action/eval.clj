@@ -1,31 +1,22 @@
 (ns com.github.clojure-repl.intellij.action.eval
   (:require
-   [camel-snake-kebab.core :as csk]
-   [clojure.set :as set]
    [clojure.string :as string]
    [com.github.clojure-repl.intellij.actions :as actions]
    [com.github.clojure-repl.intellij.db :as db]
-   [com.github.clojure-repl.intellij.editor :as editor]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.parser :as parser]
    [com.github.clojure-repl.intellij.ui.hint :as ui.hint]
    [com.github.clojure-repl.intellij.ui.inlay-hint :as ui.inlay-hint]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
-   [com.github.ericdallo.clj4intellij.action :as action]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
-   [com.github.ericdallo.clj4intellij.logger :as logger]
    [com.github.ericdallo.clj4intellij.tasks :as tasks]
    [com.github.ericdallo.clj4intellij.util :as util]
-   [com.rpl.proxy-plus :refer [proxy+]]
    [rewrite-clj.zip :as z])
   (:import
-   [com.github.clojure_repl.intellij Icons]
    [com.intellij.openapi.actionSystem CommonDataKeys]
    [com.intellij.openapi.actionSystem AnActionEvent]
-   [com.intellij.openapi.editor Editor SelectionModel]
-   [com.intellij.openapi.project DumbAwareAction Project]
-   [com.intellij.openapi.vfs VirtualFile]
-   [javax.swing Icon]))
+   [com.intellij.openapi.editor Editor]
+   [com.intellij.openapi.vfs VirtualFile]))
 
 (set! *warn-on-reflection* true)
 
@@ -75,70 +66,6 @@
        :post-success-fn (fn [_response]
                           (send-result-to-repl event (str ";; " msg) false))))))
 
-(defn ^:private current-var [^Editor editor]
-  (let [[row col] (util/editor->cursor-position editor)
-        text (.getText (.getDocument editor))
-        root-zloc (z/of-string text)
-        current-var (some-> (parser/find-var-at-pos root-zloc (inc row) col) z/string)]
-    current-var))
-
-(def available-vars #{:current-var :current-file-ns :selection})
-
-(defn custom-action [^AnActionEvent event code-snippet]
-  (let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
-        required-vars (set/select (fn [v] (string/includes? code-snippet (str v))) available-vars)
-        selection-model ^SelectionModel (.getSelectionModel editor)
-        selection (.getSelectedText selection-model)
-        current-file-ns (some-> (editor/ns-form editor) parser/find-namespace z/string parser/remove-metadata)
-        current-var (current-var editor)
-        fqn-current-var (if current-var
-                          (str "" (or current-file-ns "user") "/" current-var)
-                          "nil")]
-    (eval-action
-     :event event
-     :loading-msg "REPL: Evaluating"
-     :eval-fn (fn [^Editor editor]
-                (let [code (-> (str code-snippet)
-                               (string/replace #"~selection" selection)
-                               (string/replace #"~current-var" fqn-current-var)
-                               (string/replace #"~current-file-ns" current-file-ns))]
-                  (app-manager/invoke-later!
-                   {:invoke-fn
-                    (fn [] (send-result-to-repl event (str "Custom action code: " code) true))})
-                  (nrepl/eval-from-editor {:editor editor :code code})))
-     :success-msg-fn (fn [response]
-                       (string/join "\n" (:value response)))
-     :post-success-fn (fn [response]
-                        (send-result-to-repl event (string/join "\n" (:value response)) true))
-     :inlay-hint-feedback? true)))
-
-(defn register-custom-code-actions
-  ([eval-code-actions]
-   (register-custom-code-actions eval-code-actions nil))
-  ([eval-code-actions ^Project project]
-   (logger/info "Registering custom actions..." eval-code-actions project)
-   (doseq [action eval-code-actions]
-     (logger/info "Registering custom action..." action)
-     (let [id (str "ClojureREPL.Custom." (some-> project .getName csk/->PascalCase (str ".")) (csk/->PascalCase (:name action)))
-           title ^String (:name action)
-           description ^String (:name action)
-           icon ^Icon Icons/CLOJURE_REPL]
-       (action/register-action!
-        :id id
-        :action
-        (proxy+
-         [title description icon]
-         DumbAwareAction
-         (update
-          [_ ^AnActionEvent event]
-          (when project
-            (let [action-project (actions/action-event->project event)]
-              (.setEnabled (.getPresentation event) (boolean (= project action-project))))))
-         (actionPerformed
-          [_ event]
-          (custom-action event (:code action)))))))))
-
-
 (defn eval-last-sexpr-action [^AnActionEvent event]
   (when-let [editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)]
     (let [[row col] (util/editor->cursor-position editor)]
@@ -183,6 +110,22 @@
        :post-success-fn (fn [response]
                           (send-result-to-repl event (string/join "\n" (:value response)) true))
        :inlay-hint-feedback? true))))
+
+(defn eval-custom-code-action [^AnActionEvent event action-name code]
+  (eval-action
+   :event event
+   :loading-msg (str "REPL: Running " action-name)
+   :eval-fn (fn [^Editor editor]
+              (app-manager/invoke-later!
+               {:invoke-fn
+                (fn [] (send-result-to-repl event (str "Custom action code: " code) true))})
+              (nrepl/eval-from-editor {:editor editor :code code}))
+   :success-msg-fn (fn [response]
+                     (string/join "\n" (:value response)))
+   :post-success-fn (fn [response]
+                      (send-result-to-repl event (string/join "\n" (:value response)) true))
+   :inlay-hint-feedback? true))
+
 
 (defn clear-repl-output-action [^AnActionEvent event]
   (let [project (actions/action-event->project event)]
