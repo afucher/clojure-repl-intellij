@@ -4,6 +4,7 @@
    :implements [com.intellij.openapi.startup.ProjectActivity
                 com.intellij.openapi.project.DumbAware])
   (:require
+   [com.github.clojure-repl.intellij.action.custom-code-actions :as custom-code-actions]
    [com.github.clojure-repl.intellij.action.eval :as a.eval]
    [com.github.clojure-repl.intellij.action.test :as a.test]
    [com.github.clojure-repl.intellij.actions :as actions]
@@ -14,7 +15,7 @@
   (:import
    [com.github.clojure_repl.intellij Icons]
    [com.intellij.icons AllIcons$Actions]
-   [com.intellij.openapi.actionSystem ActionManager AnActionEvent]
+   [com.intellij.openapi.actionSystem ActionManager AnActionEvent DefaultActionGroup]
    [com.intellij.openapi.project DumbAwareAction Project]
    [kotlinx.coroutines CoroutineScope]))
 
@@ -23,7 +24,6 @@
 (defn -execute
   "Shortcuts: https://github.com/JetBrains/intellij-community/blob/master/platform/platform-resources/src/keymaps/%24default.xml"
   [_this ^Project _project ^CoroutineScope _]
-  (a.eval/register-custom-code-actions (config/eval-code-actions-from-user))
   (action/register-action! :id "ClojureREPL.RunCursorTest"
                            :title "Run test at cursor"
                            :description "Run test at cursor"
@@ -126,9 +126,12 @@
                                            custom-actions (.getActionIdList action-manager "ClojureREPL.Custom")
                                            project (actions/action-event->project event)]
                                        (doseq [id custom-actions]
-                                         (.unregisterAction action-manager id))
-                                       (a.eval/register-custom-code-actions (config/eval-code-actions-from-user))
-                                       (a.eval/register-custom-code-actions (:eval-code-actions (config/from-project project)) project)))))
+                                         (when (not= id custom-code-actions/group-id)
+                                           (.unregisterAction action-manager id)))
+                                       (when-let [group (.getAction action-manager custom-code-actions/group-id)]
+                                         (.removeAll ^DefaultActionGroup group))
+                                       (custom-code-actions/register-custom-code-actions (config/eval-code-actions-from-user))
+                                       (custom-code-actions/register-custom-code-actions (:eval-code-actions (config/from-project project)) project)))))
 
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true
@@ -149,6 +152,11 @@
                                      {:type :reference :ref "ClojureREPL.RefreshAll"}
                                      {:type :reference :ref "ClojureREPL.RefreshChanged"}
                                      {:type :reference :ref "ClojureREPL.SwitchNs"}
-                                     {:type :separator}
-                                     {:type :reference :ref "ClojureREPL.Custom.Bla"}
-                                     {:type :separator}]))
+                                     {:type :separator}])
+  (action/register-group! :id custom-code-actions/group-id
+                          :popup true
+                          :text "Custom actions"
+                          :icon Icons/CLOJURE_REPL
+                          :children [{:type :add-to-group :group-id "ClojureREPL.ReplActions" :anchor :last}])
+  (custom-code-actions/register-custom-code-actions (config/eval-code-actions-from-user)))
+
