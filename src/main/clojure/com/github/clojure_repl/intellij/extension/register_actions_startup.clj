@@ -131,7 +131,7 @@
                                        (when-let [group (.getAction action-manager custom-code-actions/group-id)]
                                          (.removeAll ^DefaultActionGroup group))
                                        (custom-code-actions/register-custom-code-actions (config/eval-code-actions-from-user))
-                                       (custom-code-actions/register-custom-code-actions (:eval-code-actions (config/from-project project)) project)))))
+                                       (custom-code-actions/register-custom-code-actions (config/from-project project) project)))))
 
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true

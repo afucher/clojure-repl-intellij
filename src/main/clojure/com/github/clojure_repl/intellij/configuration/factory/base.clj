@@ -89,6 +89,7 @@
   (db/assoc-in! project [:console :process-handler] nil)
   (db/assoc-in! project [:console :ui] nil)
   (db/assoc-in! project [:current-nrepl] nil)
+  (db/assoc-in! project [:classpath] [])
   (db/update-in! project [:on-repl-evaluated-fns] (fn [fns] (remove #(contains? #{on-repl-evaluated trigger-ui-update} %) fns))))
 
 (defn repl-started [project extra-initial-text]
@@ -110,7 +111,7 @@
     (db/assoc-in! project [:file->ns] {})
     (db/assoc-in! project [:classpath] (:classpath classpath))
 
-    (custom-code-actions/register-custom-code-actions (:eval-code-actions (config/from-project project)) project)
+    (custom-code-actions/register-custom-code-actions (config/from-project project) project)
     (ui.repl/set-repl-started-initial-text project
                                            (db/get-in project [:console :ui])
                                            (str (initial-repl-text project) extra-initial-text))

@@ -2,12 +2,14 @@
   (:require
    [clojure.edn :as edn]
    [clojure.java.io :as io]
+   [com.github.clojure-repl.intellij.db :as db]
+   [com.github.ericdallo.clj4intellij.logger :as logger]
    [rewrite-clj.zip :as z])
   (:import
    [com.intellij.ide.plugins PluginManagerCore]
    [com.intellij.openapi.extensions PluginId]
    [com.intellij.openapi.project Project]
-   [com.intellij.openapi.vfs VfsUtilCore VirtualFile]
+   [com.intellij.openapi.vfs VfsUtil VfsUtilCore VirtualFile]
    [java.io File]))
 
 (set! *warn-on-reflection* true)
@@ -41,28 +43,54 @@
 
 ;; USER CONFIGS - maybe create a namespace for this
 
-(defn read-file-from-project-root [relative-path ^Project project]
-  (let [^VirtualFile base-dir (.getBaseDir project) ; raiz do projeto
-        ^VirtualFile file (.findFileByRelativePath base-dir relative-path)
-        io-file (some-> file VfsUtilCore/virtualToIoFile)]
-    io-file))
-
 (defn safe-read-edn-string
   "Uses rewrite-clj to read the EDN from a raw string. This function is necessary because the EDN contains source code
    with reader macros and variables prefixed with $, which are intended for code replacement and evaluation. These elements
    make the EDN invalid for standard reading. By using rewrite-clj, we can parse the user's EDN, extract the code snippets,
    and transform them into strings for further processing."
   [raw-string]
-  (-> raw-string
-      z/of-string
-      (z/get :eval-code-actions)
-      z/down
-      (->> (iterate z/right)
-           (take-while (complement z/end?))
-           (map (fn [a] {:name (-> a (z/get :name) z/sexpr)
-                         :code (-> a (z/get :code) z/string)}))
-           doall)))
+  (try
+    (-> raw-string
+        z/of-string
+        (z/get :eval-code-actions)
+        z/down
+        (->> (iterate z/right)
+             (take-while (complement z/end?))
+             (map (fn [a] {:name (-> a (z/get :name) z/sexpr)
+                           :code (-> a (z/get :code) z/string)}))
+             doall))
+    (catch Throwable e
+      (logger/error "Error parsing EDN:" e)
+      [])))
 
+(defn read-file-from-project-root [relative-path ^Project project]
+  (let [^VirtualFile base-dir (.getBaseDir project) ; raiz do projeto
+        ^VirtualFile file (.findFileByRelativePath base-dir relative-path)
+        io-file (some-> file VfsUtilCore/virtualToIoFile)]
+    io-file))
+
+(defn config-from-classpath*
+  "Reads all config.edn files from JARs in the project's classpath that are under clj-repl-intellij.exports directory.
+   Returns a sequence of parsed config maps."
+  [^Project project]
+  (let [classpath (db/get-in project [:classpath])
+        jar-paths (filter #(.endsWith % ".jar") classpath)]
+    (->> jar-paths
+         (mapcat (fn [jar-path]
+                   (try
+                     (let [jar-file (java.util.jar.JarFile. jar-path)
+                           entries (enumeration-seq (.entries jar-file))
+                           config-paths (filter #(and (.startsWith (.getName %) "clj-repl-intellij.exports/")
+                                                      (= "config.edn" (.getName (io/file (.getName %)))))
+                                                entries)]
+                       (mapv (fn [entry]
+                               (with-open [stream (.getInputStream jar-file entry)]
+                                 (safe-read-edn-string (slurp stream))))
+                             config-paths))
+                     (catch Throwable e
+                       (logger/error (str "Error reading config from JAR: " jar-path) e)
+                       []))))
+         (remove empty?))))
 
 (defn ^:private config-from-project* [^Project project]
   (when-let [config-file ^File (read-file-from-project-root ".clj-repl-intellij/config.edn" project)]
