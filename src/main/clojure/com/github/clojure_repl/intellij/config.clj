@@ -9,8 +9,9 @@
    [com.intellij.ide.plugins PluginManagerCore]
    [com.intellij.openapi.extensions PluginId]
    [com.intellij.openapi.project Project]
-   [com.intellij.openapi.vfs VfsUtil VfsUtilCore VirtualFile]
-   [java.io File]))
+   [com.intellij.openapi.vfs VfsUtilCore VirtualFile]
+   [java.io File]
+   [java.util.jar JarEntry]))
 
 (set! *warn-on-reflection* true)
 
@@ -69,27 +70,30 @@
         io-file (some-> file VfsUtilCore/virtualToIoFile)]
     io-file))
 
+(defn ^:private read-configs-from-jar [^String jar-path]
+  (try
+    (with-open [jar-file (java.util.jar.JarFile. jar-path)]
+      (let [entries (enumeration-seq (.entries jar-file))
+            config-paths (filter #(and (.startsWith (.getName ^JarEntry %) "clj-repl-intellij.exports/")
+                                       (= "config.edn" (.getName (io/file (.getName ^JarEntry %)))))
+                                 entries)]
+        (mapv (fn [entry]
+                (with-open [stream (.getInputStream jar-file entry)]
+                  (safe-read-edn-string (slurp stream))))
+              config-paths)))
+    (catch Throwable e
+      (logger/error (str "Error reading config from JAR: " jar-path) e)
+      [])))
+
 (defn config-from-classpath*
   "Reads all config.edn files from JARs in the project's classpath that are under clj-repl-intellij.exports directory.
    Returns a sequence of parsed config maps."
   [^Project project]
   (let [classpath (db/get-in project [:classpath])
-        jar-paths (filter #(.endsWith % ".jar") classpath)]
+        jar-paths (filter #(.endsWith ^String % ".jar") classpath)]
     (->> jar-paths
-         (mapcat (fn [jar-path]
-                   (try
-                     (let [jar-file (java.util.jar.JarFile. jar-path)
-                           entries (enumeration-seq (.entries jar-file))
-                           config-paths (filter #(and (.startsWith (.getName %) "clj-repl-intellij.exports/")
-                                                      (= "config.edn" (.getName (io/file (.getName %)))))
-                                                entries)]
-                       (mapv (fn [entry]
-                               (with-open [stream (.getInputStream jar-file entry)]
-                                 (safe-read-edn-string (slurp stream))))
-                             config-paths))
-                     (catch Throwable e
-                       (logger/error (str "Error reading config from JAR: " jar-path) e)
-                       []))))
+         (mapcat read-configs-from-jar)
+         flatten
          (remove empty?))))
 
 (defn ^:private config-from-project* [^Project project]
@@ -110,4 +114,11 @@
   (from-user))
 
 (defn from-project [^Project project]
-  (config-from-project* project))
+  (concat
+   (config-from-project* project)
+   (config-from-classpath* project)))
+
+
+(comment
+  (-> (first (db/all-projects))
+      from-project))

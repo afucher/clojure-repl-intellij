@@ -5,6 +5,7 @@
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
+   [com.github.ericdallo.clj4intellij.logger :as logger]
    [com.rpl.proxy-plus :refer [proxy+]])
   (:import
    [com.intellij.execution.ui ConsoleView]
@@ -111,7 +112,12 @@
     (db/assoc-in! project [:file->ns] {})
     (db/assoc-in! project [:classpath] (:classpath classpath))
 
-    (custom-code-actions/register-custom-code-actions (config/from-project project) project)
+    (future
+      (try
+        (custom-code-actions/register-custom-code-actions (config/from-project project) project)
+        (catch Throwable e
+          (logger/error "Error registering custom code actions:" e))))
+
     (ui.repl/set-repl-started-initial-text project
                                            (db/get-in project [:console :ui])
                                            (str (initial-repl-text project) extra-initial-text))
