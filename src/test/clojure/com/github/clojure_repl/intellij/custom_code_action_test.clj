@@ -2,50 +2,28 @@
   (:require
    [clojure.java.io :as io]
    [clojure.string :as str]
-   [clojure.test :refer [deftest is testing]]
-   [com.github.clojure-repl.intellij.action.custom-code-actions :as custom-code-actions]
-   [com.github.clojure-repl.intellij.config :refer [read-file-from-project-root]]
-   [com.github.clojure-repl.intellij.config :as config]
+   [clojure.test :refer [deftest is testing use-fixtures]]
    [com.github.clojure-repl.intellij.configuration.factory.local :as config.factory.local]
-   [com.github.clojure-repl.intellij.db :as db]
+   [com.github.clojure-repl.intellij.utils :refer [repl-content
+                                                   stop-all-configurations
+                                                   wait-console-ui-creation]]
    [com.github.ericdallo.clj4intellij.app-manager :as app-manager]
-   [com.github.ericdallo.clj4intellij.test :as clj4intellij.test]
-   [seesaw.core :as seesaw])
+   [com.github.ericdallo.clj4intellij.test :as clj4intellij.test])
   (:import
    [com.github.clojure_repl.intellij.configuration ReplRunConfigurationType]
    [com.intellij.execution ProgramRunnerUtil RunManager]
    [com.intellij.execution.executors DefaultRunExecutor]
    [com.intellij.openapi.actionSystem ActionManager]
-   [com.intellij.openapi.project ProjectUtil]
    [com.intellij.openapi.util ThrowableComputable]
-   [com.intellij.testFramework EditorTestUtil EdtTestUtil]
-   [com.intellij.testFramework.fixtures IdeaTestFixtureFactory]
-   [java.awt.event KeyEvent]))
+   [com.intellij.testFramework EditorTestUtil EdtTestUtil]))
 
 (set! *warn-on-reflection* true)
 
-;;Move to a helper inside tests folder
-(defn ^:private repl-content [project]
-  (-> project
-      (db/get-in [:console :ui])
-      (seesaw/select [:#repl-content])))
+(def fixtures* (atom nil))
 
-(defn ensure-editor
-  "Ensure the editor was created in the UI thread"
-  [project]
-  (let [repl-content (repl-content project)]
-    @(app-manager/invoke-later!
-      {:invoke-fn (fn []
-                    (.addNotify repl-content)
-                    (.getEditor repl-content true))})))
-
-(defn wait-console-ui-creation
-  "Waits until the console UI is set in the db*, then ensures the editor is created"
-  [project]
-  @(clj4intellij.test/dispatch-all-until
-    {:cond-fn (fn [] (-> project
-                         (db/get-in [:console :ui])))})
-  (ensure-editor project))
+(use-fixtures :once (fn [f]
+                      (f)
+                      (stop-all-configurations (.getProject @fixtures*))))
 
 (defn execute-configuration
   "API for ProgramRunnerUtil/executeConfiguration
@@ -56,10 +34,10 @@
    configuration-instance
    (DefaultRunExecutor/getRunExecutorInstance)))
 
-
 (deftest custom-code-action-from-config-test
   (let [project-name "test-custom-action"
         fixtures (clj4intellij.test/setup project-name)
+        _ (reset! fixtures* fixtures)
         _ (.setTestDataPath fixtures "testdata")
         deps-file (.createFile fixtures "deps.edn" "{}")
         project (.getProject fixtures)]
