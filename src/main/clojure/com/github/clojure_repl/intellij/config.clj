@@ -49,20 +49,22 @@
    with reader macros and variables prefixed with $, which are intended for code replacement and evaluation. These elements
    make the EDN invalid for standard reading. By using rewrite-clj, we can parse the user's EDN, extract the code snippets,
    and transform them into strings for further processing."
-  [raw-string]
-  (try
-    (-> raw-string
-        z/of-string
-        (z/get :eval-code-actions)
-        z/down
-        (->> (iterate z/right)
-             (take-while (complement z/end?))
-             (map (fn [a] {:name (-> a (z/get :name) z/sexpr)
-                           :code (-> a (z/get :code) z/string)}))
-             doall))
-    (catch Throwable e
-      (logger/error "Error parsing EDN:" e)
-      [])))
+  ([raw-string]
+   (safe-read-edn-string raw-string (fn [e] (logger/error "Error parsing EDN:" e))))
+  ([raw-string fn-error]
+   (try
+     (-> raw-string
+         z/of-string
+         (z/get :eval-code-actions)
+         z/down
+         (->> (iterate z/right)
+              (take-while (complement z/end?))
+              (map (fn [a] {:name (-> a (z/get :name) z/sexpr)
+                            :code (-> a (z/get :code) z/string)}))
+              doall))
+     (catch Throwable e
+       (fn-error e)
+       []))))
 
 (defn read-file-from-project-root [relative-path ^Project project]
   (let [^VirtualFile base-dir (.getBaseDir project) ; raiz do projeto
