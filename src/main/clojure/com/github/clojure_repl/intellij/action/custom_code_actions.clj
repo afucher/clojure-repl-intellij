@@ -8,7 +8,6 @@
    [com.github.clojure-repl.intellij.editor :as editor]
    [com.github.clojure-repl.intellij.parser :as parser]
    [com.github.ericdallo.clj4intellij.action :as action]
-   [com.github.ericdallo.clj4intellij.logger :as logger]
    [com.github.ericdallo.clj4intellij.util :as util]
    [com.rpl.proxy-plus :refer [proxy+]]
    [rewrite-clj.zip :as z])
