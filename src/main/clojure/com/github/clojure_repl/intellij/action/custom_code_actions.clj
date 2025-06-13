@@ -63,9 +63,7 @@
   ([eval-code-actions]
    (register-custom-code-actions eval-code-actions nil))
   ([eval-code-actions ^Project project]
-   (logger/info "Registering custom actions..." eval-code-actions project)
    (doseq [action eval-code-actions]
-     (logger/info "Registering custom action..." action)
      (let [id (str "ClojureREPL.Custom." (some-> project .getName csk/->PascalCase (str ".")) (csk/->PascalCase (:name action)))
            title ^String (:name action)
            description ^String (:name action)

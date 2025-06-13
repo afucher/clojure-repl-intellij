@@ -115,10 +115,9 @@
                                     (actionPerformed
                                      [_ event]
                                      (a.eval/interrupt event))))
-  ;; TODO: remove or review this action before merge
   (action/register-action! :id "ClojureREPL.ReloadCustomActions"
                            :action (proxy+
-                                    ["Reload custom actions" "Reload custom actions" AllIcons$Actions/Cancel]
+                                    ["Reload custom actions" "Reload custom actions" AllIcons$Actions/Refresh]
                                     DumbAwareAction
                                     (actionPerformed
                                      [_ event]
@@ -155,7 +154,7 @@
                                      {:type :separator}])
   (action/register-group! :id custom-code-actions/group-id
                           :popup true
-                          :text "Custom actions"
+                          :text "Custom code actions"
                           :icon Icons/CLOJURE_REPL
                           :children [{:type :add-to-group :group-id "ClojureREPL.ReplActions" :anchor :last}])
   (custom-code-actions/register-custom-code-actions (config/eval-code-actions-from-user)))
