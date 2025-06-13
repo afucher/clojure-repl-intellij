@@ -174,6 +174,9 @@
 (defn describe [^Project project]
   @(send-msg project {:op "describe"}))
 
+(defn classpath [^Project project]
+  @(send-msg project {:op "classpath"}))
+
 (defn out-subscribe [^Project project]
   @(send-msg project {:op "out-subscribe" :session (db/get-in project [:current-nrepl :session-id])}))
 

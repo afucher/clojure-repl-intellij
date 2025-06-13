@@ -1,0 +1,3 @@
+{:eval-code-actions
+ [{:name "Hello World Action"
+   :code (println "Hello world")}]}
