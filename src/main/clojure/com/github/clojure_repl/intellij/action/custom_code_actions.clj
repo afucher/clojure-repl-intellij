@@ -35,7 +35,13 @@
         current-var (some-> (parser/find-var-at-pos root-zloc (inc row) col) z/string)]
     current-var))
 
-(def available-vars #{:current-var :file-namespace :selection})
+(defn ^:private top-level-form [^Editor editor]
+  (let [[row col] (util/editor->cursor-position editor)
+        text (.getText (.getDocument editor))
+        root-zloc (z/of-string text)]
+    (some-> (parser/find-form-at-pos root-zloc (inc row) col) parser/to-top z/string)))
+
+(def available-vars #{:current-var :file-namespace :selection :top-level-form})
 
 (defn custom-action [^AnActionEvent event code-snippet]
   (let [action-name (-> event .getPresentation .getText)
@@ -45,10 +51,12 @@
         current-file-ns (some-> (editor/ns-form editor) parser/find-namespace z/string parser/remove-metadata)
         fqn-current-var (when-let [current-var (current-var editor)]
                           (str (or current-file-ns "user") "/" current-var))
+        top-level-form (top-level-form editor)
         code (cond-> (str code-snippet)
                (contains? required-vars :selection) (string/replace #"\$selection" selection)
                (contains? required-vars :current-var) (string/replace #"\$current-var" fqn-current-var)
-               (contains? required-vars :file-namespace) (string/replace #"\$file-namespace" current-file-ns))]
+               (contains? required-vars :file-namespace) (string/replace #"\$file-namespace" current-file-ns)
+               (contains? required-vars :top-level-form) (string/replace #"\$top-level-form" top-level-form))]
     (a.eval/eval-custom-code-action event action-name code)))
 
 (defn register-custom-code-actions

@@ -17,6 +17,7 @@ You can use the following placeholders in your code snippets. They will be repla
 | `$current-var`      | Fully qualified name (ns/var) at the cursor position      |
 | `$file-namespace`   | Namespace of the current file                             |
 | `$selection`        | Currently selected text in the editor                     |
+| `$top-level-form`   | Text of top level form at the cursor position             |
 
 Example usage in code:
 ```clojure
