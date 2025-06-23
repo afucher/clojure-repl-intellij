@@ -47,30 +47,24 @@
                                                       :ns (db/get-in project [:current-nrepl :ns])}))}))
   (ui.repl/append-output project loading-text)
   (proxy+ [] ConsoleView
-    (getComponent [_] (db/get-in project [:console :ui]))
-    (getPreferredFocusableComponent [_] (db/get-in project [:console :ui]))
-    (dispose [_])
-    (print [_ _ _])
-    (clear [_])
-    (scrollTo [_ _])
-    (attachToProcess [_ _])
-    (setOutputPaused [_ _])
-    (isOutputPaused [_] false)
-    (hasDeferredOutput [_] false)
-    (performWhenNoDeferredOutput [_ _])
-    (setHelpId [_ _])
-    (addMessageFilter [_ _])
-    (printHyperlink [_ _ _])
-    (getContentSize [_] 0)
-    (canPause [_] false)
-    (createConsoleActions [_] (into-array AnAction (build-console-actions)))
-    (allowHeavyFilters [_])))
-
-(defn ^:private on-repl-evaluated [project {:keys [out err]}]
-  (when err
-    (ui.repl/append-output project (str "\n" err)))
-  (when out
-    (ui.repl/append-output project (str "\n" out))))
+          (getComponent [_] (db/get-in project [:console :ui]))
+          (getPreferredFocusableComponent [_] (db/get-in project [:console :ui]))
+          (dispose [_])
+          (print [_ _ _])
+          (clear [_])
+          (scrollTo [_ _])
+          (attachToProcess [_ _])
+          (setOutputPaused [_ _])
+          (isOutputPaused [_] false)
+          (hasDeferredOutput [_] false)
+          (performWhenNoDeferredOutput [_ _])
+          (setHelpId [_ _])
+          (addMessageFilter [_ _])
+          (printHyperlink [_ _ _])
+          (getContentSize [_] 0)
+          (canPause [_] false)
+          (createConsoleActions [_] (into-array AnAction (build-console-actions)))
+          (allowHeavyFilters [_])))
 
 (defn ^:private on-ns-changed [project _]
   (ui.repl/clear-input project))
@@ -79,22 +73,28 @@
   "IntelliJ actions status (visibility/enable) depend on IntelliJ calls an update of the UI
    but the call of update is not guaranteed. This function triggers the update of the UI.
    @see https://github.com/JetBrains/intellij-community/blob/08d00166f92aaf0eedfa6fc9c147ef10ea86da27/platform/editor-ui-api/src/com/intellij/openapi/actionSystem/AnAction.java#L361"
-  [_ _]
+  [& _]
   (.inc (ActivityTracker/getInstance)))
+
+(defn ^:private default-async-msg-handler [project {:keys [out err status]}]
+  (when (contains? (set status) "done")
+    (trigger-ui-update))
+  (when err
+    (ui.repl/append-output project (str "\n" err)))
+  (when out
+    (ui.repl/append-output project (str "\n" out))))
 
 (defn repl-disconnected [^Project project]
   (ui.repl/close-console project (db/get-in project [:console :ui]))
   (db/assoc-in! project [:console :process-handler] nil)
   (db/assoc-in! project [:console :ui] nil)
   (db/assoc-in! project [:current-nrepl] nil)
-  (db/update-in! project [:on-repl-evaluated-fns] (fn [fns] (remove #(contains? #{on-repl-evaluated trigger-ui-update} %) fns))))
+  #_(db/update-in! project [:on-repl-evaluated-fns] (fn [fns] (remove #(contains? #{on-repl-evaluated trigger-ui-update} %) fns))))
 
 (defn repl-started [project extra-initial-text]
   (nrepl/start-client!
    :project project
-   :on-receive-async-message (fn [msg]
-                               (when (:out msg)
-                                 (ui.repl/append-output project (:out msg)))))
+   :on-receive-async-message (fn [msg] (default-async-msg-handler project msg)))
   (nrepl/clone-session project)
   (let [description (nrepl/describe project)]
     (when (:out-subscribe (:ops description))
@@ -108,5 +108,5 @@
     (ui.repl/set-repl-started-initial-text project
                                            (db/get-in project [:console :ui])
                                            (str (initial-repl-text project) extra-initial-text))
-    (db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated trigger-ui-update))
+    #_(db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated trigger-ui-update))
     (db/update-in! project [:on-ns-changed-fns] #(conj % on-ns-changed trigger-ui-update))))
