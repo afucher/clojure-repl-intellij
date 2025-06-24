@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix REPL output when evaluation generates stdout. #153
+
 ## 2.5.3
 
 - Add client info to clone op for metrics.
