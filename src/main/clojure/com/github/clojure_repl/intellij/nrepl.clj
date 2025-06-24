@@ -89,8 +89,6 @@
 (defn ^:private eval [^Project project ns code]
   (let [session (db/get-in project [:current-nrepl :session-id])
         response @(send-msg project {:op "eval" :code code :ns ns :session session})]
-    #_(doseq [fn (db/get-in project [:on-repl-evaluated-fns])]
-        (fn project response))
     response))
 
 (defn prep-env-for-eval
@@ -168,8 +166,6 @@
                                      :file (.getText (.getDocument editor))
                                      :file-path  (some-> virtual-file .getPath)
                                      :file-name (some-> virtual-file .getName)})]
-    #_(doseq [fn (db/get-in project [:on-repl-evaluated-fns])]
-        (fn project response))
     response))
 
 (defn describe [^Project project]

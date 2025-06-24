@@ -88,8 +88,7 @@
   (ui.repl/close-console project (db/get-in project [:console :ui]))
   (db/assoc-in! project [:console :process-handler] nil)
   (db/assoc-in! project [:console :ui] nil)
-  (db/assoc-in! project [:current-nrepl] nil)
-  #_(db/update-in! project [:on-repl-evaluated-fns] (fn [fns] (remove #(contains? #{on-repl-evaluated trigger-ui-update} %) fns))))
+  (db/assoc-in! project [:current-nrepl] nil))
 
 (defn repl-started [project extra-initial-text]
   (nrepl/start-client!
@@ -108,5 +107,4 @@
     (ui.repl/set-repl-started-initial-text project
                                            (db/get-in project [:console :ui])
                                            (str (initial-repl-text project) extra-initial-text))
-    #_(db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated trigger-ui-update))
     (db/update-in! project [:on-ns-changed-fns] #(conj % on-ns-changed trigger-ui-update))))
