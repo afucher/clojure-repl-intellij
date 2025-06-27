@@ -4,16 +4,18 @@
    :implements [com.intellij.openapi.startup.ProjectActivity
                 com.intellij.openapi.project.DumbAware])
   (:require
+   [com.github.clojure-repl.intellij.action.custom-code-actions :as custom-code-actions]
    [com.github.clojure-repl.intellij.action.eval :as a.eval]
    [com.github.clojure-repl.intellij.action.test :as a.test]
    [com.github.clojure-repl.intellij.actions :as actions]
+   [com.github.clojure-repl.intellij.config :as config]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.ericdallo.clj4intellij.action :as action]
    [com.rpl.proxy-plus :refer [proxy+]])
   (:import
    [com.github.clojure_repl.intellij Icons]
    [com.intellij.icons AllIcons$Actions]
-   [com.intellij.openapi.actionSystem AnActionEvent]
+   [com.intellij.openapi.actionSystem ActionManager AnActionEvent DefaultActionGroup]
    [com.intellij.openapi.project DumbAwareAction Project]
    [kotlinx.coroutines CoroutineScope]))
 
@@ -63,13 +65,13 @@
                            :action (proxy+
                                     ["Clear REPL output" "Clear REPL output" AllIcons$Actions/GC]
                                     DumbAwareAction
-                                     (update
-                                       [_ ^AnActionEvent event]
-                                       (let [project (actions/action-event->project event)]
-                                         (.setEnabled (.getPresentation event) (boolean (nrepl/active-client? project)))))
-                                     (actionPerformed
-                                       [_ event]
-                                       (a.eval/clear-repl-output-action event))))
+                                    (update
+                                     [_ ^AnActionEvent event]
+                                     (let [project (actions/action-event->project event)]
+                                       (.setEnabled (.getPresentation event) (boolean (nrepl/active-client? project)))))
+                                    (actionPerformed
+                                     [_ event]
+                                     (a.eval/clear-repl-output-action event))))
 
   (action/register-action! :id "ClojureREPL.SwitchNs"
                            :title "Switch REPL namespace"
@@ -106,13 +108,29 @@
                            :action (proxy+
                                     ["Interrupts session evaluation" "Interrupts session evaluation" AllIcons$Actions/Cancel]
                                     DumbAwareAction
-                                     (update
-                                       [_ ^AnActionEvent event]
-                                       (let [project (actions/action-event->project event)]
-                                         (.setEnabled (.getPresentation event) (boolean (nrepl/evaluating? project)))))
-                                     (actionPerformed
-                                       [_ event]
-                                       (a.eval/interrupt event))))
+                                    (update
+                                     [_ ^AnActionEvent event]
+                                     (let [project (actions/action-event->project event)]
+                                       (.setEnabled (.getPresentation event) (boolean (nrepl/evaluating? project)))))
+                                    (actionPerformed
+                                     [_ event]
+                                     (a.eval/interrupt event))))
+  (action/register-action! :id "ClojureREPL.ReloadCustomActions"
+                           :action (proxy+
+                                    ["Reload custom actions" "Reload custom actions" AllIcons$Actions/Refresh]
+                                    DumbAwareAction
+                                    (actionPerformed
+                                     [_ event]
+                                     (let [action-manager (ActionManager/getInstance)
+                                           custom-actions (.getActionIdList action-manager "ClojureREPL.Custom")
+                                           project (actions/action-event->project event)]
+                                       (doseq [id custom-actions]
+                                         (when (not= id custom-code-actions/group-id)
+                                           (.unregisterAction action-manager id)))
+                                       (when-let [group (.getAction action-manager custom-code-actions/group-id)]
+                                         (.removeAll ^DefaultActionGroup group))
+                                       (custom-code-actions/register-custom-code-actions (config/eval-code-actions-from-user))
+                                       (custom-code-actions/register-custom-code-actions (config/from-project project) project)))))
 
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true
@@ -133,4 +151,11 @@
                                      {:type :reference :ref "ClojureREPL.RefreshAll"}
                                      {:type :reference :ref "ClojureREPL.RefreshChanged"}
                                      {:type :reference :ref "ClojureREPL.SwitchNs"}
-                                     {:type :separator}]))
+                                     {:type :separator}])
+  (action/register-group! :id custom-code-actions/group-id
+                          :popup true
+                          :text "Custom code actions"
+                          :icon Icons/CLOJURE_REPL
+                          :children [{:type :add-to-group :group-id "ClojureREPL.ReplActions" :anchor :last}])
+  (custom-code-actions/register-custom-code-actions (config/eval-code-actions-from-user)))
+

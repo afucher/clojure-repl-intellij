@@ -1,8 +1,11 @@
 (ns com.github.clojure-repl.intellij.configuration.factory.base
   (:require
+   [com.github.clojure-repl.intellij.action.custom-code-actions :as custom-code-actions]
+   [com.github.clojure-repl.intellij.config :as config]
    [com.github.clojure-repl.intellij.db :as db]
    [com.github.clojure-repl.intellij.nrepl :as nrepl]
    [com.github.clojure-repl.intellij.ui.repl :as ui.repl]
+   [com.github.ericdallo.clj4intellij.logger :as logger]
    [com.rpl.proxy-plus :refer [proxy+]])
   (:import
    [com.intellij.execution.ui ConsoleView]
@@ -66,6 +69,12 @@
           (createConsoleActions [_] (into-array AnAction (build-console-actions)))
           (allowHeavyFilters [_])))
 
+(defn ^:private on-repl-evaluated [project {:keys [out err]}]
+  (when err
+    (ui.repl/append-output project (str "\n" err)))
+  (when out
+    (ui.repl/append-output project (str "\n" out))))
+
 (defn ^:private on-ns-changed [project _]
   (ui.repl/clear-input project))
 
@@ -88,14 +97,17 @@
   (ui.repl/close-console project (db/get-in project [:console :ui]))
   (db/assoc-in! project [:console :process-handler] nil)
   (db/assoc-in! project [:console :ui] nil)
-  (db/assoc-in! project [:current-nrepl] nil))
+  (db/assoc-in! project [:current-nrepl] nil)
+  (db/assoc-in! project [:classpath] [])
+  (db/update-in! project [:on-repl-evaluated-fns] (fn [fns] (remove #(contains? #{on-repl-evaluated trigger-ui-update} %) fns))))
 
 (defn repl-started [project extra-initial-text]
   (nrepl/start-client!
    :project project
    :on-receive-async-message (fn [msg] (default-async-msg-handler project msg)))
   (nrepl/clone-session project)
-  (let [description (nrepl/describe project)]
+  (let [description (nrepl/describe project)
+        classpath (nrepl/classpath project)]
     (when (:out-subscribe (:ops description))
       (nrepl/out-subscribe project))
     (db/assoc-in! project [:current-nrepl :ops] (:ops description))
@@ -104,6 +116,14 @@
     (db/assoc-in! project [:current-nrepl :entry-index] -1)
     (db/assoc-in! project [:current-nrepl :ns] "user")
     (db/assoc-in! project [:file->ns] {})
+    (db/assoc-in! project [:classpath] (:classpath classpath))
+
+    (future
+      (try
+        (custom-code-actions/register-custom-code-actions (config/from-project project) project)
+        (catch Throwable e
+          (logger/error "Error registering custom code actions:" e))))
+
     (ui.repl/set-repl-started-initial-text project
                                            (db/get-in project [:console :ui])
                                            (str (initial-repl-text project) extra-initial-text))
