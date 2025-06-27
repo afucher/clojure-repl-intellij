@@ -92,21 +92,29 @@
    Returns a sequence of parsed config maps."
   [^Project project]
   (let [classpath (db/get-in project [:classpath])
-        jar-paths (filter #(.endsWith ^String % ".jar") classpath)]
-    (->> jar-paths
-         (mapcat read-configs-from-jar)
-         flatten
-         (remove empty?))))
+        jar-paths (filter #(.endsWith ^String % ".jar") classpath)
+        all-configs (->> jar-paths
+                         (mapcat read-configs-from-jar)
+                         flatten
+                         (remove empty?))]
+    (logger/info (str "Config from classpath - JARs: " (count jar-paths) ", Config: " (vec all-configs)))
+    all-configs))
 
 (defn ^:private config-from-project* [^Project project]
   (when-let [config-file ^File (read-file-from-project-root ".clj-repl-intellij/config.edn" project)]
     (when (.exists config-file)
-      (safe-read-edn-string (slurp config-file)))))
+      (let [config-content (slurp config-file)
+            parsed-config (safe-read-edn-string config-content)]
+        (logger/info (str "Config from project - Source: " (.getAbsolutePath config-file) ", Config: " (vec parsed-config)))
+        parsed-config))))
 
 (defn ^:private config-from-user* []
   (let [config-file (io/file (str (System/getProperty "user.home") "/.config/clj-repl-intellij/config.edn"))]
     (when (.exists config-file)
-      (safe-read-edn-string (slurp config-file)))))
+      (let [config-content (slurp config-file)
+            parsed-config (safe-read-edn-string config-content)]
+        (logger/info (str "Config from user - Source: " (.getAbsolutePath config-file) ", Config teste: " (vec parsed-config)))
+        parsed-config))))
 
 ;;global config
 (defn from-user []
