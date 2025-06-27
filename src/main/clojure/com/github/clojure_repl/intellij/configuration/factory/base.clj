@@ -82,8 +82,16 @@
   "IntelliJ actions status (visibility/enable) depend on IntelliJ calls an update of the UI
    but the call of update is not guaranteed. This function triggers the update of the UI.
    @see https://github.com/JetBrains/intellij-community/blob/08d00166f92aaf0eedfa6fc9c147ef10ea86da27/platform/editor-ui-api/src/com/intellij/openapi/actionSystem/AnAction.java#L361"
-  [_ _]
+  [& _]
   (.inc (ActivityTracker/getInstance)))
+
+(defn ^:private default-async-msg-handler [project {:keys [out err status]}]
+  (when (contains? (set status) "done")
+    (trigger-ui-update))
+  (when err
+    (ui.repl/append-output project (str "\n" err)))
+  (when out
+    (ui.repl/append-output project (str "\n" out))))
 
 (defn repl-disconnected [^Project project]
   (ui.repl/close-console project (db/get-in project [:console :ui]))
@@ -96,9 +104,7 @@
 (defn repl-started [project extra-initial-text]
   (nrepl/start-client!
    :project project
-   :on-receive-async-message (fn [msg]
-                               (when (:out msg)
-                                 (ui.repl/append-output project (:out msg)))))
+   :on-receive-async-message (fn [msg] (default-async-msg-handler project msg)))
   (nrepl/clone-session project)
   (let [description (nrepl/describe project)
         classpath (nrepl/classpath project)]
@@ -121,5 +127,4 @@
     (ui.repl/set-repl-started-initial-text project
                                            (db/get-in project [:console :ui])
                                            (str (initial-repl-text project) extra-initial-text))
-    (db/update-in! project [:on-repl-evaluated-fns] #(conj % on-repl-evaluated trigger-ui-update))
     (db/update-in! project [:on-ns-changed-fns] #(conj % on-ns-changed trigger-ui-update))))
