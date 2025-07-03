@@ -67,6 +67,6 @@
            ([executor ^ExecutionEnvironment env]
             (proxy+ [env] CommandLineState
               (createConsole [_ _]
-                (config.factory.base/build-console-view project "Connecting to nREPL server..."))
+                (config.factory.base/build-console-view project "Connecting to nREPL server...\n"))
               (startProcess [_]
                 (setup-process this project))))))))))
