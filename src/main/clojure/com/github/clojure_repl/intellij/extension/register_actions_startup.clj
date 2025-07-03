@@ -93,13 +93,13 @@
                            :title "Moves up in history"
                            :description "Moves up in history"
                            :icon AllIcons$Actions/PreviousOccurence
-                           :keyboard-shortcut {:first "control PAGE_UP" :replace-all true}
+                           :keyboard-shortcut {:first "UP" :replace-all true}
                            :on-performed #'a.eval/history-up-action)
   (action/register-action! :id "ClojureREPL.HistoryDown"
                            :title "Moves down in history"
                            :description "Moves down in history"
                            :icon AllIcons$Actions/NextOccurence
-                           :keyboard-shortcut {:first "control PAGE_DOWN" :replace-all true}
+                           :keyboard-shortcut {:first "DOWN" :replace-all true}
                            :on-performed #'a.eval/history-down-action)
   (action/register-action! :id "ClojureREPL.Interrupt"
                            :keyboard-shortcut {:first "shift alt R" :second "shift alt S" :replace-all true}
