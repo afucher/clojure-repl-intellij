@@ -20,9 +20,10 @@
     (when font-type (.setFontType attrs font-type))
     (TextAttributesKey/createTextAttributesKey ^String key attrs)))
 
+
 (defn text-attributes []
   {:repl-window (attr :key "REPL_WINDOW"
-                      :background (JBColor/background))
+                     :background (UIUtil/getWindowColor))
    :eval-inline-hint (attr :key "REPL_EVAL_INLINE_INLAY_HINT"
                            :background (JBColor. (Color/decode "#c7e8fc") (Color/decode "#16598c"))
                            :inherit DebuggerColors/INLINED_VALUES_EXECUTION_LINE)
