@@ -80,9 +80,7 @@
   (when (contains? (set status) "done")
     (trigger-ui-update))
   (when err
-    (ui.repl/append-output project (str "\n" err)))
-  (when out
-    (ui.repl/append-output project (str "\n" out))))
+    (ui.repl/append-output project (str "\n" err))))
 
 (defn repl-disconnected [^Project project]
   (ui.repl/close-console project (db/get-in project [:console :ui]))

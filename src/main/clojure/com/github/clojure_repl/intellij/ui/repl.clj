@@ -79,6 +79,7 @@
                    (.moveToOffset (.getCaretModel editor) (.getTextLength (.getDocument repl-content)))
                    (.scrollToCaret (.getScrollingModel editor) ScrollType/MAKE_VISIBLE)))}))
 
+
 (defn ^:private on-repl-input [project on-eval ^KeyEvent event]
   (.consume event)
   (let [repl-content ^EditorTextField (seesaw/select (db/get-in project [:console :ui]) [:#repl-content])
@@ -90,10 +91,11 @@
     (when-not (or (string/blank? code-to-eval)
                   (= code-to-eval (first entries)))
       (db/update-in! project [:current-nrepl :entry-history] #(conj % code-to-eval)))
-    (let [{:keys [value ns] :as response}  (on-eval code-to-eval)
+    (let [{:keys [value ns out] :as response}  (on-eval code-to-eval)
           result-text (str
-                       "\n" input code-to-eval (when value "\n")
-                       (when value (str "=> " (last value))))]
+                       "\n" input code-to-eval
+                        (when out (str "\n" out))
+                        (when value (str "=> " (last value))))]
       (append-output project result-text)
       (when (and ns (not= ns cur-ns))
         (db/assoc-in! project [:current-nrepl :ns] ns)
