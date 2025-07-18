@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Add Custom Code Actions feature, enabling the user to define custom code snippets to be executed as an action.
+  - Config can be defined at different levels: user or project. And can be exported inside libraries.
+  - To check all details, read the [feature doc](./doc/custom-code-actions.md)
 - Fix REPL output when evaluation generates stdout. #153
 
 ## 2.5.3

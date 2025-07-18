@@ -1,5 +1,6 @@
-(ns com.github.clojure-repl.intellij.repl-eval-test
+(ns com.github.clojure-repl.intellij.custom-code-action-test
   (:require
+   [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing use-fixtures]]
    [com.github.clojure-repl.intellij.configuration.factory.local :as config.factory.local]
@@ -12,9 +13,9 @@
    [com.github.clojure_repl.intellij.configuration ReplRunConfigurationType]
    [com.intellij.execution ProgramRunnerUtil RunManager]
    [com.intellij.execution.executors DefaultRunExecutor]
+   [com.intellij.openapi.actionSystem ActionManager]
    [com.intellij.openapi.util ThrowableComputable]
-   [com.intellij.testFramework EditorTestUtil EdtTestUtil]
-   [java.awt.event KeyEvent]))
+   [com.intellij.testFramework EditorTestUtil EdtTestUtil]))
 
 (set! *warn-on-reflection* true)
 
@@ -33,30 +34,26 @@
    configuration-instance
    (DefaultRunExecutor/getRunExecutorInstance)))
 
-(defn eval-code-on-repl [repl-content text]
-  (let [editor (.getEditor repl-content)
-        component (.getContentComponent editor)
-        key-enter-event (KeyEvent. component KeyEvent/KEY_PRESSED (System/currentTimeMillis) 0 KeyEvent/VK_ENTER Character/MIN_VALUE)]
-    (EdtTestUtil/runInEdtAndGet
-     (reify ThrowableComputable
-       (compute [_]
-         (doseq [char text]
-           (EditorTestUtil/performTypingAction editor char))
-         (.dispatchEvent component key-enter-event)
-         nil)))))
-
-(deftest repl-eval-test
-  (let [project-name "clojure.core"
-        fixture (clj4intellij.test/setup project-name)
-        _ (reset! fixtures* fixture)
-        deps-file (.createFile fixture "deps.edn" "{}")
-        project (.getProject fixture)]
+(deftest custom-code-action-from-config-test
+  (let [project-name "test-custom-action"
+        fixtures (clj4intellij.test/setup project-name)
+        _ (reset! fixtures* fixtures)
+        _ (.setTestDataPath fixtures "testdata")
+        deps-file (.createFile fixtures "deps.edn" "{}")
+        project (.getProject fixtures)]
     (is (= project-name (.getName project)))
     (is deps-file)
 
+    (let [base-path (.getBasePath project)
+          config-dir (io/file base-path ".clj-repl-intellij")
+          config-file (io/file config-dir "config.edn")]
+      (.mkdirs config-dir)
+      (spit config-file (slurp "testdata/config.edn")))
+
+
     (app-manager/write-command-action
      project
-     (fn [] (.openFileInEditor fixture deps-file)))
+     (fn [] (.openFileInEditor fixtures deps-file)))
 
     (let [run-manager (RunManager/getInstance project)
           configuration (config.factory.local/configuration-factory (ReplRunConfigurationType.))
@@ -68,15 +65,27 @@
 
     (wait-console-ui-creation project)
 
-    (testing "user input evaluation"
+    (testing "custom code action from project config"
       (let [repl-content (repl-content project)]
 
         @(clj4intellij.test/dispatch-all-until
           {:cond-fn (fn [] (str/ends-with? (.getText repl-content) "user> "))})
 
-        (eval-code-on-repl repl-content "(+ 1 1)\n")
-        (clj4intellij.test/dispatch-all)
+        (let [action-manager (ActionManager/getInstance)
+              action-id "ClojureREPL.Custom.TestCustomAction.HelloWorldAction"
+              custom-action (.getAction action-manager action-id)]
 
-        (let [content (.getText repl-content)]
-          (is (str/ends-with? content "user> (+ 1 1)\n=> 2\nuser> ")))))))
+          (is (not (nil? custom-action)) "Custom action should be registered")
+
+          (EdtTestUtil/runInEdtAndGet
+           (reify ThrowableComputable
+             (compute [_]
+               (let [editor (.getEditor fixtures)]
+                 (EditorTestUtil/executeAction editor action-id false))
+               nil)))
+
+          (clj4intellij.test/dispatch-all)
+
+          (let [content (.getText repl-content)]
+            (is (str/includes? content "Hello world\n") "Custom action should print Hello world to REPL")))))))
 

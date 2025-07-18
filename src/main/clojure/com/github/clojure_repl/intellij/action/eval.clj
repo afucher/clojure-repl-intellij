@@ -111,6 +111,22 @@
                           (send-result-to-repl event (string/join "\n" (:value response)) true))
        :inlay-hint-feedback? true))))
 
+(defn eval-custom-code-action [^AnActionEvent event action-name code]
+  (eval-action
+   :event event
+   :loading-msg (str "REPL: Running " action-name)
+   :eval-fn (fn [^Editor editor]
+              (app-manager/invoke-later!
+               {:invoke-fn
+                (fn [] (send-result-to-repl event (str "Custom action code: " code) true))})
+              (nrepl/eval-from-editor {:editor editor :code code}))
+   :success-msg-fn (fn [response]
+                     (string/join "\n" (:value response)))
+   :post-success-fn (fn [response]
+                      (send-result-to-repl event (string/join "\n" (:value response)) true))
+   :inlay-hint-feedback? true))
+
+
 (defn clear-repl-output-action [^AnActionEvent event]
   (let [project (actions/action-event->project event)]
     (ui.repl/clear-repl project)))
