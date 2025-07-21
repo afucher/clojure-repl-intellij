@@ -54,6 +54,7 @@ configurations.
 - Stop (interrupt) evaluation of REPL session (`alt/opt + shift + R` `alt/opt + shift + S`)
 - Entry history navigation in REPL (`ctrl + PAGE_UP` or `ctrl + PAGE_DOWN`)
 - Isolate REPL window and file editors namespace. [Read more about evaluation and namespace](https://github.com/afucher/clojure-repl-intellij/blob/master/doc/eval-and-ns.md)
+- **[BETA]** Custom Code Actions: Configure custom code snippets to be evaluated (for more information: [docs](./doc/custom-code-actions.md))
 
 
 ## Contributing
