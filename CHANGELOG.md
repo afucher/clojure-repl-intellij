@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 2.6.1
+
 - Fix parser to handle namespaced def forms like `s/deftest` in `find-var-at-pos` function
 
 ## 2.6.0
