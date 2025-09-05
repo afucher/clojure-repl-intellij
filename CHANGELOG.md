@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix parser to handle namespaced def forms like `s/deftest` in `find-var-at-pos` function
+
 ## 2.6.0
 
 - Add Custom Code Actions feature, enabling the user to define custom code snippets to be executed as an action.

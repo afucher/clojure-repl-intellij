@@ -74,8 +74,12 @@
 
     ;; We check if the form starts with "def" to ensure it's a var definition
     ;; This is the most reliable way we found to distinguish between var definitions
-    ;; and other forms, as it covers all def-like forms (def, defn, defmacro, etc.)
-    (not (clojure.string/starts-with? (z/string loc) "def"))
+    ;; and other forms, as it covers all def-like forms (def, defn, defmacro, etc.) 
+    (let [form-str (z/string loc)
+          symbol-name (if (clojure.string/includes? form-str "/")
+                        (last (clojure.string/split form-str #"/"))
+                        form-str)]
+      (not (clojure.string/starts-with? symbol-name "def")))
     nil
 
     (= :map (-> loc z/next z/tag))
