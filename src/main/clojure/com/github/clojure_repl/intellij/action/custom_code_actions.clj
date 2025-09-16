@@ -42,6 +42,17 @@
 
 (def available-vars #{:current-var :file-namespace :selection :top-level-form})
 
+(defn ^:private group-children
+  "Newer versions of IntelliJ (2025) changed the getChildren signature
+   This function checks in runtime the method signature before call"
+  [^DefaultActionGroup group]
+  (let [^Class cls (class group)]
+    (try
+      (let [m (.getMethod cls "getChildren" (into-array Class [ActionManager]))]
+        (.invoke m group (to-array [(ActionManager/getInstance)])))
+      (catch NoSuchMethodException _
+        (.getChildren group nil ^ActionManager (ActionManager/getInstance))))))
+
 (defn custom-action [^AnActionEvent event code-snippet]
   (let [action-name (-> event .getPresentation .getText)
         editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
@@ -83,7 +94,7 @@
        (action/register-action!
         :id id
         :action an-action)
-       (let [children (.getChildren custom-action-group nil ^ActionManager (ActionManager/getInstance))]
+       (let [children (group-children custom-action-group)]
          (when (not-any? (fn [a] (= (-> ^AnAction a .getTemplatePresentation .getText)
                                     (-> ^AnAction an-action .getTemplatePresentation .getText)))
                          children)
@@ -94,12 +105,18 @@
   (def action-manager (ActionManager/getInstance))
   (def custom-action-group (.getAction action-manager group-id))
   (def ids (.getActionIdList action-manager "ClojureREPL.Custom"))
-
+  (def m ^java.lang.reflect.Method (.getMethod (class custom-action-group) "getChildren" (into-array Class [ActionManager])))
+  (let [^java.lang.reflect.Method m (.getMethod (class custom-action-group) "getChildren" (into-array Class [ActionManager]))]
+    (println m)
+    (.invoke m custom-action-group Class action-manager))
+  (.invoke m custom-action-group (to-array [action-manager]))
+  (.getMethod (class custom-action-group) "getChildren" (to-array [ActionManager]))
+  (.getChildren custom-action-group action-manager)
   (defn debug-group-actions [^String group-id]
     (let [am (ActionManager/getInstance)
           group (.getAction am group-id)]
-      (when (instance? com.intellij.openapi.actionSystem.ActionGroup group)
-        (doseq [a (.getChildren ^com.intellij.openapi.actionSystem.ActionGroup group nil)]
+      (when (instance? DefaultActionGroup group)
+        (doseq [a (group-children ^DefaultActionGroup group)]
           (println "Action:" a
                    "ID:" (.getId am a)
                    "Text:" (.getText (.getTemplatePresentation a)))))))
