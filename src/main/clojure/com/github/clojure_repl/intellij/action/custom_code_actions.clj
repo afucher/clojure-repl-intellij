@@ -105,13 +105,7 @@
   (def action-manager (ActionManager/getInstance))
   (def custom-action-group (.getAction action-manager group-id))
   (def ids (.getActionIdList action-manager "ClojureREPL.Custom"))
-  (def m ^java.lang.reflect.Method (.getMethod (class custom-action-group) "getChildren" (into-array Class [ActionManager])))
-  (let [^java.lang.reflect.Method m (.getMethod (class custom-action-group) "getChildren" (into-array Class [ActionManager]))]
-    (println m)
-    (.invoke m custom-action-group Class action-manager))
-  (.invoke m custom-action-group (to-array [action-manager]))
-  (.getMethod (class custom-action-group) "getChildren" (to-array [ActionManager]))
-  (.getChildren custom-action-group action-manager)
+
   (defn debug-group-actions [^String group-id]
     (let [am (ActionManager/getInstance)
           group (.getAction am group-id)]
