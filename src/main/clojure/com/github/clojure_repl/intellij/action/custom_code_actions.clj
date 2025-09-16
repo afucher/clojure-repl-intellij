@@ -5,6 +5,7 @@
    [clojure.string :as string]
    [com.github.clojure-repl.intellij.action.eval :as a.eval]
    [com.github.clojure-repl.intellij.actions :as actions]
+   [com.github.clojure-repl.intellij.app-info :as app-info]
    [com.github.clojure-repl.intellij.editor :as editor]
    [com.github.clojure-repl.intellij.parser :as parser]
    [com.github.ericdallo.clj4intellij.action :as action]
@@ -42,16 +43,15 @@
 
 (def available-vars #{:current-var :file-namespace :selection :top-level-form})
 
+(set! *warn-on-reflection* false)
 (defn ^:private group-children
   "Newer versions of IntelliJ (2025) changed the getChildren signature
-   This function checks in runtime the method signature before call"
+   This function checks in runtime the version before call"
   [^DefaultActionGroup group]
-  (let [^Class cls (class group)]
-    (try
-      (let [m (.getMethod cls "getChildren" (into-array Class [ActionManager]))]
-        (.invoke m group (to-array [(ActionManager/getInstance)])))
-      (catch NoSuchMethodException _
-        (.getChildren group nil ^ActionManager (ActionManager/getInstance))))))
+  (if (app-info/at-least-version? "252.13776.59")
+    (.getChildren group ^ActionManager (ActionManager/getInstance))
+    (.getChildren group nil ^ActionManager (ActionManager/getInstance))))
+(set! *warn-on-reflection* true)
 
 (defn custom-action [^AnActionEvent event code-snippet]
   (let [action-name (-> event .getPresentation .getText)
