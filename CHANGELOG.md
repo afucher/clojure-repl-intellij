@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix Custom Code Action not working in new versions of IntelliJ (2025)
+
 ## 2.6.1
 
 - Fix parser to handle namespaced def forms like `s/deftest` in `find-var-at-pos` function
