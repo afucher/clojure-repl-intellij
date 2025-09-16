@@ -5,6 +5,7 @@
    [clojure.string :as string]
    [com.github.clojure-repl.intellij.action.eval :as a.eval]
    [com.github.clojure-repl.intellij.actions :as actions]
+   [com.github.clojure-repl.intellij.app-info :as app-info]
    [com.github.clojure-repl.intellij.editor :as editor]
    [com.github.clojure-repl.intellij.parser :as parser]
    [com.github.ericdallo.clj4intellij.action :as action]
@@ -41,6 +42,16 @@
     (some-> (parser/find-form-at-pos root-zloc (inc row) col) parser/to-top z/string)))
 
 (def available-vars #{:current-var :file-namespace :selection :top-level-form})
+
+(set! *warn-on-reflection* false)
+(defn ^:private group-children
+  "Newer versions of IntelliJ (2025) changed the getChildren signature
+   This function checks in runtime the version before call"
+  [^DefaultActionGroup group]
+  (if (app-info/at-least-version? "252.13776.59")
+    (.getChildren group ^ActionManager (ActionManager/getInstance))
+    (.getChildren group nil ^ActionManager (ActionManager/getInstance))))
+(set! *warn-on-reflection* true)
 
 (defn custom-action [^AnActionEvent event code-snippet]
   (let [action-name (-> event .getPresentation .getText)
@@ -83,7 +94,7 @@
        (action/register-action!
         :id id
         :action an-action)
-       (let [children (.getChildren custom-action-group nil ^ActionManager (ActionManager/getInstance))]
+       (let [children (group-children custom-action-group)]
          (when (not-any? (fn [a] (= (-> ^AnAction a .getTemplatePresentation .getText)
                                     (-> ^AnAction an-action .getTemplatePresentation .getText)))
                          children)
@@ -98,8 +109,8 @@
   (defn debug-group-actions [^String group-id]
     (let [am (ActionManager/getInstance)
           group (.getAction am group-id)]
-      (when (instance? com.intellij.openapi.actionSystem.ActionGroup group)
-        (doseq [a (.getChildren ^com.intellij.openapi.actionSystem.ActionGroup group nil)]
+      (when (instance? DefaultActionGroup group)
+        (doseq [a (group-children ^DefaultActionGroup group)]
           (println "Action:" a
                    "ID:" (.getId am a)
                    "Text:" (.getText (.getTemplatePresentation a)))))))
