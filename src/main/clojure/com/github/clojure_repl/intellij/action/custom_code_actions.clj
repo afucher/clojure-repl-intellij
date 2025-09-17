@@ -49,7 +49,11 @@
    This function checks in runtime the version before call"
   [^DefaultActionGroup group]
   (if (app-info/at-least-version? "252.13776.59")
-    (.getChildren group ^ActionManager (ActionManager/getInstance))
+    ;; For some reason, using getChildren (ActionManager) does not work when building the plugin
+    ;; It always try to call getChildren (AnActionEvent) and throws error.
+    ;; Maybe is losing the type hint during the build, because evaluating the same code works.
+    ;; For now, we are calling getChildActionsOrStubs
+    (.getChildActionsOrStubs group)
     (.getChildren group nil ^ActionManager (ActionManager/getInstance))))
 (set! *warn-on-reflection* true)
 
