@@ -43,19 +43,19 @@
 
 (def available-vars #{:current-var :file-namespace :selection :top-level-form})
 
-(set! *warn-on-reflection* false)
 (defn ^:private group-children
   "Newer versions of IntelliJ (2025) changed the getChildren signature
-   This function checks in runtime the version before call"
+   This function checks in runtime the version before call
+
+   It should use reflection because when compiling it uses the min version of IntelliJ
+   and the type hint does not work, making it call the old signature method"
   [^DefaultActionGroup group]
-  (if (app-info/at-least-version? "252.13776.59")
-    ;; For some reason, using getChildren (ActionManager) does not work when building the plugin
-    ;; It always try to call getChildren (AnActionEvent) and throws error.
-    ;; Maybe is losing the type hint during the build, because evaluating the same code works.
-    ;; For now, we are calling getChildActionsOrStubs
-    (.getChildActionsOrStubs group)
-    (.getChildren group nil ^ActionManager (ActionManager/getInstance))))
-(set! *warn-on-reflection* true)
+  (let [^Class cls (class group)]
+    (try
+      (let [m (.getMethod cls "getChildren" (into-array Class [ActionManager]))]
+        (.invoke m group (to-array [(ActionManager/getInstance)])))
+      (catch NoSuchMethodException _
+        (.getChildren group nil ^ActionManager (ActionManager/getInstance))))))
 
 (defn custom-action [^AnActionEvent event code-snippet]
   (let [action-name (-> event .getPresentation .getText)
