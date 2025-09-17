@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 2.6.3
+
 - Fix Custom Code Action not working in new versions of IntelliJ (2025)
 
 ## 2.6.2
