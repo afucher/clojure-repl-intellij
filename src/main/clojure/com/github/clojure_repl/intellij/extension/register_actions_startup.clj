@@ -65,13 +65,13 @@
                            :action (proxy+
                                     ["Clear REPL output" "Clear REPL output" AllIcons$Actions/GC]
                                     DumbAwareAction
-                                    (update
-                                     [_ ^AnActionEvent event]
-                                     (let [project (actions/action-event->project event)]
-                                       (.setEnabled (.getPresentation event) (boolean (nrepl/active-client? project)))))
-                                    (actionPerformed
-                                     [_ event]
-                                     (a.eval/clear-repl-output-action event))))
+                                     (update
+                                       [_ ^AnActionEvent event]
+                                       (let [project (actions/action-event->project event)]
+                                         (.setEnabled (.getPresentation event) (boolean (nrepl/active-client? project)))))
+                                     (actionPerformed
+                                       [_ event]
+                                       (a.eval/clear-repl-output-action event))))
 
   (action/register-action! :id "ClojureREPL.SwitchNs"
                            :title "Switch REPL namespace"
@@ -103,34 +103,45 @@
                            :icon AllIcons$Actions/NextOccurence
                            :keyboard-shortcut {:first "control PAGE_DOWN" :replace-all true}
                            :on-performed #'a.eval/history-down-action)
+(action/register-action! :id "ClojureREPL.RefreshNamespaces"
+                         :title "Refresh namespaces"
+                         :description "Refresh all namespaces"
+                         :icon AllIcons$Actions/Refresh
+                         :action (proxy+
+                                  ["Refresh namespaces" "Refresh all namespaces" AllIcons$Actions/Refresh]
+                                  DumbAwareAction
+                                   (actionPerformed
+                                     [_ event]
+                                     (a.eval/refresh-namespaces-action event))))
+
   (action/register-action! :id "ClojureREPL.Interrupt"
                            :keyboard-shortcut {:first "shift alt R" :second "shift alt S" :replace-all true}
                            :action (proxy+
                                     ["Interrupts session evaluation" "Interrupts session evaluation" AllIcons$Actions/Cancel]
                                     DumbAwareAction
-                                    (update
-                                     [_ ^AnActionEvent event]
-                                     (let [project (actions/action-event->project event)]
-                                       (.setEnabled (.getPresentation event) (boolean (nrepl/evaluating? project)))))
-                                    (actionPerformed
-                                     [_ event]
-                                     (a.eval/interrupt event))))
+                                     (update
+                                       [_ ^AnActionEvent event]
+                                       (let [project (actions/action-event->project event)]
+                                         (.setEnabled (.getPresentation event) (boolean (nrepl/evaluating? project)))))
+                                     (actionPerformed
+                                       [_ event]
+                                       (a.eval/interrupt event))))
   (action/register-action! :id "ClojureREPL.ReloadCustomActions"
                            :action (proxy+
                                     ["Reload custom actions" "Reload custom actions" AllIcons$Actions/Refresh]
                                     DumbAwareAction
-                                    (actionPerformed
-                                     [_ event]
-                                     (let [action-manager (ActionManager/getInstance)
-                                           custom-actions (.getActionIdList action-manager "ClojureREPL.Custom")
-                                           project (actions/action-event->project event)]
-                                       (doseq [id custom-actions]
-                                         (when (not= id custom-code-actions/group-id)
-                                           (.unregisterAction action-manager id)))
-                                       (when-let [group (.getAction action-manager custom-code-actions/group-id)]
-                                         (.removeAll ^DefaultActionGroup group))
-                                       (custom-code-actions/register-custom-code-actions (config/eval-code-actions-from-user))
-                                       (custom-code-actions/register-custom-code-actions (config/from-project project) project)))))
+                                     (actionPerformed
+                                       [_ event]
+                                       (let [action-manager (ActionManager/getInstance)
+                                             custom-actions (.getActionIdList action-manager "ClojureREPL.Custom")
+                                             project (actions/action-event->project event)]
+                                         (doseq [id custom-actions]
+                                           (when (not= id custom-code-actions/group-id)
+                                             (.unregisterAction action-manager id)))
+                                         (when-let [group (.getAction action-manager custom-code-actions/group-id)]
+                                           (.removeAll ^DefaultActionGroup group))
+                                         (custom-code-actions/register-custom-code-actions (config/eval-code-actions-from-user))
+                                         (custom-code-actions/register-custom-code-actions (config/from-project project) project)))))
 
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true

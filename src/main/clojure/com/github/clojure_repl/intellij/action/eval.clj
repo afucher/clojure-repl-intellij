@@ -141,6 +141,13 @@
       actions/action-event->project
       ui.repl/history-down))
 
+(defn refresh-namespaces-action [^AnActionEvent event]
+  (let [project (actions/action-event->project event)
+        response (nrepl/refresh project)]
+    (if (contains? (:status response) "ok")
+      (ui.repl/append-output project "\n;; Refreshed namespaces")
+      (ui.repl/append-output project (str "\n;; Refresh failed:\n" (:error response))))))
+
 (defn switch-ns-action [^AnActionEvent event]
   (eval-action
    :event event
