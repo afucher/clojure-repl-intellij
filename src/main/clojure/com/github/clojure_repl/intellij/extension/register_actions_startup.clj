@@ -103,17 +103,6 @@
                            :icon AllIcons$Actions/NextOccurence
                            :keyboard-shortcut {:first "control PAGE_DOWN" :replace-all true}
                            :on-performed #'a.eval/history-down-action)
-(action/register-action! :id "ClojureREPL.RefreshNamespaces"
-                           :action (proxy+
-                                    ["Refresh namespaces" "Refresh changed namespaces" AllIcons$Actions/Refresh]
-                                    DumbAwareAction
-                                    (update
-                                     [_ ^AnActionEvent event]
-                                     (let [project (actions/action-event->project event)]
-                                       (.setEnabled (.getPresentation event) (boolean (nrepl/active-client? project)))))
-                                    (actionPerformed
-                                     [_ event]
-                                     (a.eval/refresh-namespaces-action event))))
   (action/register-action! :id "ClojureREPL.Interrupt"
                            :keyboard-shortcut {:first "shift alt R" :second "shift alt S" :replace-all true}
                            :action (proxy+
@@ -142,6 +131,17 @@
                                            (.removeAll ^DefaultActionGroup group))
                                          (custom-code-actions/register-custom-code-actions (config/eval-code-actions-from-user))
                                          (custom-code-actions/register-custom-code-actions (config/from-project project) project)))))
+  (action/register-action! :id "ClojureREPL.RefreshNamespaces"
+                             :action (proxy+
+                                      ["Refresh namespaces" "Refresh changed namespaces" AllIcons$Actions/Refresh]
+                                      DumbAwareAction
+                                      (update
+                                       [_ ^AnActionEvent event]
+                                       (let [project (actions/action-event->project event)]
+                                         (.setEnabled (.getPresentation event) (boolean (nrepl/active-client? project)))))
+                                      (actionPerformed
+                                       [_ event]
+                                       (a.eval/refresh-namespaces-action event))))
 
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true
