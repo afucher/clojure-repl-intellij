@@ -36,7 +36,7 @@
         clear-repl (.getAction manager "ClojureREPL.ClearReplOutput")
         history-up (.getAction manager "ClojureREPL.HistoryUp")
         history-down (.getAction manager "ClojureREPL.HistoryDown")
-        refresh-namespaces (.getAction manager "ClojureREPL.RefreshNamespaces")
+        refresh-namespaces (.getAction manager "ClojureREPL.RefreshAll")
         interrupt (.getAction manager "ClojureREPL.Interrupt")]
     [clear-repl history-up history-down refresh-namespaces interrupt]))
 

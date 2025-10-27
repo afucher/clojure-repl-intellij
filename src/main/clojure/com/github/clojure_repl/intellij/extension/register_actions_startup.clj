@@ -82,7 +82,7 @@
   (action/register-action! :id "ClojureREPL.RefreshAll"
                            :title "Refresh all namespaces"
                            :description "Refresh all namespaces"
-                           :icon Icons/CLOJURE_REPL
+                           :icon AllIcons$Actions/Refresh
                            :keyboard-shortcut {:first "shift alt R" :second "shift alt A" :replace-all true}
                            :on-performed #'a.eval/refresh-all-action)
   (action/register-action! :id "ClojureREPL.RefreshChanged"
@@ -131,17 +131,6 @@
                                            (.removeAll ^DefaultActionGroup group))
                                          (custom-code-actions/register-custom-code-actions (config/eval-code-actions-from-user))
                                          (custom-code-actions/register-custom-code-actions (config/from-project project) project)))))
-  (action/register-action! :id "ClojureREPL.RefreshNamespaces"
-                           :action (proxy+
-                                    ["Refresh namespaces" "Refresh changed namespaces" AllIcons$Actions/Refresh]
-                                    DumbAwareAction
-                                     (update
-                                       [_ ^AnActionEvent event]
-                                       (let [project (actions/action-event->project event)]
-                                         (.setEnabled (.getPresentation event) (boolean (nrepl/active-client? project)))))
-                                     (actionPerformed
-                                       [_ event]
-                                       (a.eval/refresh-namespaces-action event))))
 
   (action/register-group! :id "ClojureREPL.ReplActions"
                           :popup true
