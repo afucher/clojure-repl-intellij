@@ -132,14 +132,14 @@
                                          (custom-code-actions/register-custom-code-actions (config/eval-code-actions-from-user))
                                          (custom-code-actions/register-custom-code-actions (config/from-project project) project)))))
   (action/register-action! :id "ClojureREPL.RefreshNamespaces"
-                             :action (proxy+
-                                      ["Refresh namespaces" "Refresh changed namespaces" AllIcons$Actions/Refresh]
-                                      DumbAwareAction
-                                      (update
+                           :action (proxy+
+                                    ["Refresh namespaces" "Refresh changed namespaces" AllIcons$Actions/Refresh]
+                                    DumbAwareAction
+                                     (update
                                        [_ ^AnActionEvent event]
                                        (let [project (actions/action-event->project event)]
                                          (.setEnabled (.getPresentation event) (boolean (nrepl/active-client? project)))))
-                                      (actionPerformed
+                                     (actionPerformed
                                        [_ event]
                                        (a.eval/refresh-namespaces-action event))))
 
