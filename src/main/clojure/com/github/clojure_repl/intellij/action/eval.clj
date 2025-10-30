@@ -157,18 +157,25 @@
                       (ui.repl/clear-input (actions/action-event->project event)))))
 
 (defn refresh-all-action [^AnActionEvent event]
-  (let [msg "Refreshed all sucessfully"]
-    (eval-action
-     :event event
-     :loading-msg "REPL: Refreshing all ns"
-     :eval-fn (fn [^Editor editor]
-                (nrepl/refresh-all (.getProject editor)))
-     :success-msg-fn (fn [response]
-                       (if (contains? (:status response) "ok")
-                         msg
-                         (str "Refresh failed:\n" (:error response))))
-     :post-success-fn (fn [_response]
-                        (send-result-to-repl event (str ";; " msg) false)))))
+  (let [project (actions/action-event->project event)
+        editor ^Editor (.getData event CommonDataKeys/EDITOR_EVEN_IF_INACTIVE)
+        msg "Refreshed all sucessfully"]
+    (if editor
+      (eval-action
+       :event event
+       :loading-msg "REPL: Refreshing all ns"
+       :eval-fn (fn [^Editor editor]
+                  (nrepl/refresh-all (.getProject editor)))
+       :success-msg-fn (fn [response]
+                         (if (contains? (:status response) "ok")
+                           msg
+                           (str "Refresh failed:\n" (:error response))))
+       :post-success-fn (fn [_response]
+                          (send-result-to-repl event (str ";; " msg) false)))
+      (let [response (nrepl/refresh-all project)]
+        (if (contains? (:status response) "ok")
+          (ui.repl/append-output project "\n;; Refreshed all namespaces")
+          (ui.repl/append-output project (str "\n;; Refresh failed:\n" (:error response))))))))
 
 (defn refresh-changed-action [^AnActionEvent event]
   (let [msg "Refreshed sucessfully"]

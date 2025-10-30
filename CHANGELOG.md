@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+## 2.6.4
+- Adding refresh namespaces action button to REPL window
+
 ## 2.6.3
 
 - Fix Custom Code Action not working in new versions of IntelliJ (2025)
