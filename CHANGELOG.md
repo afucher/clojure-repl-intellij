@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 2.7.0
+
 - Fix REPL start commands for Windows
 
 ## 2.6.3
