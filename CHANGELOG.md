@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix REPL start commands for Windows
+
 ## 2.6.3
 
 - Fix Custom Code Action not working in new versions of IntelliJ (2025)

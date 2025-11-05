@@ -6,14 +6,19 @@
 
 (set! *warn-on-reflection* true)
 
-(def ^:private project-type->command
-  {:lein ["lein"]
+(def ^:private windows-os?
+  (.contains (System/getProperty "os.name") "Windows"))
+
+(defn ^:private project-type->command
+  [project-type]
+  ({:lein (if windows-os? ["lein.bat"] ["lein"])
    :clojure ["clojure"]
    :babashka ["bb"]
    :shadow-cljs ["npx" "shadow-cljs"]
    :boot ["boot"]
    :nbb ["nbb"]
-   :gradle ["./gradlew"]})
+   :gradle  (if windows-os? ["cmd" "/c" "gradlew.bat"] ["./gradlew"])}
+  project-type))
 
 (def ^:private middleware-versions
   ;; TODO make version configurable in intellij settings
@@ -36,9 +41,6 @@
   (println cmd-and-args)
   (apply shell/sh cmd-and-args))
 
-(def ^:private windows-os?
-  (.contains (System/getProperty "os.name") "Windows"))
-
 (defn ^:private normalize-command
   "Return CLASSPATH-CMD, but with the EXEC expanded to its full path (if found).
 
@@ -56,7 +58,7 @@
   replace the EXEC. If not, it tries the same with pwsh.exe."
   [[exec & args :as cmd]]
   (if (and windows-os?
-           (#{"clojure" "lein"} exec)
+           (#{"clojure" "lein.bat"} exec)
            (not (locate-executable exec)))
     (if-let [up (some #(when-let [ps (locate-executable %)]
                          (when (= 0 (:exit (apply shell (psh-cmd ps "Get-Command" exec))))
