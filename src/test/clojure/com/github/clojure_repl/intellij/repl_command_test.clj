@@ -14,7 +14,12 @@
             "-Sdeps"
             "{:deps {nrepl/nrepl {:mvn/version \"1.3.1\"} cider/cider-nrepl {:mvn/version \"0.55.7\"}} :aliases {:cider/nrepl {:main-opts [\"-m\" \"nrepl.cmdline\" \"--middleware\" \"[cider.nrepl/cider-middleware]\"]}}}"
             "-M:foo-b:bar:cider/nrepl"]
-           (repl-command/project->repl-start-command :clojure ["foo-b" "bar"] [])))
+           (repl-command/project->repl-start-command :clojure '("foo-b" "bar") [])))
+    (is (= ["clojure"
+                "-Sdeps"
+                "{:deps {nrepl/nrepl {:mvn/version \"1.3.1\"} cider/cider-nrepl {:mvn/version \"0.55.7\"}} :aliases {:cider/nrepl {:main-opts [\"-m\" \"nrepl.cmdline\" \"--middleware\" \"[cider.nrepl/cider-middleware]\"]}}}"
+                "-M:foo-b:bar:cider/nrepl"]
+               (repl-command/project->repl-start-command :clojure '("foo-b" ":bar") [])))
     (testing "windows powershell"
       (with-redefs [repl-command/windows-os? (constantly true)
                     repl-command/locate-executable (fn [cmd]
