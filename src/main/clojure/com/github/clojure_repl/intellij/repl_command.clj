@@ -12,13 +12,13 @@
 (defn ^:private project-type->command
   [project-type]
   ({:lein (if windows-os? ["lein.bat"] ["lein"])
-   :clojure ["clojure"]
-   :babashka ["bb"]
-   :shadow-cljs ["npx" "shadow-cljs"]
-   :boot ["boot"]
-   :nbb ["nbb"]
-   :gradle  (if windows-os? ["cmd" "/c" "gradlew.bat"] ["./gradlew"])}
-  project-type))
+    :clojure ["clojure"]
+    :babashka ["bb"]
+    :shadow-cljs ["npx" "shadow-cljs"]
+    :boot ["boot"]
+    :nbb ["nbb"]
+    :gradle  (if windows-os? ["cmd" "/c" "gradlew.bat"] ["./gradlew"])}
+   project-type))
 
 (def ^:private middleware-versions
   ;; TODO make version configurable in intellij settings
@@ -68,6 +68,12 @@
       cmd)
     cmd))
 
+(defn ^:private remove-start-colon
+  [s]
+  (if (string/starts-with? s ":")
+    (subs s 1)
+    s))
+
 (defn ^:private project-type->parameters [project-type aliases jvm-args]
   (flatten
    (remove
@@ -84,7 +90,10 @@
                   (map #(str "-J" (first %) "=" (second %)) jvm-args))
                 "-Sdeps"
                 "{:deps {nrepl/nrepl {:mvn/version \"%nrepl/nrepl%\"} cider/cider-nrepl {:mvn/version \"%cider/cider-nrepl%\"}} :aliases {:cider/nrepl {:main-opts [\"-m\" \"nrepl.cmdline\" \"--middleware\" \"[cider.nrepl/cider-middleware]\"]}}}"
-                (str "-M:" (string/join ":" (conj aliases "cider/nrepl")))]
+                (str "-M:" (->> "cider/nrepl"
+                                (conj (vec aliases))
+                                (map remove-start-colon)
+                                (string/join ":")))]
       :babashka ["nrepl-server" "localhost:0"]
       :shadow-cljs ["server"]
       :boot ["repl" "-s" "-b" "localhost" "wait"]
