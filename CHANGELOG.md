@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- fix: makes `:cider/nrepl` alias be always the latest
+- fix: accept alias starting with colon 
+
 ## 2.7.0
 
 - Fix REPL start commands for Windows
