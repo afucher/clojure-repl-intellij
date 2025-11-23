@@ -125,6 +125,5 @@
           (logger/error "Error registering custom code actions:" e))))
 
     (ui.repl/set-repl-started-initial-text project
-                                           (db/get-in project [:console :ui])
                                            (str (initial-repl-text project) extra-initial-text))
     (db/update-in! project [:on-ns-changed-fns] #(conj % on-ns-changed trigger-ui-update))))
