@@ -68,11 +68,11 @@
       cmd)
     cmd))
 
-(defn- remove-start-colon [v]
-  (map (fn [e] (if (string/starts-with? e ":")
-                 (subs e 1)
-                 e))
-       v))
+(defn ^:private remove-start-colon
+  [s]
+  (if (string/starts-with? s ":")
+    (subs s 1)
+    s))
 
 (defn ^:private project-type->parameters [project-type aliases jvm-args]
   (flatten
@@ -90,10 +90,10 @@
                   (map #(str "-J" (first %) "=" (second %)) jvm-args))
                 "-Sdeps"
                 "{:deps {nrepl/nrepl {:mvn/version \"%nrepl/nrepl%\"} cider/cider-nrepl {:mvn/version \"%cider/cider-nrepl%\"}} :aliases {:cider/nrepl {:main-opts [\"-m\" \"nrepl.cmdline\" \"--middleware\" \"[cider.nrepl/cider-middleware]\"]}}}"
-                (str "-M:" (->>
-                            (apply conj (vec aliases) ["cider/nrepl"])
-                            remove-start-colon
-                            (string/join ":")))]
+                (str "-M:" (->> "cider/nrepl"
+                                (conj (vec aliases))
+                                (map remove-start-colon)
+                                (string/join ":")))]
       :babashka ["nrepl-server" "localhost:0"]
       :shadow-cljs ["server"]
       :boot ["repl" "-s" "-b" "localhost" "wait"]
