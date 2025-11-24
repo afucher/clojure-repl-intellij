@@ -1,0 +1,6 @@
+{:paths ["src/scripts"]
+ :tasks {tag ci/tag
+         clean (shell "./gradlew clean")
+         install ci/install
+         deploy ci/deploy
+         build ci/build}}

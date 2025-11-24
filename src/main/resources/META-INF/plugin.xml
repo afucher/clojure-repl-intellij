@@ -20,11 +20,17 @@
             id="clojure-repl-inlays"
             order="after hide-search"/>
         <colorSettingsPage implementation="com.github.clojure_repl.intellij.extension.ColorSettingsPage"/>
+        <applicationConfigurable parentId="tools" instance="com.github.clojure_repl.intellij.settings.PluginConfigurable"
+                                 id="com.github.clojure_repl.intellij.settings.PluginConfigurable"
+                                 displayName="Clojure REPL"/>
+        <applicationService serviceImplementation="com.github.clojure_repl.intellij.settings.PluginSettingsState"/>
     </extensions>
 
     <applicationListeners>
         <listener topic="com.intellij.ide.AppLifecycleListener"
                   class="com.github.ericdallo.clj4intellij.listener.ClojureClassLoaderListener"/>
+        <listener topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"
+                  class="com.github.clojure_repl.intellij.listener.FileSaveListener"/>
     </applicationListeners>
 
 </idea-plugin>

@@ -1,0 +1,2 @@
+{:cljfmt {:extra-indents {proxy+ [[:block 2] [:inner 1]]
+                          def-extension [[:block 2] [:inner 1]]}}}
