@@ -1,2 +1,0 @@
-{:hooks {:analyze-call {com.rpl.proxy-plus/proxy+ clj4intellij.proxy-plus/proxy+
-                        com.github.ericdallo.clj4intellij.extension/def-extension clj4intellij.proxy-plus/proxy+}}}
