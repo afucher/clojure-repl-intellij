@@ -2,8 +2,12 @@
 
 ## [Unreleased]
 
-## 2.6.4
-- Adding refresh namespaces action button to REPL window
+- fix: makes `:cider/nrepl` alias be always the latest
+- fix: accept alias starting with colon 
+
+## 2.7.0
+
+- Fix REPL start commands for Windows
 
 ## 2.6.3
 
