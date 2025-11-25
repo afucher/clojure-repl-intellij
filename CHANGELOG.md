@@ -3,7 +3,8 @@
 ## [Unreleased]
 
 - fix: makes `:cider/nrepl` alias be always the latest
-- fix: accept alias starting with colon 
+- fix: accept alias starting with colon
+- Add new configuration entry in `Tools -> Clojure REPL` for loading REPL files automatically on file save
 
 ## 2.7.0
 
