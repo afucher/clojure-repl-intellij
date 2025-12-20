@@ -168,6 +168,17 @@
                                      :file-name (some-> virtual-file .getName)})]
     response))
 
+(defn load-file-from-document
+  "Load file to REPL using a Document instead of Editor.
+   Useful for file save listeners where we have the document but not an editor."
+  [project ^com.intellij.openapi.editor.Document document ^VirtualFile virtual-file]
+  (let [response @(send-msg project {:op "load-file"
+                                     :session (db/get-in project [:current-nrepl :session-id])
+                                     :file (.getText document)
+                                     :file-path (some-> virtual-file .getPath)
+                                     :file-name (some-> virtual-file .getName)})]
+    response))
+
 (defn describe [^Project project]
   @(send-msg project {:op "describe"}))
 

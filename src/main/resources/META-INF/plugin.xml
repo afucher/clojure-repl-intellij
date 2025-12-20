@@ -6,6 +6,14 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="com.github.clojure_repl.intellij.ClojureReplSettings"/>
+        <applicationConfigurable
+                instance="com.github.clojure_repl.intellij.extension.SettingsPage"
+                id="com.github.clojure_repl.intellij.settings"
+                displayName="Clojure REPL"
+                parentId="tools"/>
+        <fileDocumentManagerListener
+                implementation="com.github.clojure_repl.intellij.extension.LoadFileOnSaveListener"/>
         <configurationType implementation="com.github.clojure_repl.intellij.configuration.ReplRunConfigurationType"/>
         <postStartupActivity implementation="com.github.ericdallo.clj4intellij.extension.NREPLStartup"/>
         <postStartupActivity id="init-repl-db" implementation="com.github.clojure_repl.intellij.extension.InitDBStartup"/>
