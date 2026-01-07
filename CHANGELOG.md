@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 2.8.0
+
 - [enhancement: adding refresh namespaces action button to REPL window](https://github.com/afucher/clojure-repl-intellij/issues/148)
 - [fix: makes `:cider/nrepl` alias be always the latest](https://github.com/afucher/clojure-repl-intellij/issues/159)
 - [fix: accept alias starting with colon](https://github.com/afucher/clojure-repl-intellij/issues/159) 
