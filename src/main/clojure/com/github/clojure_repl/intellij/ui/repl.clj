@@ -38,7 +38,11 @@
                      (str output-text "\n" input-text)
                      output-text)]
     (app-manager/invoke-later!
-     {:invoke-fn (fn [] (.setText repl-content final-text))})))
+     {:invoke-fn (fn []
+                   (.setText repl-content final-text)
+                   (when-let [editor ^EditorEx (.getEditor repl-content)]
+                     (.moveToOffset (.getCaretModel editor) (.getTextLength (.getDocument repl-content)))
+                     (.scrollToCaret (.getScrollingModel editor) ScrollType/MAKE_VISIBLE)))}))) ;; guarantee that scroll happens after text is set
 
 (defn ^:private set-output
   [^Project project output-text]
@@ -57,7 +61,11 @@
         output-text (db/get-in project [:console :state :last-output])
         final-text (str output-text "\n" input-text temp-input)]
     (app-manager/invoke-later!
-     {:invoke-fn (fn [] (.setText repl-content final-text))})))
+     {:invoke-fn (fn []
+                   (.setText repl-content final-text)
+                   (when-let [editor ^EditorEx (.getEditor repl-content)]
+                     (.moveToOffset (.getCaretModel editor) (.getTextLength (.getDocument repl-content)))
+                     (.scrollToCaret (.getScrollingModel editor) ScrollType/MAKE_VISIBLE)))}))) ;; Same here, maybe do a function for that?
 
 (defn clear-input [project]
   (let [ns-text (str (db/get-in project [:current-nrepl :ns]) "> ")]
@@ -87,7 +95,6 @@
                        "\n" input code-to-eval (when value "\n")
                        (when value (str "=> " (last value))))]
       (append-output project result-text)
-      (move-caret-and-scroll-to-latest repl-content)
       (when (and ns (not= ns cur-ns))
         (db/assoc-in! project [:current-nrepl :ns] ns)
         (doseq [fn (db/get-in project [:on-ns-changed-fns])]
@@ -100,12 +107,9 @@
         current-index (db/get-in project [:current-nrepl :entry-index])]
     (when (and (pos? (count entries))
                (< current-index (dec (count entries))))
-      (let [entry (nth entries (inc current-index))
-            console (db/get-in project [:console :ui])
-            repl-content (seesaw/select console [:#repl-content])]
+      (let [entry (nth entries (inc current-index))]
         (db/update-in! project [:current-nrepl :entry-index] inc)
-        (set-temp-input project entry)
-        (move-caret-and-scroll-to-latest repl-content)))))
+        (set-temp-input project entry)))))
 
 (defn history-down
   [project]
@@ -113,12 +117,9 @@
         current-index (db/get-in project [:current-nrepl :entry-index])]
     (when (and (pos? (count entries))
                (> current-index 0))
-      (let [entry (nth entries (dec current-index))
-            console (db/get-in project [:console :ui])
-            repl-content (seesaw/select console [:#repl-content])]
+      (let [entry (nth entries (dec current-index))]
         (db/update-in! project [:current-nrepl :entry-index] dec)
-        (set-temp-input project entry)
-        (move-caret-and-scroll-to-latest repl-content)))))
+        (set-temp-input project entry)))))
 
 (defn ^:private on-repl-new-line [project]
   (append-output project "\n")
@@ -139,7 +140,6 @@
         repl-input (re-find (re-pattern (str ns "+>\\s")) last-repl-line)]
     (when-not repl-input
       (clear-input project)
-      (move-caret-and-scroll-to-latest repl-content)
       (.consume event))))
 
 (defn build-console [project {:keys [initial-text on-eval]}]
@@ -180,15 +180,13 @@
                                  false)))
             "grow"]]))
 
-(defn set-repl-started-initial-text [project console text]
-  (let [output (str text "\n")
-        repl-content (seesaw/select console [:#repl-content])]
+(defn set-repl-started-initial-text [project text]
+  (let [output (str text "\n")]
     (db/assoc-in! project [:console :state :status] :enabled)
     (db/assoc-in! project [:console :state :initial-text] text)
     (append-output project output)
     (clear-input project)
-    (refresh-repl-text project)
-    (move-caret-and-scroll-to-latest repl-content)))
+    (refresh-repl-text project)))
 
 (def ^:private ^DateTimeFormatter time-formatter (DateTimeFormatter/ofPattern "dd/MM/yyyy HH:mm:ss"))
 
